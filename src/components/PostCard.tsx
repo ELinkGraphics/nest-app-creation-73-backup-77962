@@ -157,7 +157,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 setFollowState('checked');
                 setTimeout(() => setFollowState('hidden'), 1500);
               }}
-              className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-md hover:scale-110 transition-all duration-200"
+              className="absolute -bottom-1.5 -right-0.5 w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-md hover:scale-110 transition-all duration-200"
               aria-label="Follow user"
             >
               {followState === 'visible' ? (

@@ -68,7 +68,7 @@ const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages }) => {
   if (isLoading || !user) {
     return (
       <header className="sticky top-0 z-30 border-b border-gray-200">
-        <div className="bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <div className="bg-white">
             <div className="px-4 h-10 flex items-center justify-between">
             <div className="inline-flex items-center rounded-full px-3 py-1 border border-gray-200">
               <img 
@@ -88,7 +88,7 @@ const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages }) => {
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200">
-      <div className="bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+      <div className="bg-white">
         <div className="px-4 h-10 flex items-center justify-between">
           <div className="inline-flex items-center rounded-full px-2.5 py-0.5 border border-gray-200">
             <img 

@@ -16,7 +16,7 @@ export const FeedRelaxToggle: React.FC<FeedRelaxToggleProps> = ({
   const reducedMotion = useReducedMotion();
 
   return (
-    <div className="sticky top-16 z-40 py-2 px-4 border-b border-muted bg-background/95 backdrop-blur-sm">
+    <div className="sticky top-10 z-40 py-2 px-4 border-b border-muted bg-background/95 backdrop-blur-sm">
       <div 
         role="tablist" 
         aria-label="Feed and Relax modes"

@@ -112,7 +112,7 @@ export const QuestionDetailModal: React.FC<QuestionDetailModalProps> = ({
               {/* Removed all topic labels and badges */}
             </div>
 
-            <p className="text-foreground leading-relaxed">{question.question}</p>
+            <p className="text-sm text-foreground leading-relaxed">{question.question}</p>
 
             {/* Tags */}
             <div className="flex flex-wrap gap-1">

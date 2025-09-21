@@ -163,9 +163,9 @@ const QuestionDetail: React.FC = () => {
               )}
             </div>
 
-            <h1 className="text-xl font-semibold text-foreground leading-relaxed">
+            <p className="text-sm text-foreground leading-relaxed">
               {question.question}
-            </h1>
+            </p>
 
             {/* Tags */}
             <div className="flex flex-wrap gap-1">

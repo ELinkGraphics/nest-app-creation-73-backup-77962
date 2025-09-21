@@ -22,16 +22,16 @@ export const DraggablePipVideo: React.FC<DraggablePipVideoProps> = ({
   const baseHeight = 356; // 16:9 aspect ratio
   
   const [position, setPosition] = useState({ 
-    x: window.innerWidth - baseWidth * 0.78 - 5, // 5px space from right edge
-    y: window.innerHeight - baseHeight * 0.78 - 70 // Narrower gap above comment input (approx 70px)
+    x: window.innerWidth - baseWidth * 0.6 - 5, // 5px space from right edge
+    y: window.innerHeight - baseHeight * 0.6 - 70 // Narrower gap above comment input (approx 70px)
   });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [scale, setScale] = useState(0.78);
+  const [scale, setScale] = useState(0.6);
   const [isPinching, setIsPinching] = useState(false);
   const [pinchData, setPinchData] = useState({
     startDistance: 0,
-    startScale: 0.78,
+    startScale: 0.6,
     center: { x: 0, y: 0 },
     startPosition: { x: 0, y: 0 }
   });

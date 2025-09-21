@@ -27,6 +27,8 @@ const Index = () => {
   const [showShop, setShowShop] = useState(false);
   const [showSafe, setShowSafe] = useState(false);
   const [refreshFeed, setRefreshFeed] = useState(0);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const [headerProfileOpen, setHeaderProfileOpen] = useState(false);
 
   // Handle navigation state from FooterNav
   useEffect(() => {
@@ -132,15 +134,19 @@ const Index = () => {
       <Header 
         onNotifications={() => alert("Notifications")}
         onMessages={() => alert("Messages")}
+        onMenuOpenChange={setHeaderMenuOpen}
+        onProfileModalChange={setHeaderProfileOpen}
       />
       
       <main className="pb-24">
         <StoriesBar />
         
-        <FeedRelaxToggle 
-          activeMode={feedMode}
-          onModeChange={setFeedMode}
-        />
+        {!headerMenuOpen && !headerProfileOpen && (
+          <FeedRelaxToggle 
+            activeMode={feedMode}
+            onModeChange={setFeedMode}
+          />
+        )}
         
         {feedMode === "feed" ? (
           <FeedView key={refreshFeed} onRefresh={handleRefresh} data-testid="feed-view" />

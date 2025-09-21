@@ -9,6 +9,8 @@ import ProfileModal from './ProfileModal';
 interface HeaderProps {
   onNotifications?: () => void;
   onMessages?: () => void;
+  onMenuOpenChange?: (isOpen: boolean) => void;
+  onProfileModalChange?: (isOpen: boolean) => void;
 }
 
 const IconButton = ({ label, children, badge, onClick, 'data-testid': dataTestId }: { 
@@ -58,11 +60,19 @@ const MenuItem = ({ icon, label, danger, onClick, 'data-testid': dataTestId }: {
   </button>
 );
 
-const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages }) => {
+const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages, onMenuOpenChange, onProfileModalChange }) => {
   const { navigateToNotifications, navigateToMessages, navigateToShop } = useAppNav();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+
+  React.useEffect(() => {
+    onMenuOpenChange?.(menuOpen);
+  }, [menuOpen, onMenuOpenChange]);
+
+  React.useEffect(() => {
+    onProfileModalChange?.(showProfileModal);
+  }, [showProfileModal, onProfileModalChange]);
   const { user, isLoading } = useUser();
 
   if (isLoading || !user) {

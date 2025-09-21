@@ -87,7 +87,7 @@ const CircleCard: React.FC<CircleCardProps> = ({ circle, onClick, showManageButt
             <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
               {circle.name}
             </h3>
-            <p className="text-sm text-muted-foreground">by {circle.creator.name}</p>
+            <p className="text-username text-muted-foreground">by {circle.creator.name}</p>
           </div>
           {circle.isActive && (
             <div className="flex items-center gap-1 text-green-500">
@@ -98,12 +98,12 @@ const CircleCard: React.FC<CircleCardProps> = ({ circle, onClick, showManageButt
         </div>
 
         {/* Description */}
-        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+        <p className="text-post-content text-muted-foreground mb-3 line-clamp-2">
           {circle.description}
         </p>
 
         {/* Meta Info */}
-        <div className="flex items-center gap-4 mb-3 text-sm text-muted-foreground">
+        <div className="flex items-center gap-4 mb-3 text-meta-info text-muted-foreground">
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
             <span>{circle.members.toLocaleString()}</span>
@@ -118,7 +118,7 @@ const CircleCard: React.FC<CircleCardProps> = ({ circle, onClick, showManageButt
 
         {/* Category */}
         <div className="flex items-center justify-between">
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-badge">
             {circle.category}
           </Badge>
           

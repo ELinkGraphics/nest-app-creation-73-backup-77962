@@ -121,7 +121,7 @@ const ActionButton = ({ icon, label, onClick, active }: {
         className: `size-4 transition-colors ${active ? 'text-primary' : 'text-muted-foreground group-active/action:text-primary'}`
       })}
     </div>
-    <span className={`text-xs font-medium transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}>
+    <span className={`text-action-label font-medium transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}>
       {label}
     </span>
   </button>
@@ -170,7 +170,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h3 className="font-semibold truncate text-foreground text-sm">
+            <h3 className="font-semibold truncate text-foreground text-username">
               {post.user.name}
             </h3>
             {post.user.verified && (
@@ -182,7 +182,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               </span>
             )}
           </div>
-          <div className="text-xs text-muted-foreground font-medium">
+          <div className="text-timestamp text-muted-foreground font-medium">
             {relative}
           </div>
         </div>
@@ -204,12 +204,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       )}
       
       <div className="px-4 pt-3">
-        <p className={`text-sm text-foreground leading-relaxed font-normal ${isTextLong && !expanded ? 'line-clamp-2' : ''}`}>
+        <p className={`text-post-content text-foreground leading-relaxed font-normal ${isTextLong && !expanded ? 'line-clamp-2' : ''}`}>
           {post.content}
         </p>
         {isTextLong && !expanded && (
           <button 
-            className="text-primary text-sm font-semibold hover:text-primary/80 transition-colors mt-1 story-link" 
+            className="text-primary text-post-content font-semibold hover:text-primary/80 transition-colors mt-1 story-link" 
             onClick={handleOpenPost}
             aria-label={`Read more of ${post.user.name}'s post`}
           >

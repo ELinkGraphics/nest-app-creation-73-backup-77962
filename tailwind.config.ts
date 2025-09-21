@@ -91,6 +91,16 @@ export default {
 			fontFamily: {
 				sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif']
 			},
+			fontSize: {
+				'post-title': 'var(--post-title-size)',
+				'post-content': 'var(--post-content-size)', 
+				'comment-text': 'var(--comment-text-size)',
+				'username': 'var(--username-size)',
+				'timestamp': 'var(--timestamp-size)',
+				'action-label': 'var(--action-label-size)',
+				'badge': 'var(--badge-size)',
+				'meta-info': 'var(--meta-info-size)',
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',

@@ -62,6 +62,17 @@ All colors MUST be HSL.
 
     --radius: 1rem;
 
+    /* ========== Consistent Typography System ========== */
+    /* Standard post and comment typography sizes for uniform experience */
+    --post-title-size: 0.875rem;      /* 14px - sm */
+    --post-content-size: 0.875rem;    /* 14px - sm */
+    --comment-text-size: 0.875rem;    /* 14px - sm */
+    --username-size: 0.875rem;        /* 14px - sm */
+    --timestamp-size: 0.75rem;        /* 12px - xs */
+    --action-label-size: 0.75rem;     /* 12px - xs */
+    --badge-size: 0.75rem;            /* 12px - xs */
+    --meta-info-size: 0.875rem;       /* 14px - sm */
+
     /* Beautiful gradients using exact colors */
     --gradient-primary: linear-gradient(135deg, hsl(19 55% 28%), hsl(19 55% 40%));
     --gradient-secondary: linear-gradient(135deg, hsl(33 69% 59%), hsl(33 100% 87%));

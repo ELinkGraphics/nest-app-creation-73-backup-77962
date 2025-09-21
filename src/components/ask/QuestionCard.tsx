@@ -87,8 +87,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
             )}
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-medium text-foreground">Anonymous Asker</span>
-            <span className="text-xs text-muted-foreground">{question.timestamp}</span>
+            <span className="text-timestamp font-medium text-foreground">Anonymous Asker</span>
+            <span className="text-timestamp text-muted-foreground">{question.timestamp}</span>
           </div>
         </div>
 
@@ -98,7 +98,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
         </div>
 
         {/* Question content */}
-        <p className="text-foreground text-sm mb-3 line-clamp-3 leading-relaxed">
+        <p className="text-foreground text-post-content mb-3 line-clamp-3 leading-relaxed">
           {question.question}
         </p>
 
@@ -106,7 +106,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
         {question.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {question.tags.slice(0, 3).map((tag) => (
-              <Badge key={tag} variant="outline" className="text-xs">
+              <Badge key={tag} variant="outline" className="text-badge">
                 #{tag}
               </Badge>
             ))}
@@ -141,7 +141,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
               {question.upvotes}
             </Button>
             
-            <div className="flex items-center text-muted-foreground text-sm">
+            <div className="flex items-center text-muted-foreground text-meta-info">
               <MessageCircle className="w-4 h-4 mr-1" />
               {question.answerCount} {question.answerCount === 1 ? 'opinion' : 'opinions'}
             </div>

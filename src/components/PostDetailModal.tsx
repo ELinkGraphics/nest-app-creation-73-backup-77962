@@ -24,28 +24,28 @@ const CommentItem: React.FC<{ comment: Comment }> = ({ comment }) => {
   return (
     <div className="flex gap-3 py-3">
       <div 
-        className="size-8 rounded-full flex items-center justify-center text-xs font-medium text-white flex-shrink-0"
+        className="size-8 rounded-full flex items-center justify-center text-timestamp font-medium text-white flex-shrink-0"
         style={{ backgroundColor: comment.user.avatarColor }}
       >
         {comment.user.initials}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-medium text-sm text-foreground">{comment.user.name}</span>
-          <span className="text-xs text-gray-500">{comment.time}</span>
+          <span className="font-medium text-username text-foreground">{comment.user.name}</span>
+          <span className="text-timestamp text-gray-500">{comment.time}</span>
         </div>
-        <p className="text-sm text-foreground leading-relaxed">{comment.content}</p>
+        <p className="text-comment-text text-foreground leading-relaxed">{comment.content}</p>
         <div className="flex items-center gap-4 mt-2">
           <button 
             aria-label={`Like comment by ${comment.user.name}`}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            className="flex items-center gap-1 text-action-label text-muted-foreground hover:text-foreground"
           >
             <Heart className="size-3" />
             {comment.likes}
           </button>
           <button 
             aria-label={`Reply to ${comment.user.name}`}
-            className="text-xs text-muted-foreground hover:text-primary"
+            className="text-action-label text-muted-foreground hover:text-primary"
           >
             Reply
           </button>
@@ -105,7 +105,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
             {/* User info */}
             <div className="flex items-center gap-3 mb-4">
               <div 
-                className="size-12 rounded-full flex items-center justify-center text-sm font-medium text-white"
+                className="size-12 rounded-full flex items-center justify-center text-username font-medium text-white"
                 style={{ backgroundColor: post.user.avatarColor }}
               >
                 {post.user.initials}
@@ -124,7 +124,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500">{formatTimeAgo(post.time)}</p>
+                <p className="text-timestamp text-gray-500">{formatTimeAgo(post.time)}</p>
               </div>
               <button 
                 aria-label="More options"
@@ -142,7 +142,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
                   {post.tags.map((tag) => (
                     <span 
                       key={tag}
-                      className="text-xs px-2 py-1 bg-tertiary text-primary rounded-full"
+                      className="text-badge px-2 py-1 bg-tertiary text-primary rounded-full"
                     >
                       #{tag}
                     </span>
@@ -171,7 +171,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
                   className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <Heart className="size-5" />
-                  <span className="text-sm">{post.stats.likes}</span>
+                  <span className="text-action-label">{post.stats.likes}</span>
                 </button>
                 
                 <button 
@@ -179,7 +179,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
                   className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
                 >
                   <MessageCircle className="size-5" />
-                  <span className="text-sm">{post.stats.comments}</span>
+                  <span className="text-action-label">{post.stats.comments}</span>
                 </button>
                 
                 <button 
@@ -187,7 +187,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
                   className="flex items-center gap-2 text-muted-foreground hover:text-secondary transition-colors"
                 >
                   <Share className="size-5" />
-                  <span className="text-sm">{post.stats.shares}</span>
+                  <span className="text-action-label">{post.stats.shares}</span>
                 </button>
               </div>
             </div>

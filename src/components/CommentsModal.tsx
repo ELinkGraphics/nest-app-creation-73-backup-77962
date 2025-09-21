@@ -640,7 +640,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
                 style={{ width: `${Math.min(100, (dragOffset / DISMISS_THRESHOLD) * 100)}%` }}
               />
             </div>
-            <div className="text-xs text-center mt-1 text-muted-foreground">
+            <div className="text-timestamp text-center mt-1 text-muted-foreground">
               {dragOffset > DISMISS_THRESHOLD ? 'Release to close' : 'Pull to close'}
             </div>
           </div>
@@ -676,7 +676,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
                 <div className="flex gap-3">
                   {/* Avatar */}
                   <div 
-                    className="size-8 rounded-full flex items-center justify-center text-xs font-medium text-white flex-shrink-0"
+                    className="size-8 rounded-full flex items-center justify-center text-timestamp font-medium text-white flex-shrink-0"
                     style={{ backgroundColor: comment.user.avatarColor }}
                   >
                     {comment.user.initials}
@@ -685,43 +685,43 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
                   {/* Comment content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1 mb-1">
-                      <span className="text-sm font-semibold text-gray-900">
-                        {comment.user.name}
-                      </span>
-                      {comment.user.verified && (
-                        <div className="size-3 bg-primary rounded-full flex items-center justify-center">
-                          <div className="size-1.5 bg-white rounded-full" />
-                        </div>
-                      )}
-                      <span className="text-xs text-gray-500 ml-1">
-                        {comment.timestamp}
-                      </span>
+                       <span className="text-username font-semibold text-gray-900">
+                         {comment.user.name}
+                       </span>
+                       {comment.user.verified && (
+                         <div className="size-3 bg-primary rounded-full flex items-center justify-center">
+                           <div className="size-1.5 bg-white rounded-full" />
+                         </div>
+                       )}
+                       <span className="text-timestamp text-gray-500 ml-1">
+                         {comment.timestamp}
+                       </span>
                     </div>
                     
-                    <p className="text-sm text-gray-800 mb-2 leading-relaxed">
-                      {comment.text}
-                    </p>
+                     <p className="text-comment-text text-gray-800 mb-2 leading-relaxed">
+                       {comment.text}
+                     </p>
 
                     {/* Comment actions */}
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => handleLikeComment(comment.id)}
-                        className={`flex items-center gap-1 text-xs transition-colors ${
-                          comment.isLiked ? 'text-red-500' : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                      >
-                        <Heart className={`size-3 ${comment.isLiked ? 'fill-current' : ''}`} />
-                        {comment.likes > 0 && <span>{formatCount(comment.likes)}</span>}
-                      </button>
-                      
-                      <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors">
+                         className={`flex items-center gap-1 text-action-label transition-colors ${
+                           comment.isLiked ? 'text-red-500' : 'text-gray-500 hover:text-gray-700'
+                         }`}
+                       >
+                         <Heart className={`size-3 ${comment.isLiked ? 'fill-current' : ''}`} />
+                         {comment.likes > 0 && <span>{formatCount(comment.likes)}</span>}
+                       </button>
+                       
+                       <button className="flex items-center gap-1 text-action-label text-gray-500 hover:text-gray-700 transition-colors">
                         <MessageCircle className="size-3" />
                         {comment.replies > 0 && <span>{comment.replies}</span>}
                       </button>
                       
                       <button 
                         onClick={() => setReplyingTo(comment.id)}
-                        className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                        className="text-action-label text-gray-500 hover:text-gray-700 transition-colors"
                       >
                         Reply
                       </button>
@@ -738,7 +738,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
                           value={replyText}
                           onChange={(e) => setReplyText(e.target.value)}
                           placeholder={`Reply to ${comment.user.name}...`}
-                          className="w-full bg-transparent text-sm placeholder:text-muted-foreground outline-none resize-none min-h-[24px] leading-6"
+                           className="w-full bg-transparent text-comment-text placeholder:text-muted-foreground outline-none resize-none min-h-[24px] leading-6"
                           rows={1}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
@@ -769,7 +769,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
                         }}
                         variant="ghost"
                         size="sm"
-                        className="px-2 py-1 h-7 text-xs"
+                        className="px-2 py-1 h-7 text-action-label"
                       >
                         Cancel
                       </Button>
@@ -781,29 +781,29 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
                 {comments.filter(reply => reply.parentId === comment.id).map((reply) => (
                   <div key={reply.id} className="ml-11 flex gap-3">
                     <div 
-                      className="size-6 rounded-full flex items-center justify-center text-xs font-medium text-white flex-shrink-0"
+                      className="size-6 rounded-full flex items-center justify-center text-timestamp font-medium text-white flex-shrink-0"
                       style={{ backgroundColor: reply.user.avatarColor }}
                     >
                       {reply.user.initials}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1 mb-1">
-                        <span className="text-sm font-semibold text-gray-900">
-                          {reply.user.name}
-                        </span>
-                        <span className="text-xs text-gray-500 ml-1">
-                          {reply.timestamp}
-                        </span>
+                         <span className="text-username font-semibold text-gray-900">
+                           {reply.user.name}
+                         </span>
+                         <span className="text-timestamp text-gray-500 ml-1">
+                           {reply.timestamp}
+                         </span>
                       </div>
-                      <p className="text-sm text-gray-800 mb-1 leading-relaxed">
-                        {reply.text}
-                      </p>
+                       <p className="text-comment-text text-gray-800 mb-1 leading-relaxed">
+                         {reply.text}
+                       </p>
                       <div className="flex items-center gap-4">
                         <button
                           onClick={() => handleLikeComment(reply.id)}
-                          className={`flex items-center gap-1 text-xs transition-colors ${
-                            reply.isLiked ? 'text-red-500' : 'text-gray-500 hover:text-gray-700'
-                          }`}
+                           className={`flex items-center gap-1 text-action-label transition-colors ${
+                             reply.isLiked ? 'text-red-500' : 'text-gray-500 hover:text-gray-700'
+                           }`}
                         >
                           <Heart className={`size-3 ${reply.isLiked ? 'fill-current' : ''}`} />
                           {reply.likes > 0 && <span>{formatCount(reply.likes)}</span>}
@@ -822,7 +822,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
         <div className="sticky bottom-0">
           <div className="px-4 py-3">
             <div className="flex items-end gap-3 bg-background border border-border rounded-2xl p-3 shadow-lg">
-              <div className="size-8 rounded-full bg-gradient-primary flex items-center justify-center text-xs font-medium text-primary-foreground flex-shrink-0">
+              <div className="size-8 rounded-full bg-gradient-primary flex items-center justify-center text-timestamp font-medium text-primary-foreground flex-shrink-0">
                 YU
               </div>
               <div className="flex-1 min-w-0">
@@ -830,7 +830,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment..."
-                  className="w-full bg-transparent text-sm placeholder:text-muted-foreground outline-none resize-none min-h-[24px] leading-6"
+                  className="w-full bg-transparent text-comment-text placeholder:text-muted-foreground outline-none resize-none min-h-[24px] leading-6"
                   rows={1}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {

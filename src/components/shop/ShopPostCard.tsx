@@ -75,8 +75,8 @@ export const ShopPostCard: React.FC<ShopPostCardProps> = ({
               {item.seller.name[0]}
             </div>
             <div>
-              <p className="font-medium text-sm">{item.seller.name}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="font-medium text-username">{item.seller.name}</p>
+              <p className="text-timestamp text-muted-foreground">
                 {item.seller.rating}★ • {item.seller.followers} followers
               </p>
             </div>
@@ -138,28 +138,28 @@ export const ShopPostCard: React.FC<ShopPostCardProps> = ({
       {/* Product Details */}
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-lg leading-tight">{item.title}</h3>
+          <h3 className="font-semibold text-post-title leading-tight">{item.title}</h3>
           <div className="text-right">
-            <p className="font-bold text-lg text-primary">${item.price}</p>
+            <p className="font-bold text-post-content text-primary">${item.price}</p>
             {item.originalPrice && (
-              <p className="text-sm text-muted-foreground line-through">
+              <p className="text-timestamp text-muted-foreground line-through">
                 ${item.originalPrice}
               </p>
             )}
           </div>
         </div>
         
-        <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
+        <p className="text-muted-foreground text-post-content mb-3 line-clamp-2">
           {item.description}
         </p>
 
         {/* Category and Stock */}
         <div className="flex items-center gap-2 mb-3">
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="secondary" className="text-badge">
             {item.category}
           </Badge>
           {item.stock <= 5 && (
-            <Badge variant="destructive" className="text-xs">
+            <Badge variant="destructive" className="text-badge">
               Only {item.stock} left!
             </Badge>
           )}
@@ -171,7 +171,7 @@ export const ShopPostCard: React.FC<ShopPostCardProps> = ({
             <button
               onClick={() => onLike(item.id)}
               className={cn(
-                "flex items-center gap-1 text-sm transition-colors",
+                "flex items-center gap-1 text-action-label transition-colors",
                 item.liked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
               )}
             >
@@ -180,12 +180,12 @@ export const ShopPostCard: React.FC<ShopPostCardProps> = ({
             </button>
             <button
               onClick={() => onShare(item.id)}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-action-label text-muted-foreground hover:text-foreground transition-colors"
             >
               <Share2 className="h-4 w-4" />
               {item.shares}
             </button>
-            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1 text-action-label text-muted-foreground">
               <MessageCircle className="h-4 w-4" />
               {item.comments}
             </span>

@@ -411,7 +411,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
                       className="group flex flex-col items-center gap-1 transition-all duration-200"
                     >
                       <div className={cn(
-                        "relative w-12 h-12 rounded-full backdrop-blur-md border transition-all duration-200 flex items-center justify-center group-active:scale-95 shadow-lg",
+                        "relative w-10 h-10 rounded-full backdrop-blur-md border transition-all duration-200 flex items-center justify-center group-active:scale-95 shadow-lg",
                         isLiked 
                           ? "bg-red-500/20 border-red-500/30 shadow-red-500/25" 
                           : "bg-white/15 border-white/20 hover:bg-white/25"
@@ -443,7 +443,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
                       }}
                       className="group flex flex-col items-center gap-1 transition-all duration-200 active:bg-transparent"
                     >
-                      <div className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center group-active:scale-95 hover:bg-white/25 transition-all duration-200 shadow-lg active:bg-white/15">
+                       <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center group-active:scale-95 hover:bg-white/25 transition-all duration-200 shadow-lg active:bg-white/15">
                         <MessageCircle className="w-6 h-6 text-white group-active:text-primary transition-colors" />
                       </div>
                       <span className="text-white text-xs font-medium drop-shadow-sm">
@@ -456,7 +456,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
                       onClick={() => handleAction('share')}
                       className="group flex flex-col items-center gap-1 transition-all duration-200 active:bg-transparent"
                     >
-                      <div className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center group-active:scale-95 hover:bg-white/25 transition-all duration-200 shadow-lg active:bg-white/15">
+                      <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center group-active:scale-95 hover:bg-white/25 transition-all duration-200 shadow-lg active:bg-white/15">
                         <Share className="w-6 h-6 text-white group-active:text-primary transition-colors" />
                       </div>
                       <span className="text-white text-xs font-medium drop-shadow-sm">
@@ -469,7 +469,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
                       onClick={() => handleAction('save')}
                       className="group flex flex-col items-center gap-1 transition-all duration-200"
                     >
-                      <div className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center group-active:scale-95 hover:bg-white/25 transition-all duration-200 shadow-lg">
+                      <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center group-active:scale-95 hover:bg-white/25 transition-all duration-200 shadow-lg">
                         <Bookmark className="w-6 h-6 text-white" />
                       </div>
                     </button>
@@ -478,7 +478,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
                     <button 
                       onClick={handleMute}
                       className={cn(
-                        "w-12 h-12 rounded-full backdrop-blur-md border flex items-center justify-center active:scale-95 transition-all duration-200 shadow-lg",
+                        "w-10 h-10 rounded-full backdrop-blur-md border flex items-center justify-center active:scale-95 transition-all duration-200 shadow-lg",
                         isMuted 
                           ? "bg-white/15 border-white/20 hover:bg-white/25" 
                           : "bg-blue-500/20 border-blue-500/30 shadow-blue-500/25"

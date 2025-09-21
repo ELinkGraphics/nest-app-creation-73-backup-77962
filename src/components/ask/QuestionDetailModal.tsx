@@ -176,7 +176,7 @@ export const QuestionDetailModal: React.FC<QuestionDetailModalProps> = ({
                   </Button>
                 </div>
                 
-                <p className="text-foreground leading-relaxed">{answer.content}</p>
+                <p className="text-comment leading-relaxed">{answer.content}</p>
                 
                 {answer.isHelpful && (
                   <Badge variant="outline" className="text-xs">

@@ -17,6 +17,10 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png'],
+      devOptions: {
+        enabled: true,
+        type: 'module'
+      },
       manifest: {
         name: 'MomsNest - Connect, Share, Support',
         short_name: 'MomsNest',
@@ -54,6 +58,8 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
@@ -64,6 +70,14 @@ export default defineConfig(({ mode }) => ({
                 maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               }
+            }
+          },
+          {
+            urlPattern: /\.(?:js|css|html)$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'app-cache',
+              networkTimeoutSeconds: 3
             }
           }
         ]

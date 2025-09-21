@@ -23,6 +23,7 @@ import CreateShop from "./pages/CreateShop";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+import UpdateNotifier from "@/components/UpdateNotifier";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
         <TooltipProvider>
         <Toaster />
         <Sonner />
+        <UpdateNotifier />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />

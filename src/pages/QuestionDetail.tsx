@@ -226,7 +226,7 @@ const QuestionDetail: React.FC = () => {
                   </Button>
                 </div>
                 
-                <p className="text-xs leading-relaxed">{answer.content}</p>
+                <p className="text-comment-compact leading-relaxed">{answer.content}</p>
                 
                 {answer.isHelpful && (
                   <Badge variant="outline" className="text-xs">

@@ -95,6 +95,7 @@ export default {
 				'post-title': 'var(--post-title-size)',
 				'post-content': 'var(--post-content-size)', 
 				'comment-text': 'var(--comment-text-size)',
+				'comment-compact': 'var(--comment-text-compact)',
 				'username': 'var(--username-size)',
 				'timestamp': 'var(--timestamp-size)',
 				'action-label': 'var(--action-label-size)',

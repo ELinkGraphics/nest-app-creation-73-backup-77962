@@ -225,7 +225,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         )}
       </div>
       
-      <footer className="px-2 py-3 grid grid-cols-4 gap-1 border-t border-gray-50 mt-3">
+      <footer className="px-2 py-2 grid grid-cols-4 gap-1 border-t border-gray-50 mt-2">
         <ActionButton
           active={liked}
           onClick={() => setLiked(!liked)}

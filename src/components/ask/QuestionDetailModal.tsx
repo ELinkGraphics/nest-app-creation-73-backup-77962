@@ -109,21 +109,7 @@ export const QuestionDetailModal: React.FC<QuestionDetailModalProps> = ({
           {/* Question Header */}
           <div className="space-y-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge className="bg-blue-100 text-blue-800">
-                {getCategoryIcon(question.category)} {question.category}
-              </Badge>
-              {question.isUrgent && (
-                <Badge variant="destructive" className="animate-pulse">
-                  <AlertTriangle className="w-3 h-3 mr-1" />
-                  Urgent
-                </Badge>
-              )}
-              {question.hasExpertAnswer && (
-                <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">
-                  <Award className="w-3 h-3 mr-1" />
-                  Expert Answered
-                </Badge>
-              )}
+              {/* Removed all topic labels and badges */}
             </div>
 
             <p className="text-foreground leading-relaxed">{question.question}</p>
@@ -177,12 +163,7 @@ export const QuestionDetailModal: React.FC<QuestionDetailModalProps> = ({
               <div key={answer.id} className="p-4 bg-muted/30 rounded-lg space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {answer.isExpert && (
-                      <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">
-                        <Award className="w-3 h-3 mr-1" />
-                        {answer.expertTitle || 'Expert'}
-                      </Badge>
-                    )}
+                    {/* Removed expert badge */}
                     <span className="text-xs text-muted-foreground">{answer.timestamp}</span>
                   </div>
                   <Button 

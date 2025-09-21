@@ -85,25 +85,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
           </div>
         </div>
 
-        {/* Header with category and urgency */}
+        {/* Header - removed category badges and labels */}
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Badge className={getCategoryColor(question.category)}>
-              {getCategoryIcon(question.category)} {question.category}
-            </Badge>
-            {question.isUrgent && (
-              <Badge variant="destructive" className="animate-pulse">
-                <AlertTriangle className="w-3 h-3 mr-1" />
-                Urgent
-              </Badge>
-            )}
-            {question.hasExpertAnswer && (
-               <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">
-                 <Award className="w-3 h-3 mr-1" />
-                 Expert
-               </Badge>
-            )}
-          </div>
+          {/* Empty header space - removed all badges */}
         </div>
 
         {/* Question content */}

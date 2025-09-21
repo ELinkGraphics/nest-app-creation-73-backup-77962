@@ -81,7 +81,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
               className="w-8 h-8 rounded-full border-2 border-primary/20"
             />
             {question.isUrgent && (
-              <div className="absolute -bottom-0.5 -right-0.5 px-1 py-0.5 bg-red-500 text-white text-[7px] font-bold rounded-full border border-white shadow-sm">
+              <div className="absolute -bottom-0.5 -right-0.5 px-1 py-0.5 bg-red-500 text-white text-[7px] font-bold rounded-full border border-white shadow-sm animate-slide-in-right">
                 URG
               </div>
             )}

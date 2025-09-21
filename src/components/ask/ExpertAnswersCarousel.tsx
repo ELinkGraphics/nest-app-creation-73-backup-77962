@@ -85,7 +85,7 @@ export const ExpertAnswersCarousel: React.FC<ExpertAnswersCarouselProps> = ({
   return <div className="w-full">
       <div className="flex items-center justify-between mb-4 px-4">
         <div className="flex items-center gap-2">
-          <Award className="w-5 h-5 text-amber-500" />
+          <Award className="w-5 h-5 text-secondary" />
           <h2 className="text-lg font-semibold text-foreground">Top Stories</h2>
         </div>
         <Button variant="ghost" size="sm" className="text-primary">

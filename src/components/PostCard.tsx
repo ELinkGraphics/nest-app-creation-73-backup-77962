@@ -100,7 +100,7 @@ const MediaBlock = ({ alt, url, from, to, onClick }: {
 );
 
 const Chip = ({ label }: { label: string }) => (
-  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gradient-subtle text-primary border border-primary/20 hover:bg-primary/10 transition-all duration-200 cursor-pointer hover:scale-105">
+  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gradient-subtle text-primary border border-primary/20 hover:bg-primary/10 transition-all duration-200 cursor-pointer hover:scale-105">
     {label}
   </span>
 );

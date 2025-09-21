@@ -111,7 +111,7 @@ export const ExpertAnswersCarousel: React.FC<ExpertAnswersCarouselProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-sm text-foreground truncate">{answer.expertName}</p>
-                        {answer.verified && <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs px-1 py-0">
+                        {answer.verified && <Badge className="bg-secondary text-secondary-foreground text-xs px-1 py-0">
                             <Award className="w-2.5 h-2.5" />
                           </Badge>}
                       </div>

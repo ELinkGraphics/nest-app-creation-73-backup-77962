@@ -74,11 +74,18 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
       <CardContent className="p-4">
         {/* Asker Profile */}
         <div className="flex items-center gap-3 mb-3">
-          <img 
-            src="/src/assets/anonymous-logo.png" 
-            alt="Anonymous Asker" 
-            className="w-8 h-8 rounded-full border-2 border-primary/20"
-          />
+          <div className="relative">
+            <img 
+              src="/src/assets/anonymous-logo.png" 
+              alt="Anonymous Asker" 
+              className="w-8 h-8 rounded-full border-2 border-primary/20"
+            />
+            {question.isUrgent && (
+              <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 bg-red-500 text-white text-[8px] font-bold rounded-full border-2 border-white shadow-sm">
+                URGENT
+              </div>
+            )}
+          </div>
           <div className="flex flex-col">
             <span className="text-xs font-medium text-foreground">Anonymous Asker</span>
             <span className="text-xs text-muted-foreground">{question.timestamp}</span>

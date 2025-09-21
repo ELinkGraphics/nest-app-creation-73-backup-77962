@@ -1,0 +1,134 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CircleCard from '@/components/circles/CircleCard';
+import CreateCircleModal from '@/components/circles/CreateCircleModal';
+import FooterNav from '@/components/FooterNav';
+import { mockCircles } from '@/data/circles';
+import { type TabKey } from '@/hooks/useAppNav';
+
+interface CirclesProps {
+  activeTab: TabKey;
+  onTabSelect: (tab: TabKey) => void;
+  onOpenCreate: () => void;
+}
+
+const Circles: React.FC<CirclesProps> = ({ activeTab, onTabSelect, onOpenCreate }) => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [circleTab, setCircleTab] = useState('browse');
+
+  const filteredCircles = mockCircles.filter(circle =>
+    circle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    circle.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    circle.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="min-h-[100dvh] w-full max-w-[480px] mx-auto bg-background text-foreground selection:bg-secondary/40 relative border-l border-r border-border font-sans overflow-x-hidden" data-testid="circles-page">
+      {/* Header */}
+      <header className="sticky top-0 left-0 right-0 z-50 bg-background backdrop-blur-md border-b border-border w-full">
+        <div className="flex items-center gap-3 p-4">
+          <h1 className="text-xl font-semibold text-foreground">Circles</h1>
+          <div className="ml-auto">
+            <Button size="icon" onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* Search Bar */}
+        <div className="px-4 pb-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search circles, topics, or locations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 transform -translate-y-1/2">
+              <Filter className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="pb-24">
+        <Tabs value={circleTab} onValueChange={setCircleTab} className="w-full">
+          <div className="px-4 mt-3">
+            <TabsList className="grid w-full grid-cols-3 h-9 max-w-full">
+              <TabsTrigger value="browse" className="text-xs px-1 min-w-0">Browse</TabsTrigger>
+              <TabsTrigger value="my-circles" className="text-xs px-1 min-w-0">My Circles</TabsTrigger>
+              <TabsTrigger value="my-communities" className="text-xs px-1 min-w-0">Communities</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="browse" className="mt-4">
+            <div className="px-4">
+              <div className="grid gap-4">
+                {filteredCircles.map((circle) => (
+                  <CircleCard
+                    key={circle.id}
+                    circle={circle}
+                    onClick={() => navigate(`/circle/${circle.id}`)}
+                  />
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="my-circles" className="mt-4">
+            <div className="px-4">
+              <div className="grid gap-4">
+                {filteredCircles.filter(c => c.isJoined).map((circle) => (
+                  <CircleCard
+                    key={circle.id}
+                    circle={circle}
+                    onClick={() => navigate(`/circle/${circle.id}`)}
+                    showManageButton
+                  />
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="my-communities" className="mt-4">
+            <div className="px-4">
+              <div className="grid gap-4">
+                {filteredCircles.filter(c => c.isOwned).map((circle) => (
+                  <CircleCard
+                    key={circle.id}
+                    circle={circle}
+                    onClick={() => navigate(`/circle/${circle.id}`)}
+                    showManageButton
+                  />
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
+
+      {/* Modals */}
+      <CreateCircleModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+      />
+
+      {/* Footer Navigation */}
+      <FooterNav
+        active={activeTab}
+        onSelect={onTabSelect}
+        onOpenCreate={onOpenCreate}
+      />
+    </div>
+  );
+};
+
+export default Circles;

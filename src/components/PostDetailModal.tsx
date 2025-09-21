@@ -1,0 +1,218 @@
+import React from 'react';
+import { X, Heart, MessageCircle, Share, MoreHorizontal } from 'lucide-react';
+import { Post, Comment, MOCK_COMMENTS } from '@/data/mock';
+import { cn } from '@/lib/utils';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+
+interface PostDetailModalProps {
+  post: Post;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const formatTimeAgo = (isoString: string): string => {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+  
+  if (diffInMinutes < 60) return `${diffInMinutes}m`;
+  if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
+  return `${Math.floor(diffInMinutes / 1440)}d`;
+};
+
+const CommentItem: React.FC<{ comment: Comment }> = ({ comment }) => {
+  return (
+    <div className="flex gap-3 py-3">
+      <div 
+        className="size-8 rounded-full flex items-center justify-center text-xs font-medium text-white flex-shrink-0"
+        style={{ backgroundColor: comment.user.avatarColor }}
+      >
+        {comment.user.initials}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="font-medium text-sm text-foreground">{comment.user.name}</span>
+          <span className="text-xs text-gray-500">{comment.time}</span>
+        </div>
+        <p className="text-sm text-foreground leading-relaxed">{comment.content}</p>
+        <div className="flex items-center gap-4 mt-2">
+          <button 
+            aria-label={`Like comment by ${comment.user.name}`}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <Heart className="size-3" />
+            {comment.likes}
+          </button>
+          <button 
+            aria-label={`Reply to ${comment.user.name}`}
+            className="text-xs text-muted-foreground hover:text-primary"
+          >
+            Reply
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const PostDetailModal: React.FC<PostDetailModalProps> = ({
+  post,
+  isOpen,
+  onClose,
+}) => {
+  const reducedMotion = useReducedMotion();
+  const comments = MOCK_COMMENTS[post.id] || [];
+
+  if (!isOpen) return null;
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end"
+      onClick={handleBackdropClick}
+    >
+      <div 
+        className={cn(
+          "w-full max-w-[480px] mx-auto bg-background rounded-t-3xl max-h-[90vh] overflow-hidden",
+          reducedMotion 
+            ? "animate-none" 
+            : "animate-slide-up"
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="post-detail-title"
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+          <h2 id="post-detail-title" className="font-semibold text-lg">Post</h2>
+          <button
+            onClick={onClose}
+            aria-label="Close post detail"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto max-h-[calc(90vh-60px)]">
+          {/* Post content */}
+          <div className="p-4">
+            {/* User info */}
+            <div className="flex items-center gap-3 mb-4">
+              <div 
+                className="size-12 rounded-full flex items-center justify-center text-sm font-medium text-white"
+                style={{ backgroundColor: post.user.avatarColor }}
+              >
+                {post.user.initials}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-foreground">{post.user.name}</span>
+                  {post.user.verified && (
+                    <div className="size-4 bg-primary rounded-full flex items-center justify-center">
+                      <div className="size-2 bg-white rounded-full" />
+                    </div>
+                  )}
+                  {post.sponsored && (
+                    <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full text-gray-600">
+                      Sponsored
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500">{formatTimeAgo(post.time)}</p>
+              </div>
+              <button 
+                aria-label="More options"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <MoreHorizontal className="size-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Post text - full content */}
+            <div className="mb-4">
+              <p className="text-foreground leading-relaxed">{post.content}</p>
+              {post.tags && post.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {post.tags.map((tag) => (
+                    <span 
+                      key={tag}
+                      className="text-xs px-2 py-1 bg-tertiary text-primary rounded-full"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Media */}
+            {post.media && (
+              <div className="mb-4">
+                <img
+                  src={post.media.url}
+                  alt={post.media.alt}
+                  loading="lazy"
+                  className="w-full rounded-2xl aspect-[4/5] object-cover"
+                />
+              </div>
+            )}
+
+            {/* Stats */}
+            <div className="flex items-center justify-between py-3 border-b border-gray-200 mb-4">
+              <div className="flex items-center gap-6">
+                <button 
+                  aria-label={`Like post by ${post.user.name}`}
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Heart className="size-5" />
+                  <span className="text-sm">{post.stats.likes}</span>
+                </button>
+                
+                <button 
+                  aria-label={`Comment on post by ${post.user.name}`}
+                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <MessageCircle className="size-5" />
+                  <span className="text-sm">{post.stats.comments}</span>
+                </button>
+                
+                <button 
+                  aria-label={`Share post by ${post.user.name}`}
+                  className="flex items-center gap-2 text-muted-foreground hover:text-secondary transition-colors"
+                >
+                  <Share className="size-5" />
+                  <span className="text-sm">{post.stats.shares}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Comments section */}
+            <div>
+              <h3 className="font-semibold text-lg mb-4">
+                Comments ({comments.length})
+              </h3>
+              
+              {comments.length > 0 ? (
+                <div className="space-y-1">
+                  {comments.map((comment) => (
+                    <CommentItem key={comment.id} comment={comment} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-8">
+                  No comments yet. Be the first to comment!
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

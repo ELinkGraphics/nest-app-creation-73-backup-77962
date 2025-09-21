@@ -1,0 +1,55 @@
+import React, { useState, useEffect } from 'react';
+import PostCard from './PostCard';
+import { MOCK_POSTS, Post } from '@/data/mock';
+
+const PostSkeleton = () => (
+  <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 animate-pulse">
+    <div className="flex items-center gap-3">
+      <div className="size-10 rounded-full bg-gray-200" />
+      <div className="flex-1">
+        <div className="h-3 w-32 rounded bg-gray-200" />
+        <div className="mt-2 h-3 w-20 rounded bg-gray-200" />
+      </div>
+    </div>
+    <div className="mt-4 h-40 w-full rounded-xl bg-gray-100" />
+    <div className="mt-4 h-3 w-3/4 rounded bg-gray-200" />
+    <div className="mt-2 h-3 w-1/2 rounded bg-gray-200" />
+  </div>
+);
+
+const Feed: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPosts(MOCK_POSTS);
+      setLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <section aria-labelledby="feed-heading" className="pt-2">
+      <h2 id="feed-heading" className="sr-only">
+        Feed
+      </h2>
+      
+      {loading ? (
+        <>
+          <PostSkeleton />
+          <PostSkeleton />
+        </>
+      ) : posts.length ? (
+        posts.map((post) => <PostCard key={post.id} post={post} />)
+      ) : (
+        <div className="rounded-2xl border border-dashed border-gray-300 p-5 text-center">
+          <p className="text-sm text-gray-600">No posts yet.</p>
+        </div>
+      )}
+    </section>
+  );
+};
+
+export default Feed;

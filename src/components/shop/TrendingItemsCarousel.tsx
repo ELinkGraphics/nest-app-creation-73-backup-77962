@@ -76,7 +76,7 @@ export const TrendingItemsCarousel: React.FC = () => {
                           // Handle like
                         }}
                       >
-                        <Heart className="h-2 w-2" />
+                        <Heart className="h-1.5 w-1.5" />
                       </Button>
                       <Button
                         size="sm"
@@ -87,7 +87,7 @@ export const TrendingItemsCarousel: React.FC = () => {
                           handleAddToCart(item);
                         }}
                       >
-                        <ShoppingCart className="h-2 w-2" />
+                        <ShoppingCart className="h-1.5 w-1.5" />
                       </Button>
                     </div>
                   </div>

@@ -30,9 +30,28 @@ export const ShopFeed: React.FC<ShopFeedProps> = ({ searchQuery, category }) => 
     ));
   };
 
-  const handleShare = (itemId: string) => {
-    // Share functionality
-    console.log('Sharing item:', itemId);
+  const handleShare = async (itemId: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+
+    const shareData = {
+      title: item.title,
+      text: `Check out this amazing ${item.title} for $${item.price}!`,
+      url: `${window.location.origin}/shop/product/${item.id}`
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        console.log('Shared successfully');
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        console.log('Link copied to clipboard');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
   };
 
   const handleQuickBuy = (itemId: string) => {

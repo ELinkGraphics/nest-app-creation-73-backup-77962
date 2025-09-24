@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,10 +13,15 @@ import { Heart, Share2, ShoppingCart, TrendingUp } from 'lucide-react';
 import { mockShopItems } from '@/data/shop';
 import { useCart } from '@/contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 export const TrendingItemsCarousel: React.FC = () => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // State for managing likes
+  const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
 
   // Get trending items (simulate trending logic)
   const trendingItems = mockShopItems
@@ -26,6 +31,56 @@ export const TrendingItemsCarousel: React.FC = () => {
 
   const handleAddToCart = (item: typeof mockShopItems[0]) => {
     addToCart(item, 1);
+  };
+
+  const handleLike = (itemId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLikedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+        toast({
+          description: "Removed from favorites",
+        });
+      } else {
+        newSet.add(itemId);
+        toast({
+          description: "Added to favorites ❤️",
+        });
+      }
+      return newSet;
+    });
+  };
+
+  const handleShare = async (item: typeof mockShopItems[0], e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const shareData = {
+      title: item.title,
+      text: `Check out this amazing ${item.title} for $${item.price}!`,
+      url: `${window.location.origin}/shop/product/${item.id}`
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast({
+          description: "Shared successfully!",
+        });
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        toast({
+          description: "Link copied to clipboard!",
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast({
+        description: "Failed to share",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleItemClick = (itemId: string) => {
@@ -71,12 +126,17 @@ export const TrendingItemsCarousel: React.FC = () => {
                         size="sm"
                         variant="ghost"
                         className="h-5 w-5 p-0 bg-white hover:bg-white/90 text-primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Handle like
-                        }}
+                        onClick={(e) => handleLike(item.id, e)}
                       >
-                        <Heart className="h-1.5 w-1.5" />
+                        <Heart className={`h-1.5 w-1.5 ${likedItems.has(item.id) ? 'fill-current text-red-500' : ''}`} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-5 w-5 p-0 bg-white hover:bg-white/90 text-primary"
+                        onClick={(e) => handleShare(item, e)}
+                      >
+                        <Share2 className="h-1.5 w-1.5" />
                       </Button>
                       <Button
                         size="sm"
@@ -109,8 +169,8 @@ export const TrendingItemsCarousel: React.FC = () => {
                         )}
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Heart className="h-2 w-2 fill-current" />
-                        <span className="text-xs">{item.likes}</span>
+                        <Heart className={`h-2 w-2 ${likedItems.has(item.id) ? 'fill-current text-red-500' : 'fill-current'}`} />
+                        <span className="text-xs">{item.likes + (likedItems.has(item.id) ? 1 : 0)}</span>
                       </div>
                     </div>
                   </div>

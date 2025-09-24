@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Users, Crown, Lock, Star, TrendingUp } from 'lucide-react';
+import { MapPin, Users, Crown, Lock, TrendingUp, BadgeCheck } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -64,12 +64,6 @@ const CircleCard: React.FC<CircleCardProps> = ({ circle, onClick, showManageButt
               Private
             </Badge>
           )}
-          {circle.isExpert && (
-            <Badge variant="secondary" className="bg-accent text-accent-foreground">
-              <Star className="h-3 w-3 mr-1" />
-              Expert
-            </Badge>
-          )}
         </div>
 
         {/* Avatar */}
@@ -87,7 +81,12 @@ const CircleCard: React.FC<CircleCardProps> = ({ circle, onClick, showManageButt
             <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
               {circle.name}
             </h3>
-            <p className="text-username text-muted-foreground">by {circle.creator.name}</p>
+            <div className="flex items-center gap-1">
+              <p className="text-username text-muted-foreground">by {circle.creator.name}</p>
+              {circle.isPremium && (
+                <BadgeCheck className="size-4 text-secondary animate-scale-in" aria-label="Verified" />
+              )}
+            </div>
           </div>
           {circle.isActive && (
             <div className="flex items-center gap-1 text-green-500">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Users, Calendar, FileText, Settings, MessageCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Users, Calendar, FileText, Settings, MessageCircle, BadgeCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -107,15 +107,17 @@ const CircleDetailModal: React.FC<CircleDetailModalProps> = ({
               {circle.creator.name.slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <p className="font-medium text-foreground">{circle.creator.name}</p>
+              <div className="flex items-center gap-1">
+                <p className="font-medium text-foreground">{circle.creator.name}</p>
+                {circle.isPremium && (
+                  <BadgeCheck className="size-4 text-secondary animate-scale-in" aria-label="Verified" />
+                )}
+              </div>
               <p className="text-sm text-muted-foreground">Circle Creator</p>
             </div>
             <div className="ml-auto flex gap-2">
               {circle.isPremium && (
                 <Badge variant="default">Premium</Badge>
-              )}
-              {circle.isExpert && (
-                <Badge variant="secondary">Expert</Badge>
               )}
             </div>
           </div>

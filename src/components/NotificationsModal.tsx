@@ -197,7 +197,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, 
                 filteredNotifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`relative p-3 rounded-lg hover:bg-gray-50 transition-colors border cursor-pointer ${
+                    className={`relative p-2 rounded-lg hover:bg-gray-50 transition-colors border cursor-pointer ${
                       !notification.isRead ? 'bg-blue-50/50 border-blue-200' : 'bg-white border-gray-100'
                     }`}
                     onClick={() => markAsRead(notification.id)}
@@ -236,10 +236,10 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, 
                             </Button>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                        <p className="text-sm text-gray-600 mt-0.5 line-clamp-2">
                           {notification.description}
                         </p>
-                        <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center justify-between mt-1">
                           <span className="text-xs text-gray-500">
                             {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
                           </span>

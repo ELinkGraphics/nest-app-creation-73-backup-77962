@@ -134,7 +134,7 @@ const Notifications = () => {
     
     return (
       <div 
-        className={`p-4 border-b border-border hover:bg-muted/50 transition-colors ${
+        className={`p-2 border-b border-border hover:bg-muted/50 transition-colors ${
           !notification.isRead ? 'bg-primary/5' : ''
         }`}
         onClick={() => markAsRead(notification.id)}
@@ -162,7 +162,7 @@ const Notifications = () => {
           </div>
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-0.5">
               <h3 className="font-medium text-sm">{notification.title}</h3>
               {!notification.isRead && (
                 <div className="size-2 bg-primary rounded-full" />
@@ -174,7 +174,7 @@ const Notifications = () => {
                 <Badge variant="secondary" className="text-xs">Important</Badge>
               )}
             </div>
-            <p className="text-muted-foreground text-sm mb-2">{notification.message}</p>
+            <p className="text-muted-foreground text-sm mb-1">{notification.message}</p>
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">{notification.time}</span>
               <Button

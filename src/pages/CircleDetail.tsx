@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Users, MessageCircle, Bell, MoreVertical } from 'lucide-react';
+import { ArrowLeft, MapPin, Users, MessageCircle, Bell, MoreVertical, BadgeCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -69,7 +69,9 @@ const CircleDetail: React.FC<CircleDetailProps> = ({
       <div className="pt-14 px-6 pb-4 text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
           <h1 className="text-2xl font-bold">{circle.name}</h1>
-          {circle.isExpert && <Badge variant="secondary">Expert</Badge>}
+          {circle.isPremium && (
+            <BadgeCheck className="size-6 text-secondary animate-scale-in" aria-label="Verified" />
+          )}
         </div>
         <p className="text-muted-foreground mb-4 leading-relaxed">{circle.description}</p>
         

@@ -168,7 +168,7 @@ const getCategoryColor = (category: string) => {
 
       {/* Thread Updates - Enhanced Design */}
       {thread.updates.length > 0 && (
-        <div className="relative ml-8">
+        <div className="relative ml-8 mt-4">
           {/* Main Thread Line */}
           <div className="absolute left-2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-primary/60 to-transparent" />
           

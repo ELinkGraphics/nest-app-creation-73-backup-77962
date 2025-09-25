@@ -164,15 +164,15 @@ const Notifications = () => {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-1">
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                <h3 className="font-semibold text-sm text-foreground truncate">{notification.title}</h3>
+                <h3 className="font-semibold text-xs text-foreground truncate">{notification.title}</h3>
                 {!notification.isRead && (
-                  <div className="size-2 bg-primary rounded-full flex-shrink-0" />
+                  <div className="size-1.5 bg-primary rounded-full flex-shrink-0" />
                 )}
                 {notification.priority === 'high' && (
-                  <Badge variant="destructive" className="text-xs px-1.5 py-0.5 flex-shrink-0">Urgent</Badge>
+                  <Badge variant="destructive" className="text-[10px] px-1 py-0 flex-shrink-0">Urgent</Badge>
                 )}
                 {notification.priority === 'medium' && (
-                  <Badge variant="secondary" className="text-xs px-1.5 py-0.5 flex-shrink-0">Important</Badge>
+                  <Badge variant="secondary" className="text-[10px] px-1 py-0 flex-shrink-0">Important</Badge>
                 )}
               </div>
               <Button
@@ -182,16 +182,16 @@ const Notifications = () => {
                   e.stopPropagation();
                   deleteNotification(notification.id);
                 }}
-                className="h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive flex-shrink-0"
+                className="h-5 w-5 p-0 hover:bg-destructive/20 hover:text-destructive flex-shrink-0"
               >
-                <Trash2 className="size-3" />
+                <Trash2 className="size-2.5" />
               </Button>
             </div>
             
-            <p className="text-muted-foreground text-sm truncate mb-2 leading-relaxed">{notification.message}</p>
+            <p className="text-muted-foreground text-xs truncate mb-1.5 leading-relaxed">{notification.message}</p>
             
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">{notification.time}</span>
+              <span className="text-[10px] text-muted-foreground font-medium">{notification.time}</span>
             </div>
           </div>
         </div>

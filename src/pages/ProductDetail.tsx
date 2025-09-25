@@ -464,38 +464,40 @@ const ProductDetail: React.FC = () => {
       </div>
 
       {/* Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 pb-20">
-        <div className="flex items-center gap-3">
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t px-6 py-4 pb-20">
+        <div className="flex items-center gap-2 max-w-md mx-auto">
           {/* Quantity Selector */}
           <div className="flex items-center border rounded-lg">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="h-10 w-10 p-0"
+              className="h-8 w-8 p-0"
             >
-              <Minus className="w-4 h-4" />
+              <Minus className="w-3 h-3" />
             </Button>
-            <span className="px-3 py-2 min-w-[40px] text-center">{quantity}</span>
+            <span className="px-2 py-1 min-w-[30px] text-center text-sm">{quantity}</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setQuantity(quantity + 1)}
-              className="h-10 w-10 p-0"
+              className="h-8 w-8 p-0"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3 h-3" />
             </Button>
           </div>
           
           {/* Action Buttons */}
           <Button 
             variant="outline" 
+            size="sm"
             className="flex-1"
             onClick={handleAddToCart}
           >
             Add to Cart
           </Button>
           <Button 
+            size="sm"
             className="flex-1 bg-gradient-to-r from-primary to-secondary"
             onClick={handleBuyNow}
           >

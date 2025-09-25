@@ -134,48 +134,47 @@ const Notifications = () => {
     
     return (
       <div 
-        className={`px-2 py-1 border-b border-border hover:bg-muted/50 transition-colors ${
+        className={`px-2 py-0.5 border-b border-border hover:bg-muted/50 transition-colors ${
           !notification.isRead ? 'bg-primary/5' : ''
         }`}
         onClick={() => markAsRead(notification.id)}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-2">
           <div className="flex-shrink-0">
             {notification.avatar ? (
               <div 
-                className="size-10 rounded-full flex items-center justify-center text-white font-medium text-sm"
+                className="size-8 rounded-full flex items-center justify-center text-white font-medium text-xs"
                 style={{ backgroundColor: notification.avatar.color }}
               >
                 {notification.avatar.initials}
               </div>
             ) : (
-              <div className={`p-2 rounded-full ${
+              <div className={`p-1.5 rounded-full ${
                 notification.type === 'safety' ? 'bg-red-100 text-red-600' :
                 notification.type === 'social' ? 'bg-blue-100 text-blue-600' :
                 notification.type === 'order' ? 'bg-green-100 text-green-600' :
                 notification.type === 'event' ? 'bg-purple-100 text-purple-600' :
                 'bg-yellow-100 text-yellow-600'
               }`}>
-                <Icon className="size-4" />
+                <Icon className="size-3" />
               </div>
             )}
           </div>
           
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
-              <h3 className="font-medium text-sm">{notification.title}</h3>
+          <div className="flex-1 min-w-0 flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <h3 className="font-medium text-sm truncate">{notification.title}</h3>
               {!notification.isRead && (
-                <div className="size-2 bg-primary rounded-full" />
+                <div className="size-2 bg-primary rounded-full flex-shrink-0" />
               )}
               {notification.priority === 'high' && (
-                <Badge variant="destructive" className="text-xs">Urgent</Badge>
+                <Badge variant="destructive" className="text-xs flex-shrink-0">Urgent</Badge>
               )}
               {notification.priority === 'medium' && (
-                <Badge variant="secondary" className="text-xs">Important</Badge>
+                <Badge variant="secondary" className="text-xs flex-shrink-0">Important</Badge>
               )}
             </div>
-            <p className="text-muted-foreground text-sm mb-1">{notification.message}</p>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <span className="text-xs text-muted-foreground">{notification.time}</span>
               <Button
                 variant="ghost"
@@ -184,9 +183,9 @@ const Notifications = () => {
                   e.stopPropagation();
                   deleteNotification(notification.id);
                 }}
-                className="h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
+                className="h-5 w-5 p-0 hover:bg-destructive/20 hover:text-destructive"
               >
-                <Trash2 className="size-3" />
+                <Trash2 className="size-2.5" />
               </Button>
             </div>
           </div>

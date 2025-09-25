@@ -97,23 +97,14 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
           </div>
         </div>
 
-        {/* Thread and Status Indicators */}
+        {/* Thread Updates Only - No other badges */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Badge className={getCategoryColor(question.category)} variant="secondary">
-              {getCategoryIcon(question.category)} {question.category}
-            </Badge>
             {question.isThread && (
-              <Badge className="bg-gradient-to-r from-primary/10 to-secondary/10 text-primary border-primary/30">
-                <GitBranch className="w-3 h-3 mr-1" />
-                Story Thread
-              </Badge>
-            )}
-            {question.hasExpertAnswer && (
-              <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">
-                <Award className="w-3 h-3 mr-1" />
-                Expert
-              </Badge>
+              <div className="flex items-center text-primary text-sm">
+                <TrendingUp className="w-4 h-4 mr-1" />
+                {question.threadUpdates} update{question.threadUpdates !== 1 ? 's' : ''} • {question.lastUpdate}
+              </div>
             )}
           </div>
           {question.isUrgent && (
@@ -168,20 +159,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
               {question.upvotes}
             </Button>
             
-            <div className="flex items-center gap-3 text-muted-foreground text-meta-info">
-              <div className="flex items-center">
-                <MessageCircle className="w-4 h-4 mr-1" />
-                {question.answerCount} {question.answerCount === 1 ? 'opinion' : 'opinions'}
-              </div>
-              {question.isThread && (
-                <div className="flex items-center text-primary">
-                  <TrendingUp className="w-4 h-4 mr-1" />
-                  {question.threadUpdates} update{question.threadUpdates !== 1 ? 's' : ''}
-                  <span className="text-xs text-muted-foreground ml-1">
-                    • last {question.lastUpdate}
-                  </span>
-                </div>
-              )}
+            <div className="flex items-center text-muted-foreground text-meta-info">
+              <MessageCircle className="w-4 h-4 mr-1" />
+              {question.answerCount} {question.answerCount === 1 ? 'opinion' : 'opinions'}
             </div>
           </div>
 

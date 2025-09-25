@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import AnonymousThreadComponent from './AnonymousThread';
 import { 
   ThumbsUp, 
   MessageCircle, 
@@ -39,6 +40,19 @@ interface Question {
   hasExpertAnswer: boolean;
   aiResponse?: string;
   answers: Answer[];
+  isThread?: boolean;
+  threadUpdates?: number;
+  lastUpdate?: string;
+  threadData?: {
+    canContinue: boolean;
+    updates: Array<{
+      id: string;
+      content: string;
+      timestamp: string;
+      upvotes: number;
+      isOriginalPoster: boolean;
+    }>;
+  };
 }
 
 interface QuestionDetailModalProps {
@@ -73,6 +87,66 @@ export const QuestionDetailModal: React.FC<QuestionDetailModalProps> = ({
       setIsSubmitting(false);
     }, 1000);
   };
+
+  const handleContinueThread = () => {
+    console.log('Opening compose modal for thread continuation...');
+    toast({
+      title: "Continue Story",
+      description: "Thread continuation feature coming soon!",
+    });
+  };
+
+  const handleThreadUpvote = (updateId: string) => {
+    console.log('Upvoting update:', updateId);
+    toast({
+      title: "Upvoted!",
+      description: "Thanks for supporting this update.",
+    });
+  };
+
+  // If this is a thread post, show the threaded view
+  if (question.isThread && question.threadData) {
+    const threadFormat = {
+      id: question.id,
+      originalQuestion: question.question,
+      category: question.category,
+      tags: question.tags,
+      timestamp: question.timestamp,
+      upvotes: question.upvotes,
+      isUrgent: question.isUrgent,
+      hasExpertAnswer: question.hasExpertAnswer,
+      canContinue: question.threadData.canContinue,
+      updates: question.threadData.updates
+    };
+
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>📖 Story Thread</span>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="active:bg-transparent active:text-primary">
+                  <Share2 className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm">
+                  <Bookmark className="w-4 h-4" />
+                </Button>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+
+          <AnonymousThreadComponent
+            thread={threadFormat}
+            onContinueThread={handleContinueThread}
+            onUpvote={handleThreadUpvote}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Regular question view for non-thread posts
 
   const getCategoryIcon = (category: string) => {
     switch (category) {

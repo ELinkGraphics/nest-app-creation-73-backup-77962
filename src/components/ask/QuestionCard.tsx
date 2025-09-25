@@ -10,7 +10,9 @@ import {
   Clock, 
   Sparkles, 
   AlertTriangle,
-  Award
+  Award,
+  GitBranch,
+  TrendingUp
 } from 'lucide-react';
 
 interface Question {
@@ -24,6 +26,9 @@ interface Question {
   isUrgent: boolean;
   hasExpertAnswer: boolean;
   aiResponse?: string;
+  isThread?: boolean;
+  threadUpdates?: number;
+  lastUpdate?: string;
 }
 
 interface QuestionCardProps {
@@ -92,9 +97,31 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
           </div>
         </div>
 
-        {/* Header - removed category badges and labels */}
+        {/* Thread and Status Indicators */}
         <div className="flex items-center justify-between mb-3">
-          {/* Empty header space - removed all badges */}
+          <div className="flex items-center gap-2">
+            <Badge className={getCategoryColor(question.category)} variant="secondary">
+              {getCategoryIcon(question.category)} {question.category}
+            </Badge>
+            {question.isThread && (
+              <Badge className="bg-gradient-to-r from-primary/10 to-secondary/10 text-primary border-primary/30">
+                <GitBranch className="w-3 h-3 mr-1" />
+                Story Thread
+              </Badge>
+            )}
+            {question.hasExpertAnswer && (
+              <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">
+                <Award className="w-3 h-3 mr-1" />
+                Expert
+              </Badge>
+            )}
+          </div>
+          {question.isUrgent && (
+            <Badge variant="destructive" className="animate-pulse">
+              <AlertTriangle className="w-3 h-3 mr-1" />
+              Urgent
+            </Badge>
+          )}
         </div>
 
         {/* Question content */}
@@ -141,9 +168,20 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
               {question.upvotes}
             </Button>
             
-            <div className="flex items-center text-muted-foreground text-meta-info">
-              <MessageCircle className="w-4 h-4 mr-1" />
-              {question.answerCount} {question.answerCount === 1 ? 'opinion' : 'opinions'}
+            <div className="flex items-center gap-3 text-muted-foreground text-meta-info">
+              <div className="flex items-center">
+                <MessageCircle className="w-4 h-4 mr-1" />
+                {question.answerCount} {question.answerCount === 1 ? 'opinion' : 'opinions'}
+              </div>
+              {question.isThread && (
+                <div className="flex items-center text-primary">
+                  <TrendingUp className="w-4 h-4 mr-1" />
+                  {question.threadUpdates} update{question.threadUpdates !== 1 ? 's' : ''}
+                  <span className="text-xs text-muted-foreground ml-1">
+                    • last {question.lastUpdate}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

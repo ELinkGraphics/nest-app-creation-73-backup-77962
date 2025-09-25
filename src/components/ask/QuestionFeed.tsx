@@ -15,6 +15,19 @@ interface Question {
   hasExpertAnswer: boolean;
   aiResponse?: string;
   answers: Answer[];
+  isThread?: boolean;
+  threadUpdates?: number;
+  lastUpdate?: string;
+  threadData?: {
+    canContinue: boolean;
+    updates: Array<{
+      id: string;
+      content: string;
+      timestamp: string;
+      upvotes: number;
+      isOriginalPoster: boolean;
+    }>;
+  };
 }
 
 interface Answer {
@@ -31,46 +44,72 @@ interface QuestionFeedProps {
   filter: 'recent' | 'trending' | 'unanswered' | 'expert';
 }
 
-// Sample Thread Story - Demonstrating thread progression
-const SAMPLE_THREAD = {
+// Sample Thread Story - Convert to Question format with thread metadata
+const SAMPLE_THREAD_QUESTION = {
   id: 'thread-1',
-  originalQuestion: "My 3-year-old has been having meltdowns every morning when getting ready for daycare. I've tried different approaches but nothing seems to work. How can I make mornings less stressful for both of us?",
+  question: "My 3-year-old has been having meltdowns every morning when getting ready for daycare. I've tried different approaches but nothing seems to work. How can I make mornings less stressful for both of us?",
   category: 'parenting',
   tags: ['toddler', 'behavior', 'daycare', 'morning-routine'],
   timestamp: '2 hours ago',
+  answerCount: 8,
   upvotes: 24,
   isUrgent: false,
   hasExpertAnswer: true,
-  canContinue: true, // Simulating the user is the original poster
-  updates: [
+  isThread: true, // New property to identify threads
+  threadUpdates: 3, // Number of updates
+  lastUpdate: '30 minutes ago',
+  threadData: {
+    canContinue: true,
+    updates: [
+      {
+        id: 'update-1',
+        content: "Update: I tried the visual schedule suggestion and it's been 3 days now. There's been some improvement! She seems to like checking off the pictures. Still some resistance with getting dressed though. Should I add a reward system?",
+        timestamp: '6 hours ago',
+        upvotes: 8,
+        isOriginalPoster: true
+      },
+      {
+        id: 'update-2', 
+        content: "Day 7 update: The visual schedule is working great! I added stickers as rewards and now she actually looks forward to morning routine. The key was letting her put the stickers on herself. Thanks everyone for the advice! 🙏",
+        timestamp: '2 hours ago',
+        upvotes: 15,
+        isOriginalPoster: true
+      },
+      {
+        id: 'update-3',
+        content: "Week 3 check-in: We've had such a transformation! Mornings are actually peaceful now. She even helps pack her daycare bag. The routine has become a bonding time for us. Amazing how small changes can make such a big difference.",
+        timestamp: '30 minutes ago',
+        upvotes: 22,
+        isOriginalPoster: true
+      }
+    ]
+  },
+  answers: [
     {
-      id: 'update-1',
-      content: "Update: I tried the visual schedule suggestion and it's been 3 days now. There's been some improvement! She seems to like checking off the pictures. Still some resistance with getting dressed though. Should I add a reward system?",
-      timestamp: '6 hours ago',
-      upvotes: 8,
-      isOriginalPoster: true
+      id: 'a1',
+      content: "I had the same issue with my daughter. What worked was creating a morning checklist with pictures and letting her pick out her clothes the night before. It gave her some control and reduced the resistance.",
+      isExpert: false,
+      upvotes: 12,
+      timestamp: '1 hour ago',
+      isHelpful: true
     },
     {
-      id: 'update-2', 
-      content: "Day 7 update: The visual schedule is working great! I added stickers as rewards and now she actually looks forward to morning routine. The key was letting her put the stickers on herself. Thanks everyone for the advice! 🙏",
-      timestamp: '2 hours ago',
-      upvotes: 15,
-      isOriginalPoster: true
-    },
-    {
-      id: 'update-3',
-      content: "Week 3 check-in: We've had such a transformation! Mornings are actually peaceful now. She even helps pack her daycare bag. The routine has become a bonding time for us. Amazing how small changes can make such a big difference.",
+      id: 'a2',
+      content: "As a child psychologist, I recommend implementing a visual schedule with clear expectations. Toddlers thrive on routine and predictability. Also, consider if there are any sensory issues with clothing or if your child needs more transition time.",
+      isExpert: true,
+      expertTitle: 'Child Psychologist',
+      upvotes: 18,
       timestamp: '30 minutes ago',
-      upvotes: 22,
-      isOriginalPoster: true
+      isHelpful: true
     }
   ]
 };
 
 // Mock data
 const MOCK_QUESTIONS: Question[] = [
+  SAMPLE_THREAD_QUESTION, // Replace first question with our sample thread
   {
-    id: '1',
+    id: '2',
     question: "My 3-year-old has been having meltdowns every morning when getting ready for daycare. I've tried different approaches but nothing seems to work. How can I make mornings less stressful for both of us?",
     category: 'parenting',
     tags: ['toddler', 'behavior', 'daycare', 'morning-routine'],
@@ -100,21 +139,21 @@ const MOCK_QUESTIONS: Question[] = [
       }
     ]
   },
-  {
-    id: '2',
-    question: "I'm feeling overwhelmed as a new mom. Everyone seems to have it together except me. Is it normal to feel like I'm failing at everything?",
-    category: 'mental-health',
-    tags: ['new-mom', 'anxiety', 'overwhelmed', 'postpartum'],
-    timestamp: '4 hours ago',
-    answerCount: 15,
-    upvotes: 45,
-    isUrgent: true,
-    hasExpertAnswer: true,
-    aiResponse: "What you're experiencing is very common and normal. Many new mothers feel overwhelmed. It's important to reach out for support and remember that asking for help is a sign of strength.",
-    answers: []
-  },
-  {
-    id: '3',
+    {
+      id: '3',
+      question: "I'm feeling overwhelmed as a new mom. Everyone seems to have it together except me. Is it normal to feel like I'm failing at everything?",
+      category: 'mental-health',
+      tags: ['new-mom', 'anxiety', 'overwhelmed', 'postpartum'],
+      timestamp: '4 hours ago',
+      answerCount: 15,
+      upvotes: 45,
+      isUrgent: true,
+      hasExpertAnswer: true,
+      aiResponse: "What you're experiencing is very common and normal. Many new mothers feel overwhelmed. It's important to reach out for support and remember that asking for help is a sign of strength.",
+      answers: []
+    },
+    {
+      id: '4',
     question: "How do I balance working from home with a 1-year-old? I feel guilty not giving my full attention to either work or my baby.",
     category: 'career',
     tags: ['work-life-balance', 'working-mom', 'guilt', 'toddler'],
@@ -188,42 +227,10 @@ export const QuestionFeed: React.FC<QuestionFeedProps> = ({ filter }) => {
     );
   }
 
-  const handleContinueThread = () => {
-    console.log('Opening compose modal for thread continuation...');
-    // In real implementation, this would open the composer with thread context
-  };
-
-  const handleThreadUpvote = (updateId: string) => {
-    console.log('Upvoting update:', updateId);
-    // In real implementation, this would handle the upvote logic
-  };
-
   return (
     <>
-      <div className="space-y-6">
-        {/* Show sample thread for "recent" filter to demonstrate threading */}
-        {filter === 'recent' && (
-          <div className="bg-gradient-to-r from-primary/5 to-secondary/5 p-1 rounded-lg">
-            <div className="bg-white rounded-lg">
-              <div className="p-3 border-b border-border">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
-                    📖 Story Thread
-                  </span>
-                  <span className="text-muted-foreground">Anonymous user sharing their journey</span>
-                </div>
-              </div>
-              <AnonymousThreadComponent
-                thread={SAMPLE_THREAD}
-                onContinueThread={handleContinueThread}
-                onUpvote={handleThreadUpvote}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Regular questions */}
-        {filteredQuestions.slice(filter === 'recent' ? 1 : 0).map((question) => (
+      <div className="space-y-4">
+        {filteredQuestions.map((question) => (
           <QuestionCard
             key={question.id}
             question={question}

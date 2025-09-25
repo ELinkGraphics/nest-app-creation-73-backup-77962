@@ -134,7 +134,7 @@ const Notifications = () => {
     
     return (
       <div 
-        className={`p-2 border-b border-border hover:bg-muted/50 transition-colors ${
+        className={`px-2 py-1 border-b border-border hover:bg-muted/50 transition-colors ${
           !notification.isRead ? 'bg-primary/5' : ''
         }`}
         onClick={() => markAsRead(notification.id)}

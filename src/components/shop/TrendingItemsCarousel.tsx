@@ -128,15 +128,7 @@ export const TrendingItemsCarousel: React.FC = () => {
                         className="h-5 w-5 p-0 bg-white hover:bg-white/90 text-primary"
                         onClick={(e) => handleLike(item.id, e)}
                       >
-                        <Heart className={`h-1.5 w-1.5 ${likedItems.has(item.id) ? 'fill-current text-red-500' : ''}`} />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-5 w-5 p-0 bg-white hover:bg-white/90 text-primary"
-                        onClick={(e) => handleShare(item, e)}
-                      >
-                        <Share2 className="h-1.5 w-1.5" />
+                        <Heart className={`h-3 w-3 ${likedItems.has(item.id) ? 'fill-current text-red-500' : ''}`} />
                       </Button>
                       <Button
                         size="sm"
@@ -147,7 +139,7 @@ export const TrendingItemsCarousel: React.FC = () => {
                           handleAddToCart(item);
                         }}
                       >
-                        <ShoppingCart className="h-1.5 w-1.5" />
+                        <ShoppingCart className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>

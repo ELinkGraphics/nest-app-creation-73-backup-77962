@@ -82,34 +82,31 @@ const getCategoryColor = (category: string) => {
 
   return (
     <div className="space-y-0">
-      {/* Original Post - Enhanced Design */}
-      <Card className="overflow-hidden border-l-4 border-l-primary bg-gradient-to-r from-primary/5 via-background to-secondary/5">
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-4">
+      {/* Original Post - Compact Design */}
+      <Card className="overflow-hidden border-l-2 border-l-primary bg-gradient-to-r from-primary/3 via-background to-secondary/3">
+        <div className="p-4">
+          <div className="flex items-center gap-3 mb-3">
             <div className="relative">
               <img 
                 src="/src/assets/anonymous-logo.png" 
                 alt="Anonymous" 
-                className="w-10 h-10 rounded-full border-2 border-primary/30 shadow-sm"
+                className="w-8 h-8 rounded-full border-2 border-primary/30 shadow-sm"
               />
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary rounded-full border-2 border-white flex items-center justify-center">
-                <GitBranch className="w-2 h-2 text-white" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-primary rounded-full border-2 border-white flex items-center justify-center">
+                <GitBranch className="w-1.5 h-1.5 text-white" />
               </div>
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="text-username font-semibold text-foreground">Anonymous</span>
-                <Badge className="bg-gradient-to-r from-primary/20 to-secondary/20 text-primary border-0 px-2 py-1">
-                  <Sparkles className="w-3 h-3 mr-1" />
+                <Badge className="bg-gradient-to-r from-primary/20 to-secondary/20 text-primary border-0 px-1.5 py-0.5 text-xs">
+                  <Sparkles className="w-2.5 h-2.5 mr-1" />
                   Story Thread
                 </Badge>
               </div>
               <span className="text-timestamp text-muted-foreground">{thread.timestamp}</span>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <Badge className={getCategoryColor(thread.category)} variant="secondary">
-                {getCategoryIcon(thread.category)} {thread.category}
-              </Badge>
               {thread.isUrgent && (
                 <Badge variant="destructive" className="text-xs animate-pulse">
                   <AlertTriangle className="w-3 h-3 mr-1" />
@@ -125,12 +122,12 @@ const getCategoryColor = (category: string) => {
             </div>
           </div>
 
-          <p className="text-post-content text-foreground leading-relaxed font-normal mb-4">
+          <p className="text-post-content text-foreground leading-relaxed font-normal mb-3">
             {thread.originalQuestion}
           </p>
 
           {/* Tags */}
-          <div className="flex flex-wrap gap-1 mb-4">
+          <div className="flex flex-wrap gap-1 mb-3">
             {thread.tags.map((tag) => (
               <Badge key={tag} variant="outline" className="text-xs hover:bg-primary/10 transition-colors">
                 #{tag}
@@ -139,7 +136,7 @@ const getCategoryColor = (category: string) => {
           </div>
 
           {/* Original Post Stats */}
-          <div className="flex items-center justify-between pt-3 border-t border-border/50">
+          <div className="flex items-center justify-between pt-2 border-t border-border/50">
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <Button 
                 variant="ghost" 
@@ -178,13 +175,13 @@ const getCategoryColor = (category: string) => {
               </div>
               
               <Card className="ml-12 border-l-2 border-l-primary/30 hover:border-l-primary/60 transition-all duration-200 hover:shadow-md">
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-3">
+                <div className="p-3">
+                  <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <img 
                         src="/src/assets/anonymous-logo.png" 
                         alt="Anonymous" 
-                        className="w-7 h-7 rounded-full border border-primary/20"
+                        className="w-6 h-6 rounded-full border border-primary/20"
                       />
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground">Anonymous</span>
@@ -249,7 +246,7 @@ const getCategoryColor = (category: string) => {
               <div className="absolute left-0 top-5 w-4 h-4 bg-primary rounded-full border-3 border-white shadow-lg animate-pulse" />
               
               <Card className="ml-12 border-2 border-dashed border-primary/40 bg-gradient-to-r from-primary/5 to-secondary/5 hover:from-primary/10 hover:to-secondary/10 transition-all duration-200">
-                <div className="p-4 text-center">
+                <div className="p-3 text-center">
                   <Button
                     onClick={onContinueThread}
                     className="bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-md"

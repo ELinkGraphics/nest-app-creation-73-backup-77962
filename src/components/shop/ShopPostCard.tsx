@@ -169,7 +169,10 @@ export const ShopPostCard: React.FC<ShopPostCardProps> = ({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => onLike(item.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onLike(item.id);
+              }}
               className={cn(
                 "flex items-center gap-1 text-action-label transition-colors",
                 item.liked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
@@ -179,16 +182,22 @@ export const ShopPostCard: React.FC<ShopPostCardProps> = ({
               {item.likes}
             </button>
             <button
-              onClick={() => onShare(item.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onShare(item.id);
+              }}
               className="flex items-center gap-1 text-action-label text-muted-foreground hover:text-foreground transition-colors"
             >
               <Share2 className="h-4 w-4" />
               {item.shares}
             </button>
-            <span className="flex items-center gap-1 text-action-label text-muted-foreground">
+            <button
+              onClick={handleCardClick}
+              className="flex items-center gap-1 text-action-label text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
               <MessageCircle className="h-4 w-4" />
               {item.comments}
-            </span>
+            </button>
           </div>
           
           {item.groupBuy && (

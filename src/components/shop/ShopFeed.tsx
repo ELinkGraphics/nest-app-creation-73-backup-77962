@@ -3,7 +3,7 @@ import { ShopPostCard } from './ShopPostCard';
 import { mockShopItems } from '../../data/shop';
 import { ShopItem } from '../../types/shop';
 import { useCart } from '../../contexts/CartContext';
-import { toast } from '../ui/use-toast';
+import { useToast } from '../../hooks/use-toast';
 
 interface ShopFeedProps {
   searchQuery: string;
@@ -13,6 +13,7 @@ interface ShopFeedProps {
 export const ShopFeed: React.FC<ShopFeedProps> = ({ searchQuery, category }) => {
   const [items, setItems] = useState<ShopItem[]>(mockShopItems);
   const { addToCart, openCart, openCheckout } = useCart();
+  const { toast } = useToast();
 
   // Filter items based on search and category
   const filteredItems = items.filter(item => {
@@ -28,6 +29,13 @@ export const ShopFeed: React.FC<ShopFeedProps> = ({ searchQuery, category }) => 
         ? { ...item, liked: !item.liked, likes: item.liked ? item.likes - 1 : item.likes + 1 }
         : item
     ));
+    
+    const item = items.find(i => i.id === itemId);
+    if (item) {
+      toast({
+        description: item.liked ? "Removed from favorites" : "Added to favorites ❤️",
+      });
+    }
   };
 
   const handleShare = async (itemId: string) => {
@@ -43,14 +51,22 @@ export const ShopFeed: React.FC<ShopFeedProps> = ({ searchQuery, category }) => 
     try {
       if (navigator.share) {
         await navigator.share(shareData);
-        console.log('Shared successfully');
+        toast({
+          description: "Shared successfully!",
+        });
       } else {
         // Fallback: copy to clipboard
         await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-        console.log('Link copied to clipboard');
+        toast({
+          description: "Link copied to clipboard!",
+        });
       }
     } catch (error) {
       console.error('Error sharing:', error);
+      toast({
+        description: "Failed to share",
+        variant: "destructive"
+      });
     }
   };
 

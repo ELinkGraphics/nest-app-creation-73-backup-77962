@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, Share2, Star, MessageCircle, MapPin, Shield, Truck, RotateCcw, Flag, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, Heart, Share2, Star, MessageCircle, MapPin, Shield, Truck, RotateCcw, Flag, Plus, Minus, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import FooterNav from '@/components/FooterNav';
 import { mockShopItems } from '@/data/shop';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
 
 interface Review {
   id: string;
@@ -25,6 +27,11 @@ interface Review {
   helpful: number;
   images?: string[];
 }
+
+const reviewSchema = z.object({
+  rating: z.number().min(1, { message: "Please select a rating" }).max(5),
+  comment: z.string().trim().min(10, { message: "Comment must be at least 10 characters" }).max(1000, { message: "Comment must be less than 1000 characters" })
+});
 
 const mockReviews: Review[] = [
   {
@@ -76,6 +83,9 @@ const ProductDetail: React.FC = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewErrors, setReviewErrors] = useState<{ rating?: string; comment?: string }>({});
 
   // Find the product
   const product = mockShopItems.find(p => p.id === id);
@@ -114,6 +124,44 @@ const ProductDetail: React.FC = () => {
   const handleBuyNow = () => {
     handleAddToCart();
     navigate('/cart');
+  };
+
+  const handleSubmitReview = () => {
+    try {
+      // Reset errors
+      setReviewErrors({});
+      
+      // Validate the review data
+      const validatedData = reviewSchema.parse({
+        rating: reviewRating,
+        comment: reviewComment
+      });
+      
+      // Here you would typically submit to your backend
+      console.log('Submitting review:', validatedData);
+      
+      toast({
+        title: "Review submitted",
+        description: "Thank you for your feedback!",
+      });
+      
+      // Reset form
+      setReviewRating(0);
+      setReviewComment('');
+      
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errors: { rating?: string; comment?: string } = {};
+        error.errors.forEach((err) => {
+          if (err.path[0] === 'rating') {
+            errors.rating = err.message;
+          } else if (err.path[0] === 'comment') {
+            errors.comment = err.message;
+          }
+        });
+        setReviewErrors(errors);
+      }
+    }
   };
 
   const renderStars = (rating: number, size: 'sm' | 'md' = 'md') => {
@@ -416,16 +464,80 @@ const ProductDetail: React.FC = () => {
                           </div>
                         )}
                         
-                        <Button variant="ghost" size="sm" className="text-xs h-6 px-2">
-                          👍 Helpful ({review.helpful})
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
+                         <Button variant="ghost" size="sm" className="text-xs h-6 px-2">
+                           👍 Helpful ({review.helpful})
+                         </Button>
+                       </div>
+                     </div>
+                   </CardContent>
+                 </Card>
+               ))}
+             </div>
+             
+             {/* Add Review Section */}
+             <Card className="mt-6 sticky bottom-24 z-10">
+               <CardContent className="p-4">
+                 <h3 className="font-semibold text-sm mb-4">Write a Review</h3>
+                 
+                 {/* Rating Selector */}
+                 <div className="mb-4">
+                   <label className="block text-sm font-medium mb-2">Rating</label>
+                   <div className="flex items-center gap-1">
+                     {[1, 2, 3, 4, 5].map((star) => (
+                       <button
+                         key={star}
+                         type="button"
+                         onClick={() => setReviewRating(star)}
+                         className="p-1 transition-colors"
+                       >
+                         <Star
+                           className={`w-6 h-6 ${
+                             star <= reviewRating
+                               ? 'fill-yellow-400 text-yellow-400'
+                               : 'text-gray-300 hover:text-yellow-300'
+                           }`}
+                         />
+                       </button>
+                     ))}
+                   </div>
+                   {reviewErrors.rating && (
+                     <p className="text-red-500 text-xs mt-1">{reviewErrors.rating}</p>
+                   )}
+                 </div>
+                 
+                 {/* Comment Input */}
+                 <div className="mb-4">
+                   <label className="block text-sm font-medium mb-2">Comment</label>
+                   <Textarea
+                     placeholder="Share your experience with this product..."
+                     value={reviewComment}
+                     onChange={(e) => setReviewComment(e.target.value)}
+                     className="min-h-[80px] resize-none"
+                     maxLength={1000}
+                   />
+                   <div className="flex justify-between items-center mt-1">
+                     <span className="text-xs text-muted-foreground">
+                       {reviewComment.length}/1000 characters
+                     </span>
+                     {reviewErrors.comment && (
+                       <p className="text-red-500 text-xs">{reviewErrors.comment}</p>
+                     )}
+                   </div>
+                 </div>
+                 
+                 {/* Submit Button */}
+                 <Button 
+                   onClick={handleSubmitReview}
+                   className="w-full"
+                   size="sm"
+                   disabled={!reviewRating || !reviewComment.trim()}
+                 >
+                   <Send className="w-4 h-4 mr-2" />
+                   Submit Review
+                 </Button>
+               </CardContent>
+             </Card>
+           </TabsContent>
           
           <TabsContent value="similar" className="mt-4">
             <div className="grid grid-cols-2 gap-3">

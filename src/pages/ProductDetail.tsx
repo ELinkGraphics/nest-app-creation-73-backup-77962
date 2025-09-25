@@ -86,6 +86,7 @@ const ProductDetail: React.FC = () => {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewErrors, setReviewErrors] = useState<{ rating?: string; comment?: string }>({});
+  const [showReviewInput, setShowReviewInput] = useState(false);
 
   // Find the product
   const product = mockShopItems.find(p => p.id === id);
@@ -148,6 +149,7 @@ const ProductDetail: React.FC = () => {
       // Reset form
       setReviewRating(0);
       setReviewComment('');
+      setShowReviewInput(false);
       
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -475,68 +477,80 @@ const ProductDetail: React.FC = () => {
              </div>
              
              {/* Add Review Section */}
-             <Card className="mt-6 sticky bottom-24 z-10">
-               <CardContent className="p-4">
-                 <h3 className="font-semibold text-sm mb-4">Write a Review</h3>
-                 
-                 {/* Rating Selector */}
-                 <div className="mb-4">
-                   <label className="block text-sm font-medium mb-2">Rating</label>
-                   <div className="flex items-center gap-1">
-                     {[1, 2, 3, 4, 5].map((star) => (
-                       <button
-                         key={star}
-                         type="button"
-                         onClick={() => setReviewRating(star)}
-                         className="p-1 transition-colors"
-                       >
-                         <Star
-                           className={`w-6 h-6 ${
-                             star <= reviewRating
-                               ? 'fill-yellow-400 text-yellow-400'
-                               : 'text-gray-300 hover:text-yellow-300'
-                           }`}
-                         />
-                       </button>
-                     ))}
+             {showReviewInput && (
+               <Card className="mt-6 sticky bottom-24 z-10">
+                 <CardContent className="p-4">
+                   <div className="flex items-center justify-between mb-4">
+                     <h3 className="font-semibold text-sm">Write a Review</h3>
+                     <Button 
+                       variant="ghost" 
+                       size="sm" 
+                       onClick={() => setShowReviewInput(false)}
+                       className="text-muted-foreground hover:text-foreground"
+                     >
+                       ✕
+                     </Button>
                    </div>
-                   {reviewErrors.rating && (
-                     <p className="text-red-500 text-xs mt-1">{reviewErrors.rating}</p>
-                   )}
-                 </div>
-                 
-                 {/* Comment Input */}
-                 <div className="mb-4">
-                   <label className="block text-sm font-medium mb-2">Comment</label>
-                   <Textarea
-                     placeholder="Share your experience with this product..."
-                     value={reviewComment}
-                     onChange={(e) => setReviewComment(e.target.value)}
-                     className="min-h-[80px] resize-none"
-                     maxLength={1000}
-                   />
-                   <div className="flex justify-between items-center mt-1">
-                     <span className="text-xs text-muted-foreground">
-                       {reviewComment.length}/1000 characters
-                     </span>
-                     {reviewErrors.comment && (
-                       <p className="text-red-500 text-xs">{reviewErrors.comment}</p>
+                   
+                   {/* Rating Selector */}
+                   <div className="mb-4">
+                     <label className="block text-sm font-medium mb-2">Rating</label>
+                     <div className="flex items-center gap-1">
+                       {[1, 2, 3, 4, 5].map((star) => (
+                         <button
+                           key={star}
+                           type="button"
+                           onClick={() => setReviewRating(star)}
+                           className="p-1 transition-colors"
+                         >
+                           <Star
+                             className={`w-6 h-6 ${
+                               star <= reviewRating
+                                 ? 'fill-yellow-400 text-yellow-400'
+                                 : 'text-gray-300 hover:text-yellow-300'
+                             }`}
+                           />
+                         </button>
+                       ))}
+                     </div>
+                     {reviewErrors.rating && (
+                       <p className="text-red-500 text-xs mt-1">{reviewErrors.rating}</p>
                      )}
                    </div>
-                 </div>
-                 
-                 {/* Submit Button */}
-                 <Button 
-                   onClick={handleSubmitReview}
-                   className="w-full"
-                   size="sm"
-                   disabled={!reviewRating || !reviewComment.trim()}
-                 >
-                   <Send className="w-4 h-4 mr-2" />
-                   Submit Review
-                 </Button>
-               </CardContent>
-             </Card>
+                   
+                   {/* Comment Input */}
+                   <div className="mb-4">
+                     <label className="block text-sm font-medium mb-2">Comment</label>
+                     <Textarea
+                       placeholder="Share your experience with this product..."
+                       value={reviewComment}
+                       onChange={(e) => setReviewComment(e.target.value)}
+                       className="min-h-[80px] resize-none"
+                       maxLength={1000}
+                     />
+                     <div className="flex justify-between items-center mt-1">
+                       <span className="text-xs text-muted-foreground">
+                         {reviewComment.length}/1000 characters
+                       </span>
+                       {reviewErrors.comment && (
+                         <p className="text-red-500 text-xs">{reviewErrors.comment}</p>
+                       )}
+                     </div>
+                   </div>
+                   
+                   {/* Submit Button */}
+                   <Button 
+                     onClick={handleSubmitReview}
+                     className="w-full"
+                     size="sm"
+                     disabled={!reviewRating || !reviewComment.trim()}
+                   >
+                     <Send className="w-4 h-4 mr-2" />
+                     Submit Review
+                   </Button>
+                 </CardContent>
+               </Card>
+             )}
            </TabsContent>
           
           <TabsContent value="similar" className="mt-4">
@@ -574,6 +588,20 @@ const ProductDetail: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Floating Write Review Button */}
+      {!showReviewInput && (
+        <div className="fixed bottom-28 right-4 z-20">
+          <Button
+            onClick={() => setShowReviewInput(true)}
+            className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+            size="sm"
+          >
+            <Star className="w-4 h-4 mr-2 fill-current" />
+            Write Review
+          </Button>
+        </div>
+      )}
 
       {/* Bottom Actions */}
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t px-6 py-4 pb-20">

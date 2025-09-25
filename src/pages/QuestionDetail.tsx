@@ -140,8 +140,8 @@ const QuestionDetail: React.FC = () => {
                 className="w-10 h-10 rounded-full border-2 border-primary/20"
               />
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-foreground">Anonymous Asker</span>
-                <span className="text-xs text-muted-foreground">{question.timestamp}</span>
+                <span className="text-username font-medium text-foreground">Anonymous Asker</span>
+                <span className="text-timestamp text-muted-foreground">{question.timestamp}</span>
               </div>
             </div>
 
@@ -163,7 +163,7 @@ const QuestionDetail: React.FC = () => {
               )}
             </div>
 
-            <p className="text-sm text-foreground leading-relaxed">
+            <p className="text-post-content text-foreground leading-relaxed font-normal">
               {question.question}
             </p>
 
@@ -226,7 +226,7 @@ const QuestionDetail: React.FC = () => {
                   </Button>
                 </div>
                 
-                <p className="text-comment-compact leading-relaxed">{answer.content}</p>
+                <p className="text-post-content text-foreground leading-relaxed font-normal">{answer.content}</p>
                 
                 {answer.isHelpful && (
                   <Badge variant="outline" className="text-xs">

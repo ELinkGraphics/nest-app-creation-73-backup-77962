@@ -87,6 +87,7 @@ const ProductDetail: React.FC = () => {
   const [reviewComment, setReviewComment] = useState('');
   const [reviewErrors, setReviewErrors] = useState<{ rating?: string; comment?: string }>({});
   const [showReviewInput, setShowReviewInput] = useState(false);
+  const [activeTab, setActiveTab] = useState('description');
 
   // Find the product
   const product = mockShopItems.find(p => p.id === id);
@@ -320,7 +321,7 @@ const ProductDetail: React.FC = () => {
         </Card>
 
         {/* Product Details Tabs */}
-        <Tabs defaultValue="description" className="w-full">
+        <Tabs defaultValue="description" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="description">Description</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
@@ -590,8 +591,8 @@ const ProductDetail: React.FC = () => {
       </div>
 
       {/* Floating Write Review Button */}
-      {!showReviewInput && (
-        <div className="fixed bottom-28 right-4 z-20">
+      {!showReviewInput && activeTab === 'reviews' && (
+        <div className="fixed bottom-36 right-4 z-20">
           <Button
             onClick={() => setShowReviewInput(true)}
             className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"

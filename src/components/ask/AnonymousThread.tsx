@@ -84,74 +84,82 @@ const getCategoryColor = (category: string) => {
     <div className="space-y-0">
       {/* Original Post - Compact Design */}
       <Card className="overflow-hidden border-l-2 border-l-primary bg-gradient-to-r from-primary/3 via-background to-secondary/3">
-        <div className="p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="relative">
+        <div className="p-3">
+          <div className="flex items-start gap-2 mb-2">
+            <div className="relative flex-shrink-0">
               <img 
                 src="/src/assets/anonymous-logo.png" 
                 alt="Anonymous" 
-                className="w-8 h-8 rounded-full border-2 border-primary/30 shadow-sm"
+                className="w-7 h-7 rounded-full border-2 border-primary/30 shadow-sm"
               />
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-primary rounded-full border-2 border-white flex items-center justify-center">
-                <GitBranch className="w-1.5 h-1.5 text-white" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white flex items-center justify-center">
+                <GitBranch className="w-1 h-1 text-white" />
               </div>
             </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="text-username font-semibold text-foreground">Anonymous</span>
-                <Badge className="bg-gradient-to-r from-primary/20 to-secondary/20 text-primary border-0 px-1.5 py-0.5 text-xs">
-                  <Sparkles className="w-2.5 h-2.5 mr-1" />
-                  Story Thread
-                </Badge>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="text-username font-semibold text-foreground text-sm truncate">Anonymous</span>
+                  <Badge className="bg-gradient-to-r from-primary/20 to-secondary/20 text-primary border-0 px-1.5 py-0.5 text-xs flex-shrink-0">
+                    <Sparkles className="w-2.5 h-2.5 mr-1" />
+                    <span className="hidden xs:inline">Story Thread</span>
+                    <span className="xs:hidden">Thread</span>
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                  {thread.isUrgent && (
+                    <Badge variant="destructive" className="text-xs animate-pulse flex-shrink-0">
+                      <AlertTriangle className="w-3 h-3 mr-1" />
+                      <span className="hidden sm:inline">Urgent</span>
+                    </Badge>
+                  )}
+                  {thread.hasExpertAnswer && (
+                    <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground text-xs flex-shrink-0">
+                      <Award className="w-3 h-3 mr-1" />
+                      <span className="hidden sm:inline">Expert</span>
+                    </Badge>
+                  )}
+                </div>
               </div>
-              <span className="text-timestamp text-muted-foreground">{thread.timestamp}</span>
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              {thread.isUrgent && (
-                <Badge variant="destructive" className="text-xs animate-pulse">
-                  <AlertTriangle className="w-3 h-3 mr-1" />
-                  Urgent
-                </Badge>
-              )}
-              {thread.hasExpertAnswer && (
-                <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground text-xs">
-                  <Award className="w-3 h-3 mr-1" />
-                  Expert Answered
-                </Badge>
-              )}
+              <span className="text-timestamp text-muted-foreground text-xs">{thread.timestamp}</span>
             </div>
           </div>
 
-          <p className="text-post-content text-foreground leading-relaxed font-normal mb-3">
+          <p className="text-post-content text-foreground leading-relaxed font-normal mb-2 text-sm break-words overflow-hidden">
             {thread.originalQuestion}
           </p>
 
           {/* Tags */}
-          <div className="flex flex-wrap gap-1 mb-3">
-            {thread.tags.map((tag) => (
-              <Badge key={tag} variant="outline" className="text-xs hover:bg-primary/10 transition-colors">
+          <div className="flex flex-wrap gap-1 mb-2 overflow-hidden">
+            {thread.tags.slice(0, 4).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs hover:bg-primary/10 transition-colors flex-shrink-0">
                 #{tag}
               </Badge>
             ))}
+            {thread.tags.length > 4 && (
+              <Badge variant="outline" className="text-xs flex-shrink-0">
+                +{thread.tags.length - 4}
+              </Badge>
+            )}
           </div>
 
           {/* Original Post Stats */}
           <div className="flex items-center justify-between pt-2 border-t border-border/50">
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-3 text-sm text-muted-foreground min-w-0 flex-1">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-auto p-0 text-muted-foreground hover:text-primary transition-colors"
+                className="h-auto p-0 text-muted-foreground hover:text-primary transition-colors flex-shrink-0"
               >
                 <ThumbsUp className="w-4 h-4 mr-1" />
                 {thread.upvotes}
               </Button>
-              <div className="flex items-center">
-                <MessageCircle className="w-4 h-4 mr-1" />
-                {thread.updates.length} update{thread.updates.length !== 1 ? 's' : ''}
+              <div className="flex items-center min-w-0">
+                <MessageCircle className="w-4 h-4 mr-1 flex-shrink-0" />
+                <span className="text-xs truncate">{thread.updates.length} update{thread.updates.length !== 1 ? 's' : ''}</span>
               </div>
             </div>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="flex-shrink-0">
               <MoreVertical className="w-4 h-4" />
             </Button>
           </div>
@@ -174,43 +182,47 @@ const getCategoryColor = (category: string) => {
                 <div className="w-1.5 h-1.5 bg-white rounded-full" />
               </div>
               
-              <Card className="ml-12 border-l-2 border-l-primary/30 hover:border-l-primary/60 transition-all duration-200 hover:shadow-md">
-                <div className="p-3">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <img 
-                        src="/src/assets/anonymous-logo.png" 
-                        alt="Anonymous" 
-                        className="w-6 h-6 rounded-full border border-primary/20"
-                      />
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">Anonymous</span>
-                        {update.isOriginalPoster && (
-                          <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/30">
-                            OP
-                          </Badge>
-                        )}
-                        <span className="text-xs text-muted-foreground">•</span>
-                        <span className="text-xs text-muted-foreground">{update.timestamp}</span>
-                      </div>
-                    </div>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onUpvote?.(update.id)}
-                      className="text-muted-foreground hover:text-primary h-8 px-2 transition-colors"
-                    >
-                      <ThumbsUp className="w-3 h-3 mr-1" />
-                      {update.upvotes}
-                    </Button>
-                  </div>
-                  
-                  <p className="text-post-content text-foreground leading-relaxed font-normal">
-                    {update.content}
-                  </p>
-                </div>
-              </Card>
+               <Card className="ml-12 border-l-2 border-l-primary/30 hover:border-l-primary/60 transition-all duration-200 hover:shadow-md overflow-hidden">
+                 <div className="p-3">
+                   <div className="flex items-start justify-between mb-2">
+                     <div className="flex items-center gap-2 min-w-0 flex-1">
+                       <img 
+                         src="/src/assets/anonymous-logo.png" 
+                         alt="Anonymous" 
+                         className="w-6 h-6 rounded-full border border-primary/20 flex-shrink-0"
+                       />
+                       <div className="flex items-center gap-2 min-w-0 flex-1">
+                         <span className="text-sm font-medium text-foreground truncate">Anonymous</span>
+                         {update.isOriginalPoster && (
+                           <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/30 flex-shrink-0">
+                             OP
+                           </Badge>
+                         )}
+                         <span className="text-xs text-muted-foreground hidden xs:inline">•</span>
+                         <span className="text-xs text-muted-foreground truncate hidden xs:inline">{update.timestamp}</span>
+                       </div>
+                     </div>
+                     
+                     <Button
+                       variant="ghost"
+                       size="sm"
+                       onClick={() => onUpvote?.(update.id)}
+                       className="text-muted-foreground hover:text-primary h-8 px-2 transition-colors flex-shrink-0"
+                     >
+                       <ThumbsUp className="w-3 h-3 mr-1" />
+                       <span className="text-xs">{update.upvotes}</span>
+                     </Button>
+                   </div>
+                   
+                   <div className="xs:hidden mb-1">
+                     <span className="text-xs text-muted-foreground">{update.timestamp}</span>
+                   </div>
+                   
+                   <p className="text-post-content text-foreground leading-relaxed font-normal text-sm break-words overflow-hidden">
+                     {update.content}
+                   </p>
+                 </div>
+               </Card>
               
               {/* Progress indicator for updates */}
               {index < displayedUpdates.length - 1 && (
@@ -245,19 +257,19 @@ const getCategoryColor = (category: string) => {
               <div className="absolute left-2 top-6 w-8 h-0.5 bg-primary/40" />
               <div className="absolute left-0 top-5 w-4 h-4 bg-primary rounded-full border-3 border-white shadow-lg animate-pulse" />
               
-              <Card className="ml-12 border-2 border-dashed border-primary/40 bg-gradient-to-r from-primary/5 to-secondary/5 hover:from-primary/10 hover:to-secondary/10 transition-all duration-200">
-                <div className="p-3 text-center">
-                  <Button
-                    onClick={onContinueThread}
-                    className="bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-md"
-                    size="sm"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Continue your story
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">Share your latest update with the community</p>
-                </div>
-              </Card>
+               <Card className="ml-12 border-2 border-dashed border-primary/40 bg-gradient-to-r from-primary/5 to-secondary/5 hover:from-primary/10 hover:to-secondary/10 transition-all duration-200 overflow-hidden">
+                 <div className="p-3 text-center">
+                   <Button
+                     onClick={onContinueThread}
+                     className="bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-md w-full xs:w-auto"
+                     size="sm"
+                   >
+                     <Plus className="w-4 h-4 mr-2" />
+                     Continue your story
+                   </Button>
+                   <p className="text-xs text-muted-foreground mt-2 break-words">Share your latest update with the community</p>
+                 </div>
+               </Card>
             </div>
           )}
         </div>

@@ -183,7 +183,7 @@ const getCategoryColor = (category: string) => {
               </div>
               
                <Card className="ml-12 border-l-2 border-l-primary/30 hover:border-l-primary/60 transition-all duration-200 hover:shadow-md overflow-hidden">
-                 <div className="p-3">
+                 <div className="px-3 pb-3 pt-4">
                    <div className="flex items-start justify-between mb-2">
                      <div className="flex items-center gap-2 min-w-0 flex-1">
                        <img 

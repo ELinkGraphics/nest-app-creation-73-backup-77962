@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { QuestionCard } from './QuestionCard';
 import { QuestionDetailModal } from './QuestionDetailModal';
+import AnonymousThreadComponent from './AnonymousThread';
 
 interface Question {
   id: string;
@@ -29,6 +30,42 @@ interface Answer {
 interface QuestionFeedProps {
   filter: 'recent' | 'trending' | 'unanswered' | 'expert';
 }
+
+// Sample Thread Story - Demonstrating thread progression
+const SAMPLE_THREAD = {
+  id: 'thread-1',
+  originalQuestion: "My 3-year-old has been having meltdowns every morning when getting ready for daycare. I've tried different approaches but nothing seems to work. How can I make mornings less stressful for both of us?",
+  category: 'parenting',
+  tags: ['toddler', 'behavior', 'daycare', 'morning-routine'],
+  timestamp: '2 hours ago',
+  upvotes: 24,
+  isUrgent: false,
+  hasExpertAnswer: true,
+  canContinue: true, // Simulating the user is the original poster
+  updates: [
+    {
+      id: 'update-1',
+      content: "Update: I tried the visual schedule suggestion and it's been 3 days now. There's been some improvement! She seems to like checking off the pictures. Still some resistance with getting dressed though. Should I add a reward system?",
+      timestamp: '6 hours ago',
+      upvotes: 8,
+      isOriginalPoster: true
+    },
+    {
+      id: 'update-2', 
+      content: "Day 7 update: The visual schedule is working great! I added stickers as rewards and now she actually looks forward to morning routine. The key was letting her put the stickers on herself. Thanks everyone for the advice! 🙏",
+      timestamp: '2 hours ago',
+      upvotes: 15,
+      isOriginalPoster: true
+    },
+    {
+      id: 'update-3',
+      content: "Week 3 check-in: We've had such a transformation! Mornings are actually peaceful now. She even helps pack her daycare bag. The routine has become a bonding time for us. Amazing how small changes can make such a big difference.",
+      timestamp: '30 minutes ago',
+      upvotes: 22,
+      isOriginalPoster: true
+    }
+  ]
+};
 
 // Mock data
 const MOCK_QUESTIONS: Question[] = [
@@ -151,10 +188,42 @@ export const QuestionFeed: React.FC<QuestionFeedProps> = ({ filter }) => {
     );
   }
 
+  const handleContinueThread = () => {
+    console.log('Opening compose modal for thread continuation...');
+    // In real implementation, this would open the composer with thread context
+  };
+
+  const handleThreadUpvote = (updateId: string) => {
+    console.log('Upvoting update:', updateId);
+    // In real implementation, this would handle the upvote logic
+  };
+
   return (
     <>
-      <div className="space-y-4">
-        {filteredQuestions.map((question) => (
+      <div className="space-y-6">
+        {/* Show sample thread for "recent" filter to demonstrate threading */}
+        {filter === 'recent' && (
+          <div className="bg-gradient-to-r from-primary/5 to-secondary/5 p-1 rounded-lg">
+            <div className="bg-white rounded-lg">
+              <div className="p-3 border-b border-border">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
+                    📖 Story Thread
+                  </span>
+                  <span className="text-muted-foreground">Anonymous user sharing their journey</span>
+                </div>
+              </div>
+              <AnonymousThreadComponent
+                thread={SAMPLE_THREAD}
+                onContinueThread={handleContinueThread}
+                onUpvote={handleThreadUpvote}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Regular questions */}
+        {filteredQuestions.slice(filter === 'recent' ? 1 : 0).map((question) => (
           <QuestionCard
             key={question.id}
             question={question}

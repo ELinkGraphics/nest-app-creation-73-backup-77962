@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { PersistentCommentComposer } from '@/components/PersistentCommentComposer';
 import { ScrollTriggeredAIInsight } from '@/components/ask/ScrollTriggeredAIInsight';
+import AnonymousThreadComponent from '@/components/ask/AnonymousThread';
 import { 
   ThumbsUp, 
   MessageCircle, 
@@ -40,46 +41,119 @@ interface Question {
   hasExpertAnswer: boolean;
   aiResponse?: string;
   answers: Answer[];
+  isThread?: boolean;
+  threadData?: {
+    canContinue: boolean;
+    updates: Array<{
+      id: string;
+      content: string;
+      timestamp: string;
+      upvotes: number;
+      isOriginalPoster: boolean;
+    }>;
+  };
 }
 
 // Mock data - in real app this would come from API
-const mockQuestion: Question = {
-  id: '1',
-  question: 'How do I handle my teenager who refuses to do homework and gets angry when I try to help?',
-  category: 'parenting',
-  tags: ['teenagers', 'homework', 'behavior', 'anger'],
-  timestamp: '2h',
-  answerCount: 12,
-  upvotes: 8,
-  isUrgent: false,
-  hasExpertAnswer: true,
-  aiResponse: 'This is a common challenge in parenting teenagers. Consider establishing clear boundaries while maintaining open communication. Setting up a structured homework time and creating a supportive environment can help.',
-  answers: [
-    {
-      id: '1',
-      content: 'I went through the same thing with my daughter. What worked for us was creating a homework schedule together and letting her choose her study space. Also, instead of helping directly, I started asking her what she thought the problem was asking for first.',
-      isExpert: false,
-      upvotes: 5,
-      timestamp: '1h',
-      isHelpful: true
+const mockQuestions: { [key: string]: Question } = {
+  'thread-1': {
+    id: 'thread-1',
+    question: "My 3-year-old has been having meltdowns every morning when getting ready for daycare. I've tried different approaches but nothing seems to work. How can I make mornings less stressful for both of us?",
+    category: 'parenting',
+    tags: ['toddler', 'behavior', 'daycare', 'morning-routine'],
+    timestamp: '2 hours ago',
+    answerCount: 8,
+    upvotes: 24,
+    isUrgent: false,
+    hasExpertAnswer: true,
+    isThread: true,
+    aiResponse: "Morning transitions can be challenging for toddlers. Consider creating a visual schedule, allowing extra time, and establishing a consistent routine.",
+    threadData: {
+      canContinue: true,
+      updates: [
+        {
+          id: 'update-1',
+          content: "Update: I tried the visual schedule suggestion and it's been 3 days now. There's been some improvement! She seems to like checking off the pictures. Still some resistance with getting dressed though. Should I add a reward system?",
+          timestamp: '6 hours ago',
+          upvotes: 8,
+          isOriginalPoster: true
+        },
+        {
+          id: 'update-2', 
+          content: "Day 7 update: The visual schedule is working great! I added stickers as rewards and now she actually looks forward to morning routine. The key was letting her put the stickers on herself. Thanks everyone for the advice! 🙏",
+          timestamp: '2 hours ago',
+          upvotes: 15,
+          isOriginalPoster: true
+        },
+        {
+          id: 'update-3',
+          content: "Week 3 check-in: We've had such a transformation! Mornings are actually peaceful now. She even helps pack her daycare bag. The routine has become a bonding time for us. Amazing how small changes can make such a big difference.",
+          timestamp: '30 minutes ago',
+          upvotes: 22,
+          isOriginalPoster: true
+        }
+      ]
     },
-    {
-      id: '2',
-      content: 'As a child psychologist, I recommend focusing on the emotional aspect first. Teenagers often resist homework due to underlying anxiety or fear of failure. Try having a conversation about what makes homework difficult for them before addressing the behavior.',
-      isExpert: true,
-      expertTitle: 'Child Psychologist',
-      upvotes: 12,
-      timestamp: '45m',
-      isHelpful: true
-    }
-  ]
+    answers: [
+      {
+        id: 'a1',
+        content: "I had the same issue with my daughter. What worked was creating a morning checklist with pictures and letting her pick out her clothes the night before. It gave her some control and reduced the resistance.",
+        isExpert: false,
+        upvotes: 12,
+        timestamp: '1 hour ago',
+        isHelpful: true
+      },
+      {
+        id: 'a2',
+        content: "As a child psychologist, I recommend implementing a visual schedule with clear expectations. Toddlers thrive on routine and predictability. Also, consider if there are any sensory issues with clothing or if your child needs more transition time.",
+        isExpert: true,
+        expertTitle: 'Child Psychologist',
+        upvotes: 18,
+        timestamp: '30 minutes ago',
+        isHelpful: true
+      }
+    ]
+  },
+  '1': {
+    id: '1',
+    question: 'How do I handle my teenager who refuses to do homework and gets angry when I try to help?',
+    category: 'parenting',
+    tags: ['teenagers', 'homework', 'behavior', 'anger'],
+    timestamp: '2h',
+    answerCount: 12,
+    upvotes: 8,
+    isUrgent: false,
+    hasExpertAnswer: true,
+    aiResponse: 'This is a common challenge in parenting teenagers. Consider establishing clear boundaries while maintaining open communication. Setting up a structured homework time and creating a supportive environment can help.',
+    answers: [
+      {
+        id: '1',
+        content: 'I went through the same thing with my daughter. What worked for us was creating a homework schedule together and letting her choose her study space. Also, instead of helping directly, I started asking her what she thought the problem was asking for first.',
+        isExpert: false,
+        upvotes: 5,
+        timestamp: '1h',
+        isHelpful: true
+      },
+      {
+        id: '2',
+        content: 'As a child psychologist, I recommend focusing on the emotional aspect first. Teenagers often resist homework due to underlying anxiety or fear of failure. Try having a conversation about what makes homework difficult for them before addressing the behavior.',
+        isExpert: true,
+        expertTitle: 'Child Psychologist',
+        upvotes: 12,
+        timestamp: '45m',
+        isHelpful: true
+      }
+    ]
+  }
 };
 
 const QuestionDetail: React.FC = () => {
   const { questionId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [question] = useState<Question>(mockQuestion);
+  
+  // Get question based on questionId, fallback to default question
+  const question = mockQuestions[questionId || '1'] || mockQuestions['1'];
 
   const handleCommentSubmit = (comment: string) => {
     toast({
@@ -87,6 +161,89 @@ const QuestionDetail: React.FC = () => {
       description: "Your helpful response has been added to this question.",
     });
   };
+
+  const handleContinueThread = () => {
+    toast({
+      title: "Continue Story",
+      description: "Thread continuation feature coming soon!",
+    });
+  };
+
+  const handleThreadUpvote = (updateId: string) => {
+    toast({
+      title: "Upvoted!",
+      description: "Thanks for supporting this update.",
+    });
+  };
+
+  // If this is a thread post, show the enhanced thread view
+  if (question.isThread && question.threadData) {
+    const threadFormat = {
+      id: question.id,
+      originalQuestion: question.question,
+      category: question.category,
+      tags: question.tags,
+      timestamp: question.timestamp,
+      upvotes: question.upvotes,
+      isUrgent: question.isUrgent,
+      hasExpertAnswer: question.hasExpertAnswer,
+      canContinue: question.threadData.canContinue,
+      updates: question.threadData.updates
+    };
+
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
+          <div className="flex items-center justify-between p-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/ask')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" className="active:bg-transparent active:text-primary">
+                <Share2 className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="sm">
+                <Bookmark className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Thread Content */}
+        <div className="max-w-4xl mx-auto px-4 pb-32 pt-6">
+          <div className="mb-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+              <Badge className="bg-gradient-to-r from-primary/10 to-secondary/10 text-primary border-primary/30">
+                📖 Story Thread
+              </Badge>
+              <span>Anonymous user sharing their journey</span>
+            </div>
+          </div>
+          
+          <AnonymousThreadComponent
+            thread={threadFormat}
+            onContinueThread={handleContinueThread}
+            onUpvote={handleThreadUpvote}
+          />
+        </div>
+
+        {/* Persistent Comment Input */}
+        <PersistentCommentComposer
+          onSubmit={handleCommentSubmit}
+          placeholder="Share your thoughts on this journey"
+        />
+      </div>
+    );
+  }
+
+  // Regular question view for non-thread posts
 
   const getCategoryIcon = (category: string) => {
     switch (category) {

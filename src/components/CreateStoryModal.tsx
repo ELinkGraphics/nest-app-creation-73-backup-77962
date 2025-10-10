@@ -55,9 +55,11 @@ const CreateStoryModal: React.FC<CreateStoryModalProps> = ({ isOpen, onClose, on
     try {
       // Upload media to Supabase storage
       const fileExt = selectedMedia.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
 
+      console.log('Uploading story to path:', filePath);
+      
       const { error: uploadError } = await (await import('@/integrations/supabase/client')).supabase.storage
         .from('story-media')
         .upload(filePath, selectedMedia, {
@@ -65,7 +67,10 @@ const CreateStoryModal: React.FC<CreateStoryModalProps> = ({ isOpen, onClose, on
           upsert: false
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
 
       // Get public URL
       const { data: { publicUrl } } = (await import('@/integrations/supabase/client')).supabase.storage
@@ -73,6 +78,8 @@ const CreateStoryModal: React.FC<CreateStoryModalProps> = ({ isOpen, onClose, on
         .getPublicUrl(filePath);
 
       // Create story record in database
+      console.log('Creating story record with URL:', publicUrl);
+      
       const { error: dbError } = await (await import('@/integrations/supabase/client')).supabase
         .from('stories')
         .insert({
@@ -82,7 +89,10 @@ const CreateStoryModal: React.FC<CreateStoryModalProps> = ({ isOpen, onClose, on
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
         });
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Database insert error:', dbError);
+        throw dbError;
+      }
       
       // Notify parent to refresh stories
       onCreateStory(null);

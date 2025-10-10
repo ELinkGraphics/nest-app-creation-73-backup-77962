@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { UserProfile, UserPreferences, UserContextType } from '@/types/user';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Session } from '@supabase/supabase-js';
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -55,62 +57,118 @@ interface UserProviderProps {
 }
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  // Load persisted user data from localStorage or use mock data
-  const getInitialUser = () => {
-    try {
-      const persistedUser = localStorage.getItem('account_owner_profile');
-      if (persistedUser) {
-        const parsed = JSON.parse(persistedUser);
-        console.log('Loaded persisted user:', parsed);
-        // Force refresh with new mock data if website is still string
-        if (typeof parsed.website === 'string') {
-          console.log('Outdated user data found, using fresh mock data');
-          localStorage.removeItem('account_owner_profile');
-          return mockUser;
-        }
-        return parsed;
-      }
-    } catch (error) {
-      console.warn('Failed to parse persisted user data:', error);
-    }
-    console.log('Using fresh mock user data:', mockUser);
-    return mockUser;
-  };
-
-  const [user, setUser] = useState<UserProfile | null>(getInitialUser());
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Simulate loading user data (optional for demo purposes)
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        // For demo purposes, user is already loaded
-        // In a real app, this would be an actual API call
-        console.log('User context initialized with mock data');
-      } catch (err) {
-        setError('Failed to load user data');
-        console.error('Error loading user:', err);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      if (session?.user) {
+        setTimeout(() => {
+          fetchUserProfile(session.user.id);
+        }, 0);
+      } else {
+        setUser(null);
+        setIsLoading(false);
       }
-    };
+    });
 
-    loadUser();
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      setIsLoading(true);
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          profile_stats (
+            followers_count,
+            following_count,
+            posts_count,
+            videos_count,
+            replies_count,
+            saves_count
+          )
+        `)
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+
+      if (profile) {
+        const userProfile: UserProfile = {
+          id: profile.id,
+          name: profile.name,
+          username: profile.username,
+          email: profile.email,
+          initials: profile.initials,
+          avatar: profile.avatar_url || '',
+          coverImage: profile.cover_image_url || '',
+          bio: profile.bio || '',
+          subtitle: profile.subtitle || '',
+          location: profile.location || '',
+          website: profile.website ? [profile.website] : [],
+          joinedDate: profile.joined_date,
+          isVerified: profile.is_verified,
+          isOnline: profile.is_online,
+          stats: {
+            followers: profile.profile_stats?.[0]?.followers_count || 0,
+            following: profile.profile_stats?.[0]?.following_count || 0,
+            replies: profile.profile_stats?.[0]?.replies_count || 0,
+            posts: profile.profile_stats?.[0]?.posts_count || 0,
+            videos: profile.profile_stats?.[0]?.videos_count || 0,
+            saves: profile.profile_stats?.[0]?.saves_count || 0,
+          }
+        };
+        setUser(userProfile);
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError('Failed to load user data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
     if (!user) return;
     
     try {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: updates.name,
+          bio: updates.bio,
+          subtitle: updates.subtitle,
+          location: updates.location,
+          website: Array.isArray(updates.website) ? updates.website[0] : updates.website,
+          avatar_url: updates.avatar,
+          cover_image_url: updates.coverImage,
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
       
       const updatedUser = { ...user, ...updates };
       setUser(updatedUser);
-      
-      // Persist account owner's profile data
-      localStorage.setItem('account_owner_profile', JSON.stringify(updatedUser));
       
       toast({
         title: "Profile updated",
@@ -150,11 +208,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   };
 
   const refreshUser = async () => {
+    if (!session?.user) return;
+    
     try {
       setIsLoading(true);
-      // Keep persisted user data on refresh - don't reset to mock data
-      const currentUser = user || getInitialUser();
-      setUser(currentUser);
+      await fetchUserProfile(session.user.id);
       setError(null);
     } catch (err) {
       setError('Failed to refresh user data');
@@ -162,13 +220,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       setIsLoading(false);
     }
   };
-
-  // Persist user data whenever it changes
-  React.useEffect(() => {
-    if (user) {
-      localStorage.setItem('account_owner_profile', JSON.stringify(user));
-    }
-  }, [user]);
 
   const value: UserContextType = {
     user,

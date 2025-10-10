@@ -41,26 +41,51 @@ const CreateStoryModal: React.FC<CreateStoryModalProps> = ({ isOpen, onClose, on
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Not authenticated",
+        description: "Please log in to create a story.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
     
     try {
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Upload media to Supabase storage
+      const fileExt = selectedMedia.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await (await import('@/integrations/supabase/client')).supabase.storage
+        .from('story-media')
+        .upload(filePath, selectedMedia, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = (await import('@/integrations/supabase/client')).supabase.storage
+        .from('story-media')
+        .getPublicUrl(filePath);
+
+      // Create story record in database
+      const { error: dbError } = await (await import('@/integrations/supabase/client')).supabase
+        .from('stories')
+        .insert({
+          user_id: user.id,
+          media_url: publicUrl,
+          media_type: selectedMedia.type.startsWith('video/') ? 'video' : 'image',
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+        });
+
+      if (dbError) throw dbError;
       
-      const storyData = {
-        id: Date.now(),
-        user: {
-          name: user?.name || 'You',
-          initials: user?.initials || 'YU',
-          avatarColor: '#8B5CF6'
-        },
-        image: previewUrl,
-        caption: caption.trim(),
-        timestamp: new Date().toISOString(),
-        isOwn: false // Will be added to regular stories now
-      };
-      
-      onCreateStory(storyData);
+      // Notify parent to refresh stories
+      onCreateStory(null);
       
       toast({
         title: "Story created!",
@@ -73,6 +98,7 @@ const CreateStoryModal: React.FC<CreateStoryModalProps> = ({ isOpen, onClose, on
       setCaption('');
       onClose();
     } catch (error) {
+      console.error('Story creation error:', error);
       toast({
         title: "Upload failed",
         description: "Could not create your story. Please try again.",

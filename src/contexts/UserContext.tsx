@@ -119,6 +119,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           email: profile.email,
           initials: profile.initials,
           avatar: profile.avatar_url || '',
+          avatarColor: profile.avatar_color || '#4B164C',
           coverImage: profile.cover_image_url || '',
           bio: profile.bio || '',
           subtitle: profile.subtitle || '',

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { MOCK_STORIES, Story } from '@/data/mock';
+import { Story } from '@/data/mock';
 import StoryViewer from './StoryViewer';
 import CreateStoryModal from './CreateStoryModal';
 import { useUser } from '@/contexts/UserContext';
@@ -12,7 +12,7 @@ const StoriesBar: React.FC = () => {
   const [isStoryViewerOpen, setIsStoryViewerOpen] = useState(false);
   const [isCreateStoryOpen, setIsCreateStoryOpen] = useState(false);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
-  const [stories, updateStories] = useStoryPersistence(MOCK_STORIES);
+  const [stories, refreshStories, isLoading] = useStoryPersistence();
 
   const handleStoryClick = (story: Story, index: number) => {
     if (story.isOwn) {
@@ -24,15 +24,14 @@ const StoriesBar: React.FC = () => {
     setIsStoryViewerOpen(true);
   };
 
-  const handleCreateStory = (storyData: any) => {
-    // Add the new story to the beginning of the stories list (after "Your story")
-    const newStories = [
-      stories[0], // Keep "Your story" button
-      { ...storyData, id: Date.now() }, // Add new story
-      ...stories.slice(1) // Keep existing stories
-    ];
-    updateStories(newStories);
+  const handleCreateStory = () => {
+    // Refresh stories after creation
+    refreshStories();
   };
+
+  if (isLoading) {
+    return null; // Or a skeleton loader
+  }
 
   return (
     <>

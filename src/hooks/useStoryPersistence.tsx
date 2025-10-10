@@ -1,64 +1,95 @@
 import { useState, useEffect } from 'react';
 import { Story } from '@/data/mock';
 import { useUser } from '@/contexts/UserContext';
+import { supabase } from '@/integrations/supabase/client';
 
-interface PersistedStoryData {
-  userId: string;
-  stories: Story[];
-  timestamp: number;
-}
-
-const STORAGE_KEY = 'account_owner_stories';
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-
-export const useStoryPersistence = (initialStories: Story[]) => {
+export const useStoryPersistence = () => {
   const { user } = useUser();
-  const [stories, setStories] = useState<Story[]>(initialStories);
+  const [stories, setStories] = useState<Story[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load persisted stories for account owner on mount
-  useEffect(() => {
-    if (!user) return;
-
+  // Fetch stories from Supabase
+  const fetchStories = async () => {
     try {
-      const persistedData = localStorage.getItem(STORAGE_KEY);
-      if (persistedData) {
-        const data: PersistedStoryData = JSON.parse(persistedData);
-        
-        // Check if data is for current user and not expired
-        if (data.userId === user.id && Date.now() - data.timestamp < CACHE_DURATION) {
-          // Keep owner's stories, update others
-          const ownerStories = data.stories.filter(story => story.isOwn);
-          const otherStories = initialStories.filter(story => !story.isOwn);
-          
-          setStories([...ownerStories, ...otherStories]);
-          return;
-        }
+      setIsLoading(true);
+      
+      // Fetch active stories (not expired) with user profile data
+      const { data, error } = await supabase
+        .from('stories')
+        .select(`
+          id,
+          media_url,
+          media_type,
+          created_at,
+          user_id,
+          profiles:user_id (
+            name,
+            initials,
+            avatar_color
+          )
+        `)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform Supabase data to Story format
+      const transformedStories: Story[] = data?.map((story: any) => ({
+        id: story.id,
+        user: {
+          name: story.profiles?.name || 'Unknown',
+          initials: story.profiles?.initials || '??',
+          avatarColor: story.profiles?.avatar_color || '#4B164C',
+        },
+        image: story.media_url,
+        isOwn: story.user_id === user?.id,
+      })) || [];
+
+      // Add "Your story" button at the beginning if user is logged in
+      if (user) {
+        const yourStoryButton: Story = {
+          id: -1, // Special ID for "Your story" button
+          user: {
+            name: user.name,
+            initials: user.initials,
+            avatarColor: user.avatarColor || '#E08ED1',
+          },
+          image: '',
+          isOwn: true,
+        };
+        setStories([yourStoryButton, ...transformedStories]);
+      } else {
+        setStories(transformedStories);
       }
     } catch (error) {
-      console.warn('Failed to load persisted stories:', error);
-    }
-
-    // Fallback to initial stories
-    setStories(initialStories);
-  }, [user, initialStories]);
-
-  // Persist owner's stories when they change
-  const updateStories = (newStories: Story[]) => {
-    setStories(newStories);
-    
-    if (user) {
-      try {
-        const persistedData: PersistedStoryData = {
-          userId: user.id,
-          stories: newStories.filter(story => story.isOwn), // Only persist owner's stories
-          timestamp: Date.now(),
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedData));
-      } catch (error) {
-        console.warn('Failed to persist stories:', error);
+      console.error('Failed to fetch stories:', error);
+      // Set "Your story" button even on error if user exists
+      if (user) {
+        setStories([{
+          id: -1,
+          user: {
+            name: user.name,
+            initials: user.initials,
+            avatarColor: user.avatarColor || '#E08ED1',
+          },
+          image: '',
+          isOwn: true,
+        }]);
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  return [stories, updateStories] as const;
+  // Fetch stories on mount and when user changes
+  useEffect(() => {
+    fetchStories();
+  }, [user]);
+
+  // Refresh stories function
+  const refreshStories = () => {
+    fetchStories();
+  };
+
+  return [stories, refreshStories, isLoading] as const;
 };

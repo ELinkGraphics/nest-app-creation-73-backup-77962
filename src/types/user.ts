@@ -16,6 +16,7 @@ export interface UserProfile {
   email: string;
   initials: string;
   avatar: string;
+  avatarColor?: string;
   coverImage?: string;
   bio?: string;
   subtitle?: string;

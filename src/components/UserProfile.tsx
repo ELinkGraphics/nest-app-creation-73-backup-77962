@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { MoreHorizontal, MessageCircle, Heart, Share, Bookmark, Plus, Check, MapPin, Link as LinkIcon, Calendar, Users, Video as VideoIcon, ChevronDown, ChevronUp, Image, X } from 'lucide-react';
+import { MoreHorizontal, MessageCircle, Heart, Share, Bookmark, Plus, Check, MapPin, Link as LinkIcon, Calendar, Users, Video as VideoIcon, ChevronDown, ChevronUp, Image, X, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useUser } from '@/contexts/UserContext';
 import { ProfileHeaderSkeleton, PostCardSkeleton, VideoCardSkeleton, TabContentSkeleton } from '@/components/ui/loading-states';
 import { MOCK_POSTS, MOCK_VIDEOS, type Post, type Video } from '@/data/mock';
+import EditProfileModal from '@/components/EditProfileModal';
 
 interface UserProfileProps {
   className?: string;
@@ -27,6 +28,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const [isFollowing, setIsFollowing] = useState(false);
   const [showFullBio, setShowFullBio] = useState(false);
   const [showLinksModal, setShowLinksModal] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
   const { user, isLoading } = useUser();
 
   // Memoize user content for better performance
@@ -306,6 +308,14 @@ const UserProfile: React.FC<UserProfileProps> = ({
                   <Check className="h-3 w-3" />
                 </Badge>
               )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowEditProfile(true)}
+                className="h-8 w-8 hover:bg-muted/50"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
             </div>
             <p className="text-muted-foreground mb-3">
               <span className="font-bold text-foreground">{user.stats.followers.toLocaleString()}</span> followers • <span className="font-bold text-foreground">{user.stats.following.toLocaleString()}</span> following
@@ -505,6 +515,12 @@ const UserProfile: React.FC<UserProfileProps> = ({
     
     {/* Links Modal */}
     <LinksModal />
+    
+    {/* Edit Profile Modal */}
+    <EditProfileModal 
+      isOpen={showEditProfile} 
+      onClose={() => setShowEditProfile(false)} 
+    />
   </div>
   );
 };

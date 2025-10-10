@@ -213,7 +213,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            {links.map((link, index) => (
+            {links.filter(link => link).map((link, index) => (
               <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <LinkIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -357,12 +357,16 @@ const UserProfile: React.FC<UserProfileProps> = ({
                 {(() => {
                   // Handle multiple links case - support both string and array
                   const links = Array.isArray(user.website) ? user.website : [user.website];
-                  const displayLink = links[0].replace(/^https?:\/\//, '');
+                  const firstLink = links[0];
+                  
+                  if (!firstLink) return null;
+                  
+                  const displayLink = firstLink.replace(/^https?:\/\//, '');
                   
                   if (links.length === 1) {
                     return (
                       <a 
-                        href={links[0]} 
+                        href={firstLink} 
                         className="font-bold hover:text-primary transition-colors"
                         target="_blank"
                         rel="noopener noreferrer"

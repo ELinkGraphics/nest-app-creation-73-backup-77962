@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -13,7 +14,7 @@ interface EditProfileModalProps {
 }
 
 const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) => {
-  const { user } = useUser();
+  const { user, updateProfile } = useUser();
   const { toast } = useToast();
   
   const [name, setName] = useState(user?.name || '');
@@ -26,6 +27,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) 
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   if (!isOpen || !user) return null;
 
@@ -68,20 +70,69 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) 
   };
 
   const handleSave = async () => {
+    if (!user) return;
+    
     try {
-      // Here you would typically upload the files and update the profile
-      // For now, we'll just show a success message
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
+      setIsSaving(true);
+      let avatarUrl = user.avatar;
+      let coverUrl = user.coverImage;
+
+      // Upload avatar if changed
+      if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, avatarFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+        
+        avatarUrl = publicUrl;
+      }
+
+      // Upload cover image if changed
+      if (coverFile) {
+        const fileExt = coverFile.name.split('.').pop();
+        const fileName = `cover-${user.id}-${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, coverFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+        
+        coverUrl = publicUrl;
+      }
+
+      // Update profile with all changes
+      await updateProfile({
+        name,
+        bio,
+        location,
+        website: links.filter(link => link.trim() !== ''),
+        avatar: avatarUrl,
+        coverImage: coverUrl,
       });
+
       onClose();
     } catch (error) {
+      console.error('Error updating profile:', error);
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -100,8 +151,8 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) 
               <X className="h-5 w-5" />
             </Button>
             <h1 className="text-xl font-bold">Edit Profile</h1>
-            <Button onClick={handleSave} size="sm">
-              Save
+            <Button onClick={handleSave} size="sm" disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </div>

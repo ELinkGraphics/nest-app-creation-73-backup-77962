@@ -57,11 +57,13 @@ const StoriesBar: React.FC = () => {
                   style={
                     story.allStories && story.allStories.length > 1
                       ? {
-                          background: `conic-gradient(from 0deg, 
+                          background: `conic-gradient(from -90deg, 
                             ${story.allStories.map((_, i) => {
-                              const start = (i / story.allStories!.length) * 360;
-                              const end = ((i + 1) / story.allStories!.length) * 360;
-                              return `hsl(var(--primary)) ${start}deg ${end}deg`;
+                              const segmentSize = 360 / story.allStories!.length;
+                              const gapSize = 4; // Gap between segments in degrees
+                              const start = (i * segmentSize);
+                              const end = ((i + 1) * segmentSize) - gapSize;
+                              return `hsl(var(--primary)) ${start}deg ${end}deg, transparent ${end}deg ${start + segmentSize}deg`;
                             }).join(', ')})`,
                         }
                       : undefined

@@ -59,6 +59,7 @@ export interface Story {
   };
   image: string;
   isOwn?: boolean;
+  allStories?: Story[];
 }
 
 export const MOCK_POSTS: Post[] = [

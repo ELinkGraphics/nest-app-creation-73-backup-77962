@@ -45,22 +45,56 @@ export const useStoryPersistence = () => {
         isOwn: story.user_id === user?.id,
       })) || [];
 
-      // Add "Your story" button at the beginning if user is logged in
+      // Group stories by user
+      const groupedStories: Story[] = [];
+      const userStoriesMap = new Map<string, Story[]>();
+
+      // Separate own stories and others' stories
+      const ownStories: Story[] = [];
+      const othersStories: Story[] = [];
+
+      transformedStories.forEach(story => {
+        if (story.isOwn) {
+          ownStories.push(story);
+        } else {
+          const userId = data?.find((s: any) => s.id === story.id)?.user_id;
+          if (userId) {
+            if (!userStoriesMap.has(userId)) {
+              userStoriesMap.set(userId, []);
+            }
+            userStoriesMap.get(userId)?.push(story);
+          }
+        }
+      });
+
+      // Add user's own story circle at the beginning if user is logged in
       if (user) {
-        const yourStoryButton: Story = {
-          id: -1, // Special ID for "Your story" button
+        const yourStoryCircle: Story = {
+          id: ownStories.length > 0 ? ownStories[0].id : -1,
           user: {
             name: user.name,
             initials: user.initials,
             avatarColor: user.avatarColor || '#E08ED1',
           },
-          image: '',
+          image: ownStories.length > 0 ? ownStories[0].image : '',
           isOwn: true,
+          // Store all user's stories in a custom property
+          allStories: ownStories.length > 0 ? ownStories : undefined,
         };
-        setStories([yourStoryButton, ...transformedStories]);
-      } else {
-        setStories(transformedStories);
+        groupedStories.push(yourStoryCircle);
       }
+
+      // Add other users' story circles (first story of each user)
+      userStoriesMap.forEach((stories, userId) => {
+        if (stories.length > 0) {
+          groupedStories.push({
+            ...stories[0],
+            allStories: stories,
+          });
+        }
+      });
+
+      setStories(groupedStories);
     } catch (error) {
       console.error('Failed to fetch stories:', error);
       // Set "Your story" button even on error if user exists
@@ -75,6 +109,8 @@ export const useStoryPersistence = () => {
           image: '',
           isOwn: true,
         }]);
+      } else {
+        setStories([]);
       }
     } finally {
       setIsLoading(false);

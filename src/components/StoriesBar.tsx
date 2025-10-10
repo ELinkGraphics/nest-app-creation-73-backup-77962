@@ -15,7 +15,8 @@ const StoriesBar: React.FC = () => {
   const [stories, refreshStories, isLoading] = useStoryPersistence();
 
   const handleStoryClick = (story: Story, index: number) => {
-    if (story.isOwn) {
+    if (story.isOwn && (!story.allStories || story.allStories.length === 0)) {
+      // If it's user's own story and they have no stories yet, open create modal
       setIsCreateStoryOpen(true);
       return;
     }
@@ -43,26 +44,36 @@ const StoriesBar: React.FC = () => {
               type="button"
               onClick={() => handleStoryClick(story, index)}
               className="flex flex-col items-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary rounded-xl transition-transform hover:scale-105"
-              aria-label={story.isOwn ? "Add your story" : `View ${story.user.name}'s story`}
-              title={story.isOwn ? "Add your story" : `View ${story.user.name}'s story`}
+              aria-label={story.isOwn && (!story.allStories || story.allStories.length === 0) ? "Add your story" : `View ${story.user.name}'s story`}
+              title={story.isOwn && (!story.allStories || story.allStories.length === 0) ? "Add your story" : `View ${story.user.name}'s story`}
             >
               <div className="relative">
                 <div 
                   className={`size-18 rounded-full grid place-items-center transition-opacity ${
-                    story.isOwn 
+                    story.isOwn && (!story.allStories || story.allStories.length === 0)
                       ? 'p-[3px] bg-gray-300 rounded-full' 
                       : 'p-[3px] bg-gradient-to-br from-primary via-secondary to-tertiary rounded-full'
                   }`}
+                  style={
+                    story.allStories && story.allStories.length > 1
+                      ? {
+                          background: `conic-gradient(from 0deg, 
+                            ${story.allStories.map((_, i) => {
+                              const start = (i / story.allStories!.length) * 360;
+                              const end = ((i + 1) / story.allStories!.length) * 360;
+                              return `hsl(var(--primary)) ${start}deg ${end}deg`;
+                            }).join(', ')})`,
+                        }
+                      : undefined
+                  }
                 >
-                  <div 
-                    className={`${story.isOwn ? 'size-full rounded-full bg-background grid place-items-center p-[3px]' : 'size-full rounded-full bg-background grid place-items-center p-[3px]'}`}
-                  >
-                    {story.isOwn ? (
+                  <div className="size-full rounded-full bg-background grid place-items-center p-[3px]">
+                    {story.isOwn && (!story.allStories || story.allStories.length === 0) ? (
                       <div className="size-full rounded-full border border-dashed border-gray-200 grid place-items-center">
                         <Avatar className="size-12">
                           <AvatarFallback 
                             className="text-xs font-medium text-white"
-                            style={{ backgroundColor: '#E08ED1' }}
+                            style={{ backgroundColor: user?.avatarColor || '#E08ED1' }}
                           >
                             {user?.initials || 'YS'}
                           </AvatarFallback>
@@ -95,8 +106,10 @@ const StoriesBar: React.FC = () => {
       </section>
 
       <StoryViewer
-        stories={stories.filter(story => !story.isOwn)}
-        initialIndex={selectedStoryIndex > 0 ? selectedStoryIndex - 1 : 0}
+        stories={selectedStoryIndex >= 0 && stories[selectedStoryIndex]?.allStories 
+          ? stories[selectedStoryIndex].allStories! 
+          : stories.filter(story => !story.isOwn || (story.allStories && story.allStories.length > 0))}
+        initialIndex={0}
         isOpen={isStoryViewerOpen}
         onClose={() => setIsStoryViewerOpen(false)}
       />

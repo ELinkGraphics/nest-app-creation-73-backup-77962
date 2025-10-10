@@ -92,9 +92,16 @@ const StoriesBar: React.FC = () => {
                   </div>
                 </div>
                 {story.isOwn && (
-                  <div className="absolute -bottom-1 -right-1 size-6 bg-primary rounded-full flex items-center justify-center border-2 border-white">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsCreateStoryOpen(true);
+                    }}
+                    className="absolute -bottom-1 -right-1 size-6 bg-primary rounded-full flex items-center justify-center border-2 border-white hover:bg-primary/90 transition-colors"
+                    aria-label="Add story"
+                  >
                     <Plus className="size-3 text-white" />
-                  </div>
+                  </button>
                 )}
               </div>
               <span className="mt-2 text-xs text-gray-700 max-w-[60px] truncate text-center leading-tight">

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Send } from 'lucide-react';
-import { MOCK_POSTS } from '@/data/mock';
 import { Button } from '@/components/ui/button';
-
+import { supabase } from '@/integrations/supabase/client';
 import { PersistentCommentComposer } from '@/components/PersistentCommentComposer';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useUser } from '@/contexts/UserContext';
+import { usePostMutations } from '@/hooks/usePostMutations';
 
 interface Comment {
   id: string;
@@ -76,14 +77,69 @@ const PostDetail: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
   const { triggerHaptic } = useHapticFeedback();
+  const { user } = useUser();
+  const { toggleLike } = usePostMutations();
   
+  const [post, setPost] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState(sampleComments);
-  const [newComment, setNewComment] = useState('');
   const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
   const [saved, setSaved] = useState(false);
 
-  // Find the post by ID (in a real app, this would come from an API)
-  const post = MOCK_POSTS.find(p => p.id === Number(postId));
+  // Fetch post from database
+  useEffect(() => {
+    const fetchPost = async () => {
+      if (!postId) return;
+      
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          profiles!inner(name, username, avatar_url, initials, avatar_color, is_verified),
+          post_stats(likes_count, comments_count, shares_count, saves_count)
+        `)
+        .eq('id', postId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching post:', error);
+        setLoading(false);
+        return;
+      }
+
+      if (data) {
+        setPost(data);
+        setLikesCount(data.post_stats?.likes_count || 0);
+        
+        // Check if user has liked this post
+        if (user) {
+          const { data: likeData } = await supabase
+            .from('likes')
+            .select('id')
+            .eq('post_id', postId)
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          setLiked(!!likeData);
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchPost();
+  }, [postId, user]);
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
   
   if (!post) {
     return (
@@ -129,9 +185,15 @@ const PostDetail: React.FC = () => {
     triggerHaptic('light');
   };
 
-  const handleLikePost = () => {
-    setLiked(!liked);
+  const handleLikePost = async () => {
+    if (!user) return;
+    
+    const newLikedState = !liked;
+    setLiked(newLikedState);
+    setLikesCount(prev => newLikedState ? prev + 1 : prev - 1);
     triggerHaptic('light');
+    
+    await toggleLike(postId!, user.id, liked);
   };
 
   return (
@@ -147,7 +209,7 @@ const PostDetail: React.FC = () => {
           <ArrowLeft className="size-5" />
         </Button>
         <div>
-          <h1 className="font-semibold text-foreground">{post.user.name}</h1>
+          <h1 className="font-semibold text-foreground">{post.profiles.name}</h1>
           <p className="text-sm text-muted-foreground">Post</p>
         </div>
       </header>
@@ -158,22 +220,26 @@ const PostDetail: React.FC = () => {
           {/* Post Header */}
           <div className="p-4 flex items-center gap-3">
             <div 
-              className="size-10 rounded-full grid place-items-center text-sm font-medium text-white"
-              style={{ backgroundColor: post.user.avatarColor }}
+              className="size-10 rounded-full grid place-items-center text-sm font-medium text-white overflow-hidden"
+              style={{ backgroundColor: post.profiles.avatar_color }}
             >
-              {post.user.initials}
+              {post.profiles.avatar_url ? (
+                <img src={post.profiles.avatar_url} alt={post.profiles.initials} className="w-full h-full object-cover" />
+              ) : (
+                post.profiles.initials
+              )}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-1.5">
                 <h3 className="font-semibold text-foreground">
-                  {post.user.name}
+                  {post.profiles.name}
                 </h3>
-                {post.user.verified && (
+                {post.profiles.is_verified && (
                   <BadgeCheck className="size-4 text-secondary" />
                 )}
               </div>
               <div className="text-sm text-muted-foreground">
-                {formatRelativeTime(post.time)}
+                {formatRelativeTime(post.created_at)}
               </div>
             </div>
             <Button variant="ghost" size="sm" className="p-2">
@@ -202,21 +268,17 @@ const PostDetail: React.FC = () => {
           </div>
 
           {/* Post Media */}
-          {post.media && (
+          {post.media_url && (
             <div className="px-0">
               <div 
                 className="relative overflow-hidden"
-                style={{ background: `linear-gradient(135deg, ${post.media.colorFrom || '#FEDAF7'}, ${post.media.colorTo || '#E08ED1'})` }}
+                style={{ background: `linear-gradient(135deg, ${post.media_color_from || '#FEDAF7'}, ${post.media_color_to || '#E08ED1'})` }}
               >
-                {post.media.url ? (
-                  <img 
-                    src={post.media.url} 
-                    alt={post.media.alt || ""} 
-                    className="w-full h-64 object-cover" 
-                  />
-                ) : (
-                  <div className="h-64 w-full" />
-                )}
+                <img 
+                  src={post.media_url} 
+                  alt={post.media_alt || ""} 
+                  className="w-full h-64 object-cover" 
+                />
               </div>
             </div>
           )}
@@ -230,17 +292,17 @@ const PostDetail: React.FC = () => {
               <Heart 
                 className={`size-5 transition-all ${liked ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} 
               />
-              <span>{formatCount((post.stats.likes || 0) + (liked ? 1 : 0))}</span>
+              <span>{formatCount(likesCount)}</span>
             </button>
             
             <button className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
               <MessageCircle className="size-5" />
-              <span>{formatCount(post.stats.comments + comments.length)}</span>
+              <span>{formatCount((post.post_stats?.comments_count || 0) + comments.length)}</span>
             </button>
             
             <button className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-secondary transition-colors">
               <Share2 className="size-5" />
-              <span>{formatCount(post.stats.shares)}</span>
+              <span>{formatCount(post.post_stats?.shares_count || 0)}</span>
             </button>
           </div>
         </article>

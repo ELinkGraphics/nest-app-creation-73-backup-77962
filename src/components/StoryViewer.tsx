@@ -302,7 +302,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
         )}
         
         {/* User info */}
-        <div className="absolute bottom-20 left-4 right-4 text-white z-10">
+        <div className="absolute bottom-20 left-4 right-4 text-white z-30">
           <div className="flex items-center gap-3">
             <div 
               className="size-10 rounded-full flex items-center justify-center text-white font-medium text-sm overflow-hidden"
@@ -316,8 +316,11 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
             </div>
             <div>
               <p 
-                className="font-medium cursor-pointer hover:underline"
-                onClick={() => setShowProfileModal(true)}
+                className="font-medium cursor-pointer hover:underline relative z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProfileModal(true);
+                }}
               >
                 {currentStory.user.name}
               </p>

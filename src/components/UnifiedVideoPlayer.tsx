@@ -7,6 +7,7 @@ import { useFollowMutations } from '@/hooks/useFollowMutations';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import PublicProfileModal from '@/components/PublicProfileModal';
 
 interface UnifiedVideoPlayerProps {
   video: Video;
@@ -36,6 +37,7 @@ export const UnifiedVideoPlayer = memo<UnifiedVideoPlayerProps>(({
   const [isMuted, setIsMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [followState, setFollowState] = useState<'visible' | 'checked' | 'hidden'>('visible');
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const { triggerHaptic } = useHapticFeedback();
   const { toggleLike, toggleSave } = useVideoMutations();
   const { toggleFollow, checkFollowStatus } = useFollowMutations();
@@ -221,7 +223,15 @@ export const UnifiedVideoPlayer = memo<UnifiedVideoPlayerProps>(({
               )}
             </div>
             <div>
-              <p className="font-semibold text-sm">{video.user.name}</p>
+              <p 
+                className="font-semibold text-sm cursor-pointer hover:underline relative z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProfileModal(true);
+                }}
+              >
+                {video.user.name}
+              </p>
               <p className="text-xs opacity-80">@{video.user.name.toLowerCase().replace(/\s+/g, '')}</p>
             </div>
           </div>
@@ -313,6 +323,12 @@ export const UnifiedVideoPlayer = memo<UnifiedVideoPlayerProps>(({
         </button>
       </div>
       )}
+
+      <PublicProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        userId={video.user.id}
+      />
     </div>
   );
 });

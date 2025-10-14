@@ -5,6 +5,7 @@ import { useFollowMutations } from '@/hooks/useFollowMutations';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import PublicProfileModal from '@/components/PublicProfileModal';
 import FooterNav from './FooterNav';
 import { CommentsModal } from './CommentsModal';
 import { DraggablePipVideo } from './DraggablePipVideo';
@@ -52,6 +53,8 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
   const [expandedCaptions, setExpandedCaptions] = useState<Set<string>>(new Set());
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [pipVideoIndex, setPipVideoIndex] = useState<string | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
   
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
@@ -414,7 +417,16 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
                             )}
                           </div>
                           <div>
-                            <p className="font-semibold text-sm">{video.user.name}</p>
+                            <p 
+                              className="font-semibold text-sm cursor-pointer hover:underline relative z-10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedUserId(video.user.id);
+                                setShowProfileModal(true);
+                              }}
+                            >
+                              {video.user.name}
+                            </p>
                             <p className="text-xs opacity-80">@{video.user.name.toLowerCase().replace(/\s+/g, "")}</p>
                           </div>
                         </div>
@@ -605,6 +617,15 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
           />
         );
       })()}
+
+      <PublicProfileModal
+        isOpen={showProfileModal}
+        onClose={() => {
+          setShowProfileModal(false);
+          setSelectedUserId('');
+        }}
+        userId={selectedUserId}
+      />
     </div>
   );
 };

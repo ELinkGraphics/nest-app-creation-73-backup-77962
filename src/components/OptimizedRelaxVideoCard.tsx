@@ -8,6 +8,7 @@ import { useFollowMutations } from '@/hooks/useFollowMutations';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 import { videoLogger, loadHlsJs, isHlsSource, supportsNativeHls } from '@/utils/videoUtils';
+import PublicProfileModal from '@/components/PublicProfileModal';
 
 interface OptimizedRelaxVideoCardProps {
   video: Video;
@@ -45,6 +46,7 @@ export const OptimizedRelaxVideoCard = memo<OptimizedRelaxVideoCardProps>(({
   const [showCaptions, setShowCaptions] = useState(true);
   const [optimisticStats, setOptimisticStats] = useState(video.stats);
   const [followState, setFollowState] = useState<'visible' | 'checked' | 'hidden'>('visible');
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const hlsRef = useRef<any>(null);
   const loadStartTime = useRef<number>(0);
   const bufferingStartTime = useRef<number>(0);
@@ -353,7 +355,15 @@ export const OptimizedRelaxVideoCard = memo<OptimizedRelaxVideoCardProps>(({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-white">{video.user.name}</span>
+              <span 
+                className="font-semibold text-white cursor-pointer hover:underline relative z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProfileModal(true);
+                }}
+              >
+                {video.user.name}
+              </span>
               {video.user.verified && (
                 <div className="size-4 bg-white rounded-full flex items-center justify-center">
                   <div className="size-2 bg-primary rounded-full" />
@@ -510,6 +520,12 @@ export const OptimizedRelaxVideoCard = memo<OptimizedRelaxVideoCardProps>(({
           </p>
         </div>
       )}
+
+      <PublicProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        userId={video.user.id || ''}
+      />
     </div>
   );
 });

@@ -56,6 +56,7 @@ export interface Story {
     name: string;
     initials: string;
     avatarColor: string;
+    avatar?: string;
   };
   image: string;
   isOwn?: boolean;
@@ -307,99 +308,99 @@ export const MOCK_STORIES: Story[] = [
   // Emma's stories
   {
     id: 1,
-    user: { name: "Emma", initials: "EM", avatarColor: "#E08ED1" },
+    user: { name: "Emma", initials: "EM", avatarColor: "#E08ED1", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma" },
     image: "https://picsum.photos/400/700?random=1",
   },
   {
     id: 2,
-    user: { name: "Emma", initials: "EM", avatarColor: "#E08ED1" },
+    user: { name: "Emma", initials: "EM", avatarColor: "#E08ED1", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma" },
     image: "https://picsum.photos/400/700?random=11",
   },
   {
     id: 3,
-    user: { name: "Emma", initials: "EM", avatarColor: "#E08ED1" },
+    user: { name: "Emma", initials: "EM", avatarColor: "#E08ED1", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma" },
     image: "https://picsum.photos/400/700?random=21",
   },
   // Sofia's stories
   {
     id: 4,
-    user: { name: "Sofia", initials: "SF", avatarColor: "#4B164C" },
+    user: { name: "Sofia", initials: "SF", avatarColor: "#4B164C", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sofia" },
     image: "https://picsum.photos/400/700?random=2",
   },
   {
     id: 5,
-    user: { name: "Sofia", initials: "SF", avatarColor: "#4B164C" },
+    user: { name: "Sofia", initials: "SF", avatarColor: "#4B164C", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sofia" },
     image: "https://picsum.photos/400/700?random=12",
   },
   // Aria's stories
   {
     id: 6,
-    user: { name: "Aria", initials: "AR", avatarColor: "#22C3A6" },
+    user: { name: "Aria", initials: "AR", avatarColor: "#22C3A6", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aria" },
     image: "https://picsum.photos/400/700?random=3",
   },
   {
     id: 7,
-    user: { name: "Aria", initials: "AR", avatarColor: "#22C3A6" },
+    user: { name: "Aria", initials: "AR", avatarColor: "#22C3A6", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aria" },
     image: "https://picsum.photos/400/700?random=13",
   },
   {
     id: 8,
-    user: { name: "Aria", initials: "AR", avatarColor: "#22C3A6" },
+    user: { name: "Aria", initials: "AR", avatarColor: "#22C3A6", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aria" },
     image: "https://picsum.photos/400/700?random=23",
   },
   {
     id: 9,
-    user: { name: "Aria", initials: "AR", avatarColor: "#22C3A6" },
+    user: { name: "Aria", initials: "AR", avatarColor: "#22C3A6", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aria" },
     image: "https://picsum.photos/400/700?random=33",
   },
   // Luna's story
   {
     id: 10,
-    user: { name: "Luna", initials: "LU", avatarColor: "#B794F6" },
+    user: { name: "Luna", initials: "LU", avatarColor: "#B794F6", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Luna" },
     image: "https://picsum.photos/400/700?random=4",
   },
   // Maya's stories
   {
     id: 11,
-    user: { name: "Maya", initials: "MY", avatarColor: "#F093FB" },
+    user: { name: "Maya", initials: "MY", avatarColor: "#F093FB", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Maya" },
     image: "https://picsum.photos/400/700?random=5",
   },
   {
     id: 12,
-    user: { name: "Maya", initials: "MY", avatarColor: "#F093FB" },
+    user: { name: "Maya", initials: "MY", avatarColor: "#F093FB", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Maya" },
     image: "https://picsum.photos/400/700?random=15",
   },
   // Zoe's stories
   {
     id: 13,
-    user: { name: "Zoe", initials: "ZO", avatarColor: "#ED8936" },
+    user: { name: "Zoe", initials: "ZO", avatarColor: "#ED8936", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe" },
     image: "https://picsum.photos/400/700?random=6",
   },
   {
     id: 14,
-    user: { name: "Zoe", initials: "ZO", avatarColor: "#ED8936" },
+    user: { name: "Zoe", initials: "ZO", avatarColor: "#ED8936", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe" },
     image: "https://picsum.photos/400/700?random=16",
   },
   {
     id: 15,
-    user: { name: "Zoe", initials: "ZO", avatarColor: "#ED8936" },
+    user: { name: "Zoe", initials: "ZO", avatarColor: "#ED8936", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe" },
     image: "https://picsum.photos/400/700?random=26",
   },
   // Isla's story
   {
     id: 16,
-    user: { name: "Isla", initials: "IS", avatarColor: "#4B164C" },
+    user: { name: "Isla", initials: "IS", avatarColor: "#4B164C", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Isla" },
     image: "https://picsum.photos/400/700?random=7",
   },
   // Nova's stories
   {
     id: 17,
-    user: { name: "Nova", initials: "NV", avatarColor: "#E08ED1" },
+    user: { name: "Nova", initials: "NV", avatarColor: "#E08ED1", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Nova" },
     image: "https://picsum.photos/400/700?random=8",
   },
   {
     id: 18,
-    user: { name: "Nova", initials: "NV", avatarColor: "#E08ED1" },
+    user: { name: "Nova", initials: "NV", avatarColor: "#E08ED1", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Nova" },
     image: "https://picsum.photos/400/700?random=18",
   },
 ];

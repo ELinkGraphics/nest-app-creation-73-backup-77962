@@ -5,7 +5,7 @@ import StoryViewer from './StoryViewer';
 import CreateStoryModal from './CreateStoryModal';
 import { useUser } from '@/contexts/UserContext';
 import { useStoryPersistence } from '@/hooks/useStoryPersistence';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const StoriesBar: React.FC = () => {
   const { user } = useUser();
@@ -73,6 +73,7 @@ const StoriesBar: React.FC = () => {
                     {story.isOwn && (!story.allStories || story.allStories.length === 0) ? (
                       <div className="size-full rounded-full border border-dashed border-gray-200 grid place-items-center">
                         <Avatar className="size-12">
+                          <AvatarImage src={user?.avatar} alt={user?.name} />
                           <AvatarFallback 
                             className="text-xs font-medium text-white"
                             style={{ backgroundColor: user?.avatarColor || '#E08ED1' }}
@@ -83,6 +84,7 @@ const StoriesBar: React.FC = () => {
                       </div>
                     ) : (
                       <Avatar className="size-12">
+                        <AvatarImage src={story.user.avatar} alt={story.user.name} />
                         <AvatarFallback 
                           className="text-xs font-medium text-white"
                           style={{ backgroundColor: story.user.avatarColor }}

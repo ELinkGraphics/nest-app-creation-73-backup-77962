@@ -123,7 +123,7 @@ const CreateVideo = () => {
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/', { state: { feedMode: 'feed' } })}
               className="p-2 hover:bg-accent rounded-full transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />

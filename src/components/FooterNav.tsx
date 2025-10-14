@@ -34,7 +34,7 @@ const FooterNav: React.FC<FooterNavProps> = ({ active, onSelect, onOpenCreate, o
     if (active === 'ask' && onOpenStoryModal) {
       onOpenStoryModal();
     } else {
-      setShowCreatePopup(!showCreatePopup);
+      onOpenCreate();
     }
   };
 

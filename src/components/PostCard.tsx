@@ -119,10 +119,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [likesCount, setLikesCount] = useState(post.stats.likes);
   const [expanded, setExpanded] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [sharesCount, setSharesCount] = useState(post.stats.shares);
   const [followState, setFollowState] = useState<'visible' | 'checked' | 'hidden'>('visible');
   const navigate = useNavigate();
   const { user } = useUser();
-  const { toggleLike } = usePostMutations();
+  const { toggleLike, toggleSave, incrementShare, deletePost } = usePostMutations();
 
   const relative = formatRelativeTime(post.time);
   const content = expanded ? post.content : clampText(post.content, 140);
@@ -135,6 +136,33 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     setLikesCount(prev => newLikedState ? prev + 1 : prev - 1);
     
     await toggleLike(String(post.id), user.id, liked);
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    
+    const newSavedState = !saved;
+    setSaved(newSavedState);
+    
+    await toggleSave(String(post.id), user.id, saved);
+  };
+
+  const handleShare = async () => {
+    setSharesCount(prev => prev + 1);
+    await incrementShare(String(post.id));
+    
+    // Web Share API if available
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${post.user.name}'s post`,
+          text: post.content,
+          url: window.location.origin + `/post/${post.id}`
+        });
+      } catch (error) {
+        console.log('Share cancelled');
+      }
+    }
   };
 
   const handleOpenPost = () => {
@@ -243,11 +271,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         />
         <ActionButton 
           icon={<Share2 className="size-4 transition-colors" />} 
-          label={formatCount(post.stats.shares)} 
+          label={formatCount(sharesCount)}
+          onClick={handleShare}
         />
         <ActionButton
           active={saved}
-          onClick={() => setSaved(!saved)}
+          onClick={handleSave}
           icon={
             <svg className={`size-4 transition-all duration-300 ${saved ? 'fill-primary text-primary animate-scale-in' : 'text-muted-foreground'}`} fill={saved ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />

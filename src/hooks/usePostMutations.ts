@@ -137,6 +137,60 @@ export const usePostMutations = () => {
     }
   };
 
+  const addComment = async (postId: string, userId: string, content: string, parentId?: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .insert({
+          post_id: postId,
+          user_id: userId,
+          content,
+          parent_id: parentId || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Comment added",
+        description: "Your comment has been posted.",
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add comment. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const incrementShare = async (postId: string) => {
+    try {
+      // Get current shares count
+      const { data: stats } = await supabase
+        .from('post_stats')
+        .select('shares_count')
+        .eq('post_id', postId)
+        .single();
+
+      if (stats) {
+        const { error } = await supabase
+          .from('post_stats')
+          .update({ shares_count: stats.shares_count + 1 })
+          .eq('post_id', postId);
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error incrementing share:', error);
+    }
+  };
+
   const deletePost = async (postId: string, userId: string) => {
     try {
       const { error } = await supabase
@@ -165,6 +219,8 @@ export const usePostMutations = () => {
     createPost,
     toggleLike,
     toggleSave,
+    addComment,
+    incrementShare,
     deletePost,
     isCreating,
     isLiking,

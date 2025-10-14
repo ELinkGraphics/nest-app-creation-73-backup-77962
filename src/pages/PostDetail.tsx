@@ -78,7 +78,7 @@ const PostDetail: React.FC = () => {
   const navigate = useNavigate();
   const { triggerHaptic } = useHapticFeedback();
   const { user } = useUser();
-  const { toggleLike } = usePostMutations();
+  const { toggleLike, addComment } = usePostMutations();
   
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -154,22 +154,31 @@ const PostDetail: React.FC = () => {
     );
   }
 
-  const handleCommentSubmit = (commentText: string) => {
-    const comment: Comment = {
-      id: Date.now().toString(),
-      user: {
-        name: 'You',
-        initials: 'YU',
-        avatarColor: '#E08ED1',
-      },
-      text: commentText,
-      timestamp: 'now',
-      likes: 0,
-      replies: 0,
-      isLiked: false,
-    };
-    setComments(prev => [comment, ...prev]);
-    triggerHaptic('light');
+  const handleCommentSubmit = async (commentText: string) => {
+    if (!user) return;
+    
+    try {
+      await addComment(postId!, user.id, commentText);
+      
+      // Add optimistic comment to UI
+      const comment: Comment = {
+        id: Date.now().toString(),
+        user: {
+          name: user.name || 'You',
+          initials: user.initials || 'YU',
+          avatarColor: user.avatarColor || '#E08ED1',
+        },
+        text: commentText,
+        timestamp: 'now',
+        likes: 0,
+        replies: 0,
+        isLiked: false,
+      };
+      setComments(prev => [comment, ...prev]);
+      triggerHaptic('light');
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+    }
   };
 
   const handleLikeComment = (commentId: string) => {

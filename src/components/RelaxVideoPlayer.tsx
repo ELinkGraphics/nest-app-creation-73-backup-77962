@@ -1,6 +1,9 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Heart, MessageCircle, Share, Bookmark, Music, Plus, Check } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useFollowMutations } from '@/hooks/useFollowMutations';
+import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import FooterNav from './FooterNav';
 import { CommentsModal } from './CommentsModal';
@@ -36,6 +39,8 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
   // Fetch videos from database
   const { videos: relaxVideos, loading: videosLoading, hasMore, loadMore, refetch } = useVideoFeed();
   const { toggleLike, toggleSave, incrementShare } = useVideoMutations();
+  const { toggleFollow } = useFollowMutations();
+  const { user } = useUser();
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -194,17 +199,24 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex, relaxVideos.length, isTransitioning, onBackToFeed]);
 
-  const handleFollow = useCallback((userId: string) => {
+  const handleFollow = useCallback(async (userId: string) => {
+    if (!user) {
+      toast.error('Please login to follow users');
+      return;
+    }
     const currentState = followStates[userId] || 'visible';
     if (currentState === 'visible') {
-      setFollowStates(prev => ({ ...prev, [userId]: 'checked' }));
-      setFollowedUsers(prev => new Set([...prev, userId]));
-      setTimeout(() => {
-        setFollowStates(prev => ({ ...prev, [userId]: 'hidden' }));
-      }, 1500);
-      triggerHaptic('success');
+      const followed = await toggleFollow(userId);
+      if (followed) {
+        setFollowStates(prev => ({ ...prev, [userId]: 'checked' }));
+        setFollowedUsers(prev => new Set([...prev, userId]));
+        setTimeout(() => {
+          setFollowStates(prev => ({ ...prev, [userId]: 'hidden' }));
+        }, 1500);
+        triggerHaptic('success');
+      }
     }
-  }, [followStates, triggerHaptic]);
+  }, [followStates, triggerHaptic, toggleFollow, user]);
 
   // Action handlers
   const handleLike = useCallback(async (videoId: string) => {
@@ -365,16 +377,16 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
                               )}
                             </div>
                             {/* Follow button */}
-                            {(followStates[video.user.name] || 'visible') !== 'hidden' && (
+                            {(followStates[video.user.id] || 'visible') !== 'hidden' && user?.id !== video.user.id && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleFollow(video.user.name);
+                                  handleFollow(video.user.id);
                                 }}
                                 className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-white border-2 border-white flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all duration-200 z-10"
                                 aria-label={`Follow ${video.user.name}`}
                               >
-                                {(followStates[video.user.name] || 'visible') === 'visible' ? (
+                                {(followStates[video.user.id] || 'visible') === 'visible' ? (
                                   <Plus className="w-2.5 h-2.5 text-primary" />
                                 ) : (
                                   <Check className="w-2.5 h-2.5 text-green-500" />

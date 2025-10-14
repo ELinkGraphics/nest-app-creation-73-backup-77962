@@ -3,6 +3,9 @@ import { Video } from '@/hooks/useVideoFeed';
 import { Heart, MessageCircle, Share, Bookmark, Volume2, VolumeX, Plus, Check } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useVideoMutations } from '@/hooks/useVideoMutations';
+import { useFollowMutations } from '@/hooks/useFollowMutations';
+import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 interface UnifiedVideoPlayerProps {
@@ -35,6 +38,8 @@ export const UnifiedVideoPlayer = memo<UnifiedVideoPlayerProps>(({
   const [followState, setFollowState] = useState<'visible' | 'checked' | 'hidden'>('visible');
   const { triggerHaptic } = useHapticFeedback();
   const { toggleLike, toggleSave } = useVideoMutations();
+  const { toggleFollow } = useFollowMutations();
+  const { user } = useUser();
 
   // Update like/save state when video changes
   useEffect(() => {
@@ -176,13 +181,20 @@ export const UnifiedVideoPlayer = memo<UnifiedVideoPlayerProps>(({
                 )}
               </div>
               {/* Follow button */}
-              {followState !== 'hidden' && (
+              {followState !== 'hidden' && user?.id !== video.user.id && (
                 <button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    setFollowState('checked');
-                    setTimeout(() => setFollowState('hidden'), 1500);
-                    triggerHaptic('success');
+                    if (!user) {
+                      toast.error('Please login to follow users');
+                      return;
+                    }
+                    const followed = await toggleFollow(video.user.id);
+                    if (followed) {
+                      setFollowState('checked');
+                      setTimeout(() => setFollowState('hidden'), 1500);
+                      triggerHaptic('success');
+                    }
                   }}
                   className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-white border-2 border-white flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all duration-200 z-10"
                   aria-label={`Follow ${video.user.name}`}

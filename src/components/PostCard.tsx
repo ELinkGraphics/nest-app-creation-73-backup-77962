@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Post } from '@/data/mock';
 import { useUser } from '@/contexts/UserContext';
 import { usePostMutations } from '@/hooks/usePostMutations';
+import { useFollowMutations } from '@/hooks/useFollowMutations';
 import { toast } from '@/hooks/use-toast';
 import PublicProfileModal from '@/components/PublicProfileModal';
 
@@ -127,6 +128,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const navigate = useNavigate();
   const { user } = useUser();
   const { toggleLike, toggleSave, incrementShare, deletePost } = usePostMutations();
+  const { toggleFollow, checkFollowStatus } = useFollowMutations();
 
   const relative = formatRelativeTime(post.time);
   const content = expanded ? post.content : clampText(post.content, 140);
@@ -193,11 +195,19 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             verified={post.user.verified}
             avatar={post.user.avatar}
           />
-          {followState !== 'hidden' && (
+          {followState !== 'hidden' && user?.id !== post.user.id && (
             <button
-              onClick={() => {
-                setFollowState('checked');
-                setTimeout(() => setFollowState('hidden'), 1500);
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (!user) {
+                  toast({ title: "Please login to follow users" });
+                  return;
+                }
+                const followed = await toggleFollow(post.user.id || '');
+                if (followed) {
+                  setFollowState('checked');
+                  setTimeout(() => setFollowState('hidden'), 1500);
+                }
               }}
               className="absolute -bottom-1.5 -right-0.5 w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-md hover:scale-110 transition-all duration-200"
               aria-label="Follow user"

@@ -4,6 +4,9 @@ import { Video } from '@/data/mock';
 import { cn } from '@/lib/utils';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useFollowMutations } from '@/hooks/useFollowMutations';
+import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
 import { videoLogger, loadHlsJs, isHlsSource, supportsNativeHls } from '@/utils/videoUtils';
 
 interface OptimizedRelaxVideoCardProps {
@@ -47,6 +50,8 @@ export const OptimizedRelaxVideoCard = memo<OptimizedRelaxVideoCardProps>(({
   const bufferingStartTime = useRef<number>(0);
   const reducedMotion = useReducedMotion();
   const { triggerHaptic } = useHapticFeedback();
+  const { toggleFollow } = useFollowMutations();
+  const { user } = useUser();
   const lastTapTime = useRef<number>(0);
   const tapCount = useRef<number>(0);
 
@@ -307,13 +312,20 @@ export const OptimizedRelaxVideoCard = memo<OptimizedRelaxVideoCardProps>(({
               )}
             </div>
             {/* Follow button */}
-            {followState !== 'hidden' && (
+            {followState !== 'hidden' && user?.id !== video.user.id && (
               <button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
-                  setFollowState('checked');
-                  setTimeout(() => setFollowState('hidden'), 1500);
-                  triggerHaptic('success');
+                  if (!user) {
+                    toast.error('Please login to follow users');
+                    return;
+                  }
+                  const followed = await toggleFollow(video.user.id || '');
+                  if (followed) {
+                    setFollowState('checked');
+                    setTimeout(() => setFollowState('hidden'), 1500);
+                    triggerHaptic('success');
+                  }
                 }}
                 className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white border-2 border-white flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all duration-200 z-10"
                 aria-label={`Follow ${video.user.name}`}

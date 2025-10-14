@@ -3,6 +3,9 @@ import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Plus, Check } fr
 import { Video } from '@/data/mock';
 import { cn } from '@/lib/utils';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useFollowMutations } from '@/hooks/useFollowMutations';
+import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
 import PublicProfileModal from '@/components/PublicProfileModal';
 
 interface RelaxVideoCardProps {
@@ -28,6 +31,8 @@ export const RelaxVideoCard: React.FC<RelaxVideoCardProps> = ({
   const [followState, setFollowState] = useState<'visible' | 'checked' | 'hidden'>('visible');
   const [showProfileModal, setShowProfileModal] = useState(false);
   const reducedMotion = useReducedMotion();
+  const { toggleFollow } = useFollowMutations();
+  const { user } = useUser();
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -107,12 +112,19 @@ export const RelaxVideoCard: React.FC<RelaxVideoCardProps> = ({
               )}
             </div>
             {/* Follow button */}
-            {followState !== 'hidden' && (
+            {followState !== 'hidden' && user?.id !== video.user.id && (
               <button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
-                  setFollowState('checked');
-                  setTimeout(() => setFollowState('hidden'), 1500);
+                  if (!user) {
+                    toast.error('Please login to follow users');
+                    return;
+                  }
+                  const followed = await toggleFollow(video.user.id || '');
+                  if (followed) {
+                    setFollowState('checked');
+                    setTimeout(() => setFollowState('hidden'), 1500);
+                  }
                 }}
                 className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white border-2 border-white flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all duration-200 z-10"
                 aria-label={`Follow ${video.user.name}`}

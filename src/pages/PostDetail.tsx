@@ -25,36 +25,6 @@ interface Comment {
   parentId?: string;
 }
 
-const sampleComments: Comment[] = [
-  {
-    id: '1',
-    user: { name: 'Sarah Johnson', initials: 'SJ', avatarColor: '#8B5CF6' },
-    text: 'This is such a great post! Really helpful information.',
-    timestamp: '2h',
-    likes: 12,
-    replies: 2,
-    isLiked: false,
-  },
-  {
-    id: '2',
-    user: { name: 'Mike Chen', initials: 'MC', avatarColor: '#10B981', verified: true },
-    text: 'I completely agree with this perspective. Thanks for sharing!',
-    timestamp: '1h',
-    likes: 8,
-    replies: 0,
-    isLiked: true,
-  },
-  {
-    id: '3',
-    user: { name: 'Emma Davis', initials: 'ED', avatarColor: '#F59E0B' },
-    text: 'Could you share more details about this? I\'d love to learn more.',
-    timestamp: '45m',
-    likes: 5,
-    replies: 1,
-    isLiked: false,
-  },
-];
-
 const formatCount = (n: number) => {
   if (n < 1000) return String(n);
   if (n < 1000000) return (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1) + "k";
@@ -83,12 +53,12 @@ const PostDetail: React.FC = () => {
   
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [comments, setComments] = useState(sampleComments);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [saved, setSaved] = useState(false);
 
-  // Fetch post from database
+  // Fetch post and comments from database
   useEffect(() => {
     const fetchPost = async () => {
       if (!postId) return;
@@ -124,6 +94,31 @@ const PostDetail: React.FC = () => {
             .maybeSingle();
           
           setLiked(!!likeData);
+        }
+
+        // Fetch comments for this post
+        const { data: commentsData, error: commentsError } = await supabase
+          .rpc('get_post_comments', { _post_id: postId });
+
+        if (commentsError) {
+          console.error('Error fetching comments:', commentsError);
+        } else if (commentsData) {
+          const formattedComments: Comment[] = commentsData.map((c: any) => ({
+            id: c.comment_id,
+            user: {
+              name: c.name,
+              initials: c.initials,
+              avatarColor: c.avatar_color,
+              avatar: c.avatar_url,
+              verified: false,
+            },
+            text: c.content,
+            timestamp: formatRelativeTime(c.created_at),
+            likes: c.likes_count || 0,
+            replies: 0,
+            isLiked: c.user_has_liked || false,
+          }));
+          setComments(formattedComments);
         }
       }
       setLoading(false);
@@ -161,24 +156,26 @@ const PostDetail: React.FC = () => {
     try {
       const newComment = await addComment(postId!, user.id, commentText);
       
-      // Add the actual comment with user's real profile to UI
-      const comment: Comment = {
-        id: newComment?.id || Date.now().toString(),
-        user: {
-          name: user.name,
-          initials: user.initials,
-          avatarColor: user.avatarColor,
-          avatar: user.avatar,
-          verified: user.isVerified,
-        },
-        text: commentText,
-        timestamp: 'now',
-        likes: 0,
-        replies: 0,
-        isLiked: false,
-      };
-      setComments(prev => [comment, ...prev]);
-      triggerHaptic('light');
+      if (newComment) {
+        // Add the actual comment with user's real profile to UI
+        const comment: Comment = {
+          id: newComment.id,
+          user: {
+            name: user.name,
+            initials: user.initials,
+            avatarColor: user.avatarColor,
+            avatar: user.avatar,
+            verified: user.isVerified,
+          },
+          text: commentText,
+          timestamp: 'now',
+          likes: 0,
+          replies: 0,
+          isLiked: false,
+        };
+        setComments(prev => [comment, ...prev]);
+        triggerHaptic('light');
+      }
     } catch (error) {
       console.error('Failed to add comment:', error);
     }

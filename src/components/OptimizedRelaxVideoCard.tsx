@@ -50,10 +50,23 @@ export const OptimizedRelaxVideoCard = memo<OptimizedRelaxVideoCardProps>(({
   const bufferingStartTime = useRef<number>(0);
   const reducedMotion = useReducedMotion();
   const { triggerHaptic } = useHapticFeedback();
-  const { toggleFollow } = useFollowMutations();
+  const { toggleFollow, checkFollowStatus } = useFollowMutations();
   const { user } = useUser();
   const lastTapTime = useRef<number>(0);
   const tapCount = useRef<number>(0);
+
+  // Check initial follow status
+  useEffect(() => {
+    const checkInitialFollowStatus = async () => {
+      if (user && video.user.id && user.id !== video.user.id) {
+        const following = await checkFollowStatus(video.user.id);
+        if (following) {
+          setFollowState('hidden');
+        }
+      }
+    };
+    checkInitialFollowStatus();
+  }, [video.user.id, user, checkFollowStatus]);
 
   // Register video element
   useEffect(() => {

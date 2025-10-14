@@ -9,6 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { useFollowMutations } from '@/hooks/useFollowMutations';
+import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
 
 interface PublicUserProfileProps {
   userId: string;
@@ -32,6 +35,19 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
   const [posts, setPosts] = useState<any[]>([]);
   const [videos, setVideos] = useState<any[]>([]);
   const navigate = useNavigate();
+  const { toggleFollow, checkFollowStatus, isFollowing: isFollowingMutation } = useFollowMutations();
+  const { user: currentUser } = useUser();
+
+  // Check initial follow status
+  useEffect(() => {
+    const checkInitialFollowStatus = async () => {
+      if (currentUser && userId && currentUser.id !== userId) {
+        const following = await checkFollowStatus(userId);
+        setIsFollowing(following);
+      }
+    };
+    checkInitialFollowStatus();
+  }, [userId, currentUser, checkFollowStatus]);
 
   // Fetch user profile data
   useEffect(() => {
@@ -410,13 +426,23 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
 
         {/* Action Buttons */}
         <div className="flex gap-2 mb-4">
-          <Button
-            variant={isFollowing ? "outline" : "default"}
-            className="flex-1"
-            onClick={() => setIsFollowing(!isFollowing)}
-          >
-            {isFollowing ? 'Following' : 'Follow'}
-          </Button>
+          {currentUser?.id !== userId && (
+            <Button
+              variant={isFollowing ? "outline" : "default"}
+              className="flex-1"
+              onClick={async () => {
+                if (!currentUser) {
+                  toast.error('Please login to follow users');
+                  return;
+                }
+                const newFollowState = await toggleFollow(userId);
+                setIsFollowing(newFollowState);
+              }}
+              disabled={isFollowingMutation}
+            >
+              {isFollowing ? 'Unfollow' : 'Follow'}
+            </Button>
+          )}
           <Button
             variant="outline"
             className="flex-1"

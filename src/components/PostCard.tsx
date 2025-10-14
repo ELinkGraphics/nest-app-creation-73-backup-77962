@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Plus, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Post } from '@/data/mock';
@@ -129,6 +129,19 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const { user } = useUser();
   const { toggleLike, toggleSave, incrementShare, deletePost } = usePostMutations();
   const { toggleFollow, checkFollowStatus } = useFollowMutations();
+
+  // Check initial follow status
+  useEffect(() => {
+    const checkInitialFollowStatus = async () => {
+      if (user && post.user.id && user.id !== post.user.id) {
+        const following = await checkFollowStatus(post.user.id);
+        if (following) {
+          setFollowState('hidden');
+        }
+      }
+    };
+    checkInitialFollowStatus();
+  }, [post.user.id, user, checkFollowStatus]);
 
   const relative = formatRelativeTime(post.time);
   const content = expanded ? post.content : clampText(post.content, 140);

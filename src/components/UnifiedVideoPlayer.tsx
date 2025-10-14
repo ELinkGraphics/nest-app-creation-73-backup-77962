@@ -38,8 +38,21 @@ export const UnifiedVideoPlayer = memo<UnifiedVideoPlayerProps>(({
   const [followState, setFollowState] = useState<'visible' | 'checked' | 'hidden'>('visible');
   const { triggerHaptic } = useHapticFeedback();
   const { toggleLike, toggleSave } = useVideoMutations();
-  const { toggleFollow } = useFollowMutations();
+  const { toggleFollow, checkFollowStatus } = useFollowMutations();
   const { user } = useUser();
+
+  // Check initial follow status
+  useEffect(() => {
+    const checkInitialFollowStatus = async () => {
+      if (user && video.user.id && user.id !== video.user.id) {
+        const following = await checkFollowStatus(video.user.id);
+        if (following) {
+          setFollowState('hidden');
+        }
+      }
+    };
+    checkInitialFollowStatus();
+  }, [video.user.id, user, checkFollowStatus]);
 
   // Update like/save state when video changes
   useEffect(() => {

@@ -31,8 +31,21 @@ export const RelaxVideoCard: React.FC<RelaxVideoCardProps> = ({
   const [followState, setFollowState] = useState<'visible' | 'checked' | 'hidden'>('visible');
   const [showProfileModal, setShowProfileModal] = useState(false);
   const reducedMotion = useReducedMotion();
-  const { toggleFollow } = useFollowMutations();
+  const { toggleFollow, checkFollowStatus } = useFollowMutations();
   const { user } = useUser();
+
+  // Check initial follow status
+  useEffect(() => {
+    const checkInitialFollowStatus = async () => {
+      if (user && video.user.id && user.id !== video.user.id) {
+        const following = await checkFollowStatus(video.user.id);
+        if (following) {
+          setFollowState('hidden');
+        }
+      }
+    };
+    checkInitialFollowStatus();
+  }, [video.user.id, user, checkFollowStatus]);
 
   useEffect(() => {
     const videoElement = videoRef.current;

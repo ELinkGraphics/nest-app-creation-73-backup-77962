@@ -39,7 +39,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
   // Fetch videos from database
   const { videos: relaxVideos, loading: videosLoading, hasMore, loadMore, refetch } = useVideoFeed();
   const { toggleLike, toggleSave, incrementShare } = useVideoMutations();
-  const { toggleFollow } = useFollowMutations();
+  const { toggleFollow, checkFollowStatus } = useFollowMutations();
   const { user } = useUser();
   
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -60,6 +60,25 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
   const { triggerHaptic } = useHapticFeedback();
 
   const videoHeight = window.innerHeight - 50; // Account for 50px footer navbar
+
+  // Check initial follow status for all videos
+  useEffect(() => {
+    const checkAllFollowStatuses = async () => {
+      if (!user) return;
+      
+      const newFollowStates: Record<string, 'visible' | 'checked' | 'hidden'> = {};
+      for (const video of relaxVideos) {
+        if (video.user.id && user.id !== video.user.id) {
+          const following = await checkFollowStatus(video.user.id);
+          if (following) {
+            newFollowStates[video.user.id] = 'hidden';
+          }
+        }
+      }
+      setFollowStates(prev => ({ ...prev, ...newFollowStates }));
+    };
+    checkAllFollowStatuses();
+  }, [relaxVideos, user, checkFollowStatus]);
 
   // Register video elements and handle their lifecycle
   const registerVideo = useCallback((videoId: string, element: HTMLVideoElement | null) => {

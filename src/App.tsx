@@ -2,8 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { UserProvider } from "@/contexts/UserContext";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { UserProvider, useUser } from "@/contexts/UserContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import Index from "./pages/Index";
@@ -27,41 +27,63 @@ import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import UpdateNotifier from "@/components/UpdateNotifier";
 
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isLoading } = useUser();
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 const queryClient = new QueryClient();
+
+const AppRoutes = () => (
+  <Routes>
+    <Route path="/login" element={<Login />} />
+    <Route path="/signup" element={<Signup />} />
+    <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+    <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+    <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+    <Route path="/shop" element={<ProtectedRoute><Shop activeTab="shop" onTabSelect={() => {}} onOpenCreate={() => {}} /></ProtectedRoute>} />
+    <Route path="/shop/product/:id" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
+    <Route path="/seller/:sellerId" element={<ProtectedRoute><SellerProfile /></ProtectedRoute>} />
+    <Route path="/ask" element={<ProtectedRoute><Ask activeTab="ask" onTabSelect={() => {}} onOpenCreate={() => {}} /></ProtectedRoute>} />
+    <Route path="/ask/question/:questionId" element={<ProtectedRoute><QuestionDetail /></ProtectedRoute>} />
+    <Route path="/create/post" element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
+    <Route path="/create/video" element={<ProtectedRoute><CreateVideo /></ProtectedRoute>} />
+    <Route path="/create/circle" element={<ProtectedRoute><CreateCircle /></ProtectedRoute>} />
+    <Route path="/create/shop" element={<ProtectedRoute><CreateShop /></ProtectedRoute>} />
+    <Route path="/sos/:category" element={<ProtectedRoute><SOSSubCategories /></ProtectedRoute>} />
+    <Route path="/post/:postId" element={<ProtectedRoute><PostDetail /></ProtectedRoute>} />
+    <Route path="/circle/:id" element={<ProtectedRoute><CircleDetailWrapper /></ProtectedRoute>} />
+    <Route path="/circle/:circleId/post/:postId" element={<ProtectedRoute><CirclePostDetail /></ProtectedRoute>} />
+    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+    <Route path="*" element={<NotFound />} />
+  </Routes>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <UserProvider>
       <CartProvider>
         <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <UpdateNotifier />
-        <InstallPrompt />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/shop" element={<Shop activeTab="shop" onTabSelect={() => {}} onOpenCreate={() => {}} />} />
-          <Route path="/shop/product/:id" element={<ProductDetail />} />
-          <Route path="/seller/:sellerId" element={<SellerProfile />} />
-            <Route path="/ask" element={<Ask activeTab="ask" onTabSelect={() => {}} onOpenCreate={() => {}} />} />
-            <Route path="/ask/question/:questionId" element={<QuestionDetail />} />
-            <Route path="/create/post" element={<CreatePost />} />
-            <Route path="/create/video" element={<CreateVideo />} />
-            <Route path="/create/circle" element={<CreateCircle />} />
-            <Route path="/create/shop" element={<CreateShop />} />
-            <Route path="/sos/:category" element={<SOSSubCategories />} />
-            <Route path="/post/:postId" element={<PostDetail />} />
-            <Route path="/circle/:id" element={<CircleDetailWrapper />} />
-            <Route path="/circle/:circleId/post/:postId" element={<CirclePostDetail />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+          <Toaster />
+          <Sonner />
+          <UpdateNotifier />
+          <InstallPrompt />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
         </TooltipProvider>
       </CartProvider>
     </UserProvider>

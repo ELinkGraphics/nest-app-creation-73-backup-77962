@@ -55,7 +55,7 @@ export default function Signup() {
           title: "Account created!",
           description: "Welcome to MomsNest!",
         });
-        navigateToTab("home");
+        navigate("/");
       }
     } catch (error) {
       toast({

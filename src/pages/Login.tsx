@@ -33,7 +33,11 @@ export default function Login() {
           variant: "destructive",
         });
       } else {
-        navigateToTab("home");
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully logged in.",
+        });
+        navigate("/");
       }
     } catch (error) {
       toast({

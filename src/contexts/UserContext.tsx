@@ -65,7 +65,23 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Handle auth errors by signing out
+      if (event === 'SIGNED_OUT') {
+        setSession(null);
+        setUser(null);
+        setIsLoading(false);
+        window.location.href = '/login';
+        return;
+      }
+      
+      if (event === 'TOKEN_REFRESHED' && !session) {
+        // Token refresh failed, sign out
+        await supabase.auth.signOut();
+        window.location.href = '/login';
+        return;
+      }
+
       setSession(session);
       if (session?.user) {
         setTimeout(() => {
@@ -78,7 +94,15 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     });
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      if (error) {
+        console.error('Session error:', error);
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        window.location.href = '/login';
+        return;
+      }
+
       setSession(session);
       if (session?.user) {
         fetchUserProfile(session.user.id);
@@ -109,7 +133,15 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // If profile fetch fails, it might be an auth issue
+        if (error.code === 'PGRST301' || error.message.includes('JWT')) {
+          await supabase.auth.signOut();
+          window.location.href = '/login';
+          return;
+        }
+        throw error;
+      }
 
       if (profile) {
         const userProfile: UserProfile = {

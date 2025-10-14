@@ -1,5 +1,4 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { MOCK_VIDEOS, Video } from '@/data/mock';
 import { Heart, MessageCircle, Share, Bookmark, Music, Plus, Check } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { cn } from '@/lib/utils';
@@ -7,6 +6,8 @@ import FooterNav from './FooterNav';
 import { CommentsModal } from './CommentsModal';
 import { DraggablePipVideo } from './DraggablePipVideo';
 import { type TabKey } from '@/hooks/useAppNav';
+import { useVideoFeed } from '@/hooks/useVideoFeed';
+import { useVideoMutations } from '@/hooks/useVideoMutations';
 
 interface RelaxVideoPlayerProps {
   onBackToFeed?: () => void;
@@ -32,22 +33,23 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
   onTabSelect = () => {},
   onOpenCreate = () => {}
 }) => {
-  // Filter videos for relax section (using all videos for now, but can be filtered)
-  const relaxVideos = MOCK_VIDEOS;
+  // Fetch videos from database
+  const { videos: relaxVideos, loading: videosLoading, hasMore, loadMore, refetch } = useVideoFeed();
+  const { toggleLike, toggleSave, incrementShare } = useVideoMutations();
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
-  const [likedVideos, setLikedVideos] = useState<Set<number>>(new Set());
+  const [likedVideos, setLikedVideos] = useState<Set<string>>(new Set());
   const [followedUsers, setFollowedUsers] = useState<Set<string>>(new Set());
   const [followStates, setFollowStates] = useState<Record<string, 'visible' | 'checked' | 'hidden'>>({});
-  const [isLoading, setIsLoading] = useState<Record<number, boolean>>({});
-  const [expandedCaptions, setExpandedCaptions] = useState<Set<number>>(new Set());
+  const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
+  const [expandedCaptions, setExpandedCaptions] = useState<Set<string>>(new Set());
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
-  const [pipVideoIndex, setPipVideoIndex] = useState<number | null>(null);
+  const [pipVideoIndex, setPipVideoIndex] = useState<string | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
   const touchStartY = useRef<number>(0);
   const touchStartTime = useRef<number>(0);
   const { triggerHaptic } = useHapticFeedback();
@@ -55,22 +57,23 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
   const videoHeight = window.innerHeight - 50; // Account for 50px footer navbar
 
   // Register video elements and handle their lifecycle
-  const registerVideo = useCallback((index: number, element: HTMLVideoElement | null) => {
+  const registerVideo = useCallback((videoId: string, element: HTMLVideoElement | null) => {
     if (element) {
-      videoRefs.current.set(index, element);
+      videoRefs.current.set(videoId, element);
       
       // Set video properties
-      const video = relaxVideos[index];
+      const videoIndex = relaxVideos.findIndex(v => v.id === videoId);
+      const video = relaxVideos[videoIndex];
       if (video && element.src !== video.url) {
         element.src = video.url;
         element.muted = isMuted;
-        element.preload = Math.abs(index - currentIndex) <= 1 ? 'auto' : 'metadata';
+        element.preload = Math.abs(videoIndex - currentIndex) <= 1 ? 'auto' : 'metadata';
         
         // Add event listeners for loading states
-        const handleLoadStart = () => setIsLoading(prev => ({ ...prev, [index]: true }));
-        const handleCanPlay = () => setIsLoading(prev => ({ ...prev, [index]: false }));
-        const handleWaiting = () => setIsLoading(prev => ({ ...prev, [index]: true }));
-        const handlePlaying = () => setIsLoading(prev => ({ ...prev, [index]: false }));
+        const handleLoadStart = () => setIsLoading(prev => ({ ...prev, [videoId]: true }));
+        const handleCanPlay = () => setIsLoading(prev => ({ ...prev, [videoId]: false }));
+        const handleWaiting = () => setIsLoading(prev => ({ ...prev, [videoId]: true }));
+        const handlePlaying = () => setIsLoading(prev => ({ ...prev, [videoId]: false }));
         
         element.addEventListener('loadstart', handleLoadStart);
         element.addEventListener('canplay', handleCanPlay);
@@ -81,25 +84,28 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
         element.dataset.cleanup = 'true';
       }
     } else {
-      videoRefs.current.delete(index);
+      videoRefs.current.delete(videoId);
     }
   }, [relaxVideos, currentIndex, isMuted]);
 
   // Handle video playback state changes
   useEffect(() => {
-    videoRefs.current.forEach((video, index) => {
-      if (index === currentIndex) {
+    const currentVideo = relaxVideos[currentIndex];
+    if (!currentVideo) return;
+
+    videoRefs.current.forEach((video, videoId) => {
+      if (videoId === currentVideo.id) {
         // Play current video
         video.currentTime = 0; // Reset to beginning
         video.play().catch(() => {
-          console.log('Auto-play prevented for video', index);
+          console.log('Auto-play prevented for video', videoId);
         });
       } else {
         // Pause other videos
         video.pause();
       }
     });
-  }, [currentIndex]);
+  }, [currentIndex, relaxVideos]);
 
   // Handle mute/unmute for all videos
   useEffect(() => {
@@ -141,6 +147,11 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
       if (deltaY < 0 && currentIndex < relaxVideos.length - 1) {
         // Swipe up - next video
         setCurrentIndex(prev => prev + 1);
+        
+        // Load more if near the end
+        if (currentIndex >= relaxVideos.length - 3 && hasMore) {
+          loadMore();
+        }
       } else if (deltaY > 0 && currentIndex > 0) {
         // Swipe down - previous video
         setCurrentIndex(prev => prev - 1);
@@ -196,7 +207,8 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
   }, [followStates, triggerHaptic]);
 
   // Action handlers
-  const handleLike = useCallback((videoId: number) => {
+  const handleLike = useCallback(async (videoId: string) => {
+    // Optimistic update
     setLikedVideos(prev => {
       const newSet = new Set(prev);
       if (newSet.has(videoId)) {
@@ -207,19 +219,35 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
       return newSet;
     });
     triggerHaptic('light');
-  }, [triggerHaptic]);
+    
+    // Database update
+    await toggleLike(videoId);
+  }, [triggerHaptic, toggleLike]);
 
   const handleMute = useCallback(() => {
     setIsMuted(!isMuted);
     triggerHaptic('light');
   }, [isMuted, triggerHaptic]);
 
-  const handleAction = useCallback((action: string) => {
+  const handleAction = useCallback(async (action: string, videoId?: string) => {
     console.log(`${action} action triggered`);
     triggerHaptic('light');
-  }, [triggerHaptic]);
+    
+    if (action === 'save' && videoId) {
+      await toggleSave(videoId);
+    } else if (action === 'share' && videoId) {
+      await incrementShare(videoId);
+      // Trigger native share if available
+      if (navigator.share) {
+        navigator.share({
+          title: relaxVideos.find(v => v.id === videoId)?.title,
+          url: window.location.href
+        });
+      }
+    }
+  }, [triggerHaptic, toggleSave, incrementShare, relaxVideos]);
 
-  const toggleCaptionExpansion = useCallback((videoId: number) => {
+  const toggleCaptionExpansion = useCallback((videoId: string) => {
     setExpandedCaptions(prev => {
       const newSet = new Set(prev);
       if (newSet.has(videoId)) {
@@ -268,8 +296,8 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
           const video = relaxVideos[index];
           const translateY = (index - currentIndex) * videoHeight;
           const isActive = index === currentIndex;
-          const isLiked = likedVideos.has(video.id);
-          const videoIsLoading = isLoading[index] || false;
+          const isLiked = video.liked || likedVideos.has(video.id);
+          const videoIsLoading = isLoading[video.id] || false;
           
           return (
             <div
@@ -284,7 +312,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
             >
               {/* Video element */}
               <video
-                ref={(el) => registerVideo(index, el)}
+                ref={(el) => registerVideo(video.id, el)}
                 className="w-full h-full object-cover"
                 poster={video.thumbnail}
                 loop
@@ -438,7 +466,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
                     <button 
                       onClick={() => {
                         setIsCommentsOpen(true);
-                        setPipVideoIndex(index);
+                        setPipVideoIndex(video.id);
                         triggerHaptic('light');
                       }}
                       className="group flex flex-col items-center gap-1 transition-all duration-200 active:bg-transparent"
@@ -453,7 +481,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
 
                     {/* Share button with enhanced styling */}
                     <button 
-                      onClick={() => handleAction('share')}
+                      onClick={() => handleAction('share', video.id)}
                       className="group flex flex-col items-center gap-1 transition-all duration-200 active:bg-transparent"
                     >
                       <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center group-active:scale-95 hover:bg-white/25 transition-all duration-200 shadow-lg active:bg-white/15">
@@ -466,7 +494,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
 
                     {/* Bookmark button with enhanced styling */}
                     <button 
-                      onClick={() => handleAction('save')}
+                      onClick={() => handleAction('save', video.id)}
                       className="group flex flex-col items-center gap-1 transition-all duration-200"
                     >
                       <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center group-active:scale-95 hover:bg-white/25 transition-all duration-200 shadow-lg">
@@ -517,26 +545,30 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
               setIsCommentsOpen(false);
               setPipVideoIndex(null);
             }}
-            videoTitle={relaxVideos[currentIndex]?.description || ''}
+            videoTitle={relaxVideos[currentIndex]?.title || relaxVideos[currentIndex]?.description || ''}
             totalComments={relaxVideos[currentIndex]?.stats.comments || 0}
           />
         </div>
       )}
 
       {/* PIP Video when comments are open */}
-      {isCommentsOpen && pipVideoIndex !== null && relaxVideos[pipVideoIndex] && (
-        <DraggablePipVideo
-          videoSrc={relaxVideos[pipVideoIndex].url}
-          isPlaying={true}
-          isMuted={isMuted}
-          onMuteToggle={handleMute}
-          onRestore={() => {
-            setIsCommentsOpen(false);
-            setPipVideoIndex(null);
-          }}
-          title={relaxVideos[pipVideoIndex].user.name}
-        />
-      )}
+      {isCommentsOpen && pipVideoIndex !== null && (() => {
+        const pipVideo = relaxVideos.find(v => v.id === pipVideoIndex);
+        if (!pipVideo) return null;
+        return (
+          <DraggablePipVideo
+            videoSrc={pipVideo.url}
+            isPlaying={true}
+            isMuted={isMuted}
+            onMuteToggle={handleMute}
+            onRestore={() => {
+              setIsCommentsOpen(false);
+              setPipVideoIndex(null);
+            }}
+            title={pipVideo.user.name}
+          />
+        );
+      })()}
     </div>
   );
 };

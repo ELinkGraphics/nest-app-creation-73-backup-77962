@@ -8,8 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useUser } from '@/contexts/UserContext';
 import { ProfileHeaderSkeleton, PostCardSkeleton, VideoCardSkeleton, TabContentSkeleton } from '@/components/ui/loading-states';
-import { MOCK_POSTS, MOCK_VIDEOS, type Post, type Video } from '@/data/mock';
+import { MOCK_VIDEOS, type Video } from '@/data/mock';
 import EditProfileModal from '@/components/EditProfileModal';
+import { useUserPosts } from '@/hooks/useUserPosts';
+import { usePostMutations } from '@/hooks/usePostMutations';
 
 interface UserProfileProps {
   className?: string;
@@ -30,15 +32,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const [showLinksModal, setShowLinksModal] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const { user, isLoading } = useUser();
-
-  // Memoize user content for better performance
-  const userPosts = useMemo(() => {
-    if (!user) return [];
-    return MOCK_POSTS.slice(0, user.stats.posts || 3).map(post => ({
-      ...post,
-      user: { ...post.user, name: user.name, initials: user.initials }
-    }));
-  }, [user]);
+  const { posts: userPosts, isLoading: postsLoading } = useUserPosts(user?.id);
+  const { toggleLike } = usePostMutations();
 
   const userVideos = useMemo(() => {
     if (!user) return [];
@@ -46,12 +41,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
       ...video,
       user: { ...video.user, name: user.name, initials: user.initials }
     }));
-  }, [user]);
-
-  // Mock saved content
-  const savedContent = useMemo(() => {
-    if (!user) return [];
-    return [...MOCK_POSTS.slice(0, 2), ...MOCK_VIDEOS.slice(0, 1)];
   }, [user]);
 
   if (isLoading || !user) {
@@ -82,7 +71,21 @@ const UserProfile: React.FC<UserProfileProps> = ({
     return "now";
   };
 
-  const PostCard = ({ post }: { post: Post }) => (
+  const PostCard = ({ post }: { post: any }) => {
+    const [isLiked, setIsLiked] = useState(post.user_has_liked || false);
+    const [likesCount, setLikesCount] = useState(post.likes_count || 0);
+
+    const handleLike = async () => {
+      if (!user) return;
+      
+      const newLikedState = !isLiked;
+      setIsLiked(newLikedState);
+      setLikesCount(prev => newLikedState ? prev + 1 : prev - 1);
+      
+      await toggleLike(post.id, user.id, isLiked);
+    };
+
+    return (
     <Card className="mb-4 overflow-hidden rounded-none border-x-0 border-t-0 border-b border-border/50 bg-card transition-all duration-200">
       <CardContent className="px-4 sm:px-6 py-6">
         <div className="flex items-start gap-3 mb-4">
@@ -102,18 +105,18 @@ const UserProfile: React.FC<UserProfileProps> = ({
               )}
             </div>
             <span className="text-sm text-muted-foreground">
-              {formatTime(post.time)}
+              {formatTime(post.created_at)}
             </span>
           </div>
         </div>
         
         <p className="text-foreground leading-relaxed mb-4">{post.content}</p>
         
-        {post.media?.url && (
+        {post.media_url && (
           <div className="mb-4 rounded-xl overflow-hidden">
             <img 
-              src={post.media.url} 
-              alt={post.media.alt} 
+              src={post.media_url} 
+              alt="Post media" 
               className="w-full h-64 object-cover transition-transform duration-200 hover:scale-105"
             />
           </div>
@@ -121,13 +124,18 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
         <div className="flex items-center justify-between pt-4 border-t border-border/50">
           <div className="flex items-center gap-6">
-            <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors duration-150 min-h-[40px] p-2 -m-2">
-              <Heart className="h-5 w-5" />
-              <span className="font-medium">{post.stats.likes}</span>
+            <button 
+              onClick={handleLike}
+              className={`flex items-center gap-2 transition-colors duration-150 min-h-[40px] p-2 -m-2 ${
+                isLiked ? 'text-red-500' : 'text-muted-foreground hover:text-primary'
+              }`}
+            >
+              <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
+              <span className="font-medium">{likesCount}</span>
             </button>
             <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors duration-150 min-h-[40px] p-2 -m-2">
               <MessageCircle className="h-5 w-5" />
-              <span className="font-medium">{post.stats.comments}</span>
+              <span className="font-medium">{post.comments_count || 0}</span>
             </button>
           </div>
           <button className="p-2 rounded-full hover:bg-muted/50 transition-colors duration-150 min-h-[40px] min-w-[40px]">
@@ -136,7 +144,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
         </div>
       </CardContent>
     </Card>
-  );
+    );
+  };
 
   const VideoCard = ({ video }: { video: Video }) => (
     <Card className="mb-4 overflow-hidden rounded-none border-x-0 border-t-0 border-b border-border/50 bg-card transition-all duration-200">
@@ -489,25 +498,15 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
           {/* Saved Tab */}
           <TabsContent value="saved">
-            {savedContent.length > 0 ? (
-              savedContent.map((item) => (
-                'title' in item ? (
-                  <VideoCard key={`video-${item.id}`} video={item as Video} />
-                ) : (
-                  <PostCard key={`post-${item.id}`} post={item as Post} />
-                )
-              ))
-            ) : (
-              <div className="px-4 sm:px-6">
-                <EmptyState
-                  icon={Bookmark}
-                  title="No saved content"
-                  description="Save posts and videos to view them later"
-                  ctaText="Explore content"
-                  onCtaClick={() => {}}
-                />
-              </div>
-            )}
+            <div className="px-4 sm:px-6">
+              <EmptyState
+                icon={Bookmark}
+                title="No saved content"
+                description="Save posts and videos to view them later"
+                ctaText="Explore content"
+                onCtaClick={() => {}}
+              />
+            </div>
           </TabsContent>
         </Tabs>
       </div>

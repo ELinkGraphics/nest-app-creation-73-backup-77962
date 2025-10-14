@@ -1,0 +1,172 @@
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+
+export interface CreatePostData {
+  content: string;
+  media?: File;
+  tags?: string[];
+}
+
+export const usePostMutations = () => {
+  const [isCreating, setIsCreating] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
+
+  const createPost = async (data: CreatePostData, userId: string) => {
+    setIsCreating(true);
+    try {
+      let mediaUrl: string | null = null;
+
+      // Upload media if exists
+      if (data.media) {
+        const fileExt = data.media.name.split('.').pop();
+        const fileName = `${userId}/post-${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('post-media')
+          .upload(fileName, data.media);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('post-media')
+          .getPublicUrl(uploadData.path);
+        
+        mediaUrl = publicUrl;
+      }
+
+      // Insert post
+      const { data: post, error: postError } = await supabase
+        .from('posts')
+        .insert({
+          user_id: userId,
+          content: data.content,
+          media_url: mediaUrl,
+          tags: data.tags || [],
+          is_sponsored: false,
+        })
+        .select()
+        .single();
+
+      if (postError) throw postError;
+
+      toast({
+        title: "Post created",
+        description: "Your post has been published successfully.",
+      });
+
+      return post;
+    } catch (error) {
+      console.error('Error creating post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create post. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const toggleLike = async (postId: string, userId: string, isLiked: boolean) => {
+    setIsLiking(true);
+    try {
+      if (isLiked) {
+        // Unlike
+        const { error } = await supabase
+          .from('likes')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', userId);
+
+        if (error) throw error;
+      } else {
+        // Like
+        const { error } = await supabase
+          .from('likes')
+          .insert({
+            post_id: postId,
+            user_id: userId,
+          });
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update like. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const toggleSave = async (postId: string, userId: string, isSaved: boolean) => {
+    try {
+      if (isSaved) {
+        // Unsave
+        const { error } = await supabase
+          .from('saves')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', userId);
+
+        if (error) throw error;
+      } else {
+        // Save
+        const { error } = await supabase
+          .from('saves')
+          .insert({
+            post_id: postId,
+            user_id: userId,
+          });
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error toggling save:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update save. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deletePost = async (postId: string, userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Post deleted",
+        description: "Your post has been removed.",
+      });
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete post. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return {
+    createPost,
+    toggleLike,
+    toggleSave,
+    deletePost,
+    isCreating,
+    isLiking,
+  };
+};

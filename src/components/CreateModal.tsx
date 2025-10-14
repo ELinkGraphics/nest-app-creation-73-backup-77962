@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface CreateModalProps {
   isOpen: boolean;
@@ -32,10 +33,16 @@ const CreateAction = ({ label, description, onClick }: {
 );
 
 const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
+  
   if (!isOpen) return null;
 
   const handleAction = (action: string) => {
-    alert(`${action} flow`);
+    if (action === 'Post') {
+      navigate('/create-post');
+    } else {
+      alert(`${action} flow - Coming soon!`);
+    }
     onClose();
   };
 

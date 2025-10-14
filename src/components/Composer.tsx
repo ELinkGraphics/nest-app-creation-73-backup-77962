@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Camera, BarChart3, Users, HelpCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useUser } from '@/contexts/UserContext';
+import { usePostMutations } from '@/hooks/usePostMutations';
 
 interface ComposerProps {
   onPhoto: () => void;
@@ -27,7 +30,11 @@ const ComposerChip = ({ icon, label, onClick }: {
 );
 
 const Composer: React.FC<ComposerProps> = ({ onPhoto, onPoll, onCircle, onAsk }) => {
+  const navigate = useNavigate();
+  const { user } = useUser();
+  const { createPost, isCreating } = usePostMutations();
   const [expanded, setExpanded] = useState(false);
+  const [postContent, setPostContent] = useState('');
 
   return (
     <article className="bg-white rounded-2xl border border-gray-100 transition-all duration-300 overflow-hidden">
@@ -58,6 +65,8 @@ const Composer: React.FC<ComposerProps> = ({ onPhoto, onPoll, onCircle, onAsk })
                 placeholder="What's on your mind?"
                 rows={2}
                 autoFocus
+                value={postContent}
+                onChange={(e) => setPostContent(e.target.value)}
               />
             </div>
           </div>
@@ -73,12 +82,33 @@ const Composer: React.FC<ComposerProps> = ({ onPhoto, onPoll, onCircle, onAsk })
             <button
               type="button"
               className="text-muted-foreground text-sm font-medium hover:text-foreground transition-colors px-3 py-2 rounded-xl hover:bg-muted/30"
-              onClick={() => setExpanded(false)}
+              onClick={() => {
+                setExpanded(false);
+                setPostContent('');
+              }}
             >
               Cancel
             </button>
-            <button className="px-6 py-2 bg-gradient-primary text-white rounded-xl transition-all duration-200 font-semibold hover:scale-105 text-sm">
-              Share
+            <button 
+              type="button"
+              className="px-6 py-2 bg-gradient-primary text-white rounded-xl transition-all duration-200 font-semibold hover:scale-105 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!postContent.trim() || isCreating}
+              onClick={async () => {
+                if (!user) {
+                  navigate('/login');
+                  return;
+                }
+                try {
+                  await createPost({ content: postContent }, user.id);
+                  setPostContent('');
+                  setExpanded(false);
+                  window.location.reload();
+                } catch (error) {
+                  console.error('Failed to create post:', error);
+                }
+              }}
+            >
+              {isCreating ? 'Posting...' : 'Share'}
             </button>
           </div>
         </div>

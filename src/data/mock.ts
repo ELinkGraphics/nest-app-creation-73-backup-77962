@@ -1,12 +1,13 @@
 // Mock data for posts, videos, and stories
 
 export interface Post {
-  id: number;
+  id: string | number;
   user: { 
     name: string; 
     initials: string; 
     avatarColor: string; 
-    verified?: boolean; 
+    verified?: boolean;
+    avatar?: string;
   };
   time: string;
   content: string;
@@ -20,6 +21,7 @@ export interface Post {
   tags?: string[];
   stats: { likes: number; comments: number; shares: number };
   sponsored?: boolean;
+  userHasLiked?: boolean;
 }
 
 export interface Comment {

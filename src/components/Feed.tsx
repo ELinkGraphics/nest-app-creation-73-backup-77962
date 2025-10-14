@@ -37,12 +37,13 @@ const Feed: React.FC = () => {
 
       if (data) {
         const formattedPosts: Post[] = data.map((item: any) => ({
-          id: parseInt(item.post_id) || Math.random(),
+          id: item.post_id,
           user: {
             name: item.name,
             initials: item.initials,
             avatarColor: item.avatar_color,
             verified: item.is_verified,
+            avatar: item.avatar_url,
           },
           time: new Date(item.created_at).toISOString(),
           content: item.content,
@@ -60,6 +61,7 @@ const Feed: React.FC = () => {
             shares: item.shares_count || 0,
           },
           sponsored: item.is_sponsored || false,
+          userHasLiked: item.user_has_liked || false,
         }));
         setPosts(formattedPosts);
       }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PostCard from './PostCard';
-import { MOCK_POSTS, Post } from '@/data/mock';
+import { Post } from '@/data/mock';
+import { supabase } from '@/integrations/supabase/client';
 
 const PostSkeleton = () => (
   <div className="mb-6 rounded-3xl border border-gray-100 bg-white p-5 animate-pulse shadow-elegant">
@@ -32,13 +33,54 @@ export const FeedView: React.FC<FeedViewProps> = ({ onRefresh }) => {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setPosts(MOCK_POSTS);
-      setLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    fetchPosts();
   }, []);
+
+  const fetchPosts = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_feed_posts', {
+        page_num: 0,
+        page_size: 10
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        const formattedPosts: Post[] = data.map((item: any) => ({
+          id: item.post_id,
+          user: {
+            name: item.name,
+            initials: item.initials,
+            avatarColor: item.avatar_color,
+            verified: item.is_verified,
+            avatar: item.avatar_url,
+          },
+          time: new Date(item.created_at).toISOString(),
+          content: item.content,
+          media: item.media_url ? {
+            kind: "image" as const,
+            alt: item.media_alt || '',
+            colorFrom: item.media_color_from || '#4B164C',
+            colorTo: item.media_color_to || '#22194D',
+            url: item.media_url,
+          } : undefined,
+          tags: item.tags || [],
+          stats: { 
+            likes: item.likes_count || 0,
+            comments: item.comments_count || 0,
+            shares: item.shares_count || 0,
+          },
+          sponsored: item.is_sponsored || false,
+          userHasLiked: item.user_has_liked || false,
+        }));
+        setPosts(formattedPosts);
+      }
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>

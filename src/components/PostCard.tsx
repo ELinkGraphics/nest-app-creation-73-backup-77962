@@ -1,28 +1,9 @@
 import React, { useState } from 'react';
 import { Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Plus, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-interface Post {
-  id: number;
-  user: { 
-    name: string; 
-    initials: string; 
-    avatarColor: string; 
-    verified?: boolean; 
-  };
-  time: string;
-  content: string;
-  media?: { 
-    kind: "image"; 
-    alt?: string; 
-    colorFrom?: string; 
-    colorTo?: string; 
-    url?: string; 
-  };
-  tags?: string[];
-  stats: { likes: number; comments: number; shares: number };
-  sponsored?: boolean;
-}
+import { Post } from '@/data/mock';
+import { useUser } from '@/contexts/UserContext';
+import { usePostMutations } from '@/hooks/usePostMutations';
 
 interface PostCardProps {
   post: Post;
@@ -52,17 +33,22 @@ const clampText = (text: string, limit: number) => {
   return text.slice(0, limit).trim() + "…";
 };
 
-const Avatar = ({ initials, color, verified }: { 
+const Avatar = ({ initials, color, verified, avatar }: { 
   initials: string; 
   color: string; 
-  verified?: boolean; 
+  verified?: boolean;
+  avatar?: string;
 }) => (
   <div className="relative">
     <div 
-      className="size-8 rounded-full grid place-items-center text-xs font-medium text-white"
+      className="size-8 rounded-full grid place-items-center text-xs font-medium text-white overflow-hidden"
       style={{ background: color }}
     >
-      {initials}
+      {avatar ? (
+        <img src={avatar} alt={initials} className="w-full h-full object-cover" />
+      ) : (
+        initials
+      )}
     </div>
   </div>
 );
@@ -129,14 +115,27 @@ const ActionButton = ({ icon, label, onClick, active }: {
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const isTextLong = post.content.length > 120;
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(post.userHasLiked || false);
+  const [likesCount, setLikesCount] = useState(post.stats.likes);
   const [expanded, setExpanded] = useState(false);
   const [saved, setSaved] = useState(false);
   const [followState, setFollowState] = useState<'visible' | 'checked' | 'hidden'>('visible');
   const navigate = useNavigate();
+  const { user } = useUser();
+  const { toggleLike } = usePostMutations();
 
   const relative = formatRelativeTime(post.time);
   const content = expanded ? post.content : clampText(post.content, 140);
+
+  const handleLike = async () => {
+    if (!user) return;
+    
+    const newLikedState = !liked;
+    setLiked(newLikedState);
+    setLikesCount(prev => newLikedState ? prev + 1 : prev - 1);
+    
+    await toggleLike(String(post.id), user.id, liked);
+  };
 
   const handleOpenPost = () => {
     navigate(`/post/${post.id}`);
@@ -149,7 +148,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           <Avatar 
             initials={post.user.initials} 
             color={post.user.avatarColor} 
-            verified={post.user.verified} 
+            verified={post.user.verified}
+            avatar={post.user.avatar}
           />
           {followState !== 'hidden' && (
             <button
@@ -228,13 +228,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <footer className="px-2 py-2 grid grid-cols-4 gap-1 border-t border-gray-50 mt-2">
         <ActionButton
           active={liked}
-          onClick={() => setLiked(!liked)}
+          onClick={handleLike}
           icon={
             <Heart 
               className={`size-4 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500 animate-scale-in' : 'text-muted-foreground'}`} 
             />
           }
-          label={formatCount((post.stats.likes || 0) + (liked ? 1 : 0))}
+          label={formatCount(likesCount)}
         />
         <ActionButton 
           icon={<MessageCircle className="size-4 transition-colors" />} 

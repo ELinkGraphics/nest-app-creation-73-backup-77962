@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Heart, Send } from 'lucide-react';
 import { Story } from '@/data/mock';
 import { useSwipeGestures } from '@/hooks/useSwipeGestures';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -25,6 +25,8 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
   const [transitionDirection, setTransitionDirection] = useState<'next' | 'prev'>('next');
   const [nextStoryIndex, setNextStoryIndex] = useState<number | null>(null);
   const [isImagePreloaded, setIsImagePreloaded] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [message, setMessage] = useState('');
 
   const { triggerHaptic } = useHapticFeedback();
   const STORY_DURATION = 5000; // 5 seconds
@@ -298,7 +300,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
         )}
         
         {/* User info */}
-        <div className="absolute bottom-6 left-4 right-4 text-white z-10">
+        <div className="absolute bottom-20 left-4 right-4 text-white z-10">
           <div className="flex items-center gap-3">
             <div 
               className="size-10 rounded-full flex items-center justify-center text-white font-medium text-sm overflow-hidden"
@@ -319,6 +321,50 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
                 })()}
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Like button */}
+        <div className="absolute right-4 bottom-32 z-10 flex flex-col items-center gap-2">
+          <button
+            onClick={() => setIsLiked(!isLiked)}
+            className="p-2 rounded-full hover:bg-white/10 transition-colors"
+            aria-label={isLiked ? "Unlike story" : "Like story"}
+          >
+            <Heart 
+              className={`size-7 transition-all ${
+                isLiked 
+                  ? 'fill-red-500 text-red-500 scale-110' 
+                  : 'text-white'
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Message input */}
+        <div className="absolute bottom-4 left-4 right-4 z-10">
+          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Send message..."
+              className="flex-1 bg-transparent text-white placeholder:text-white/60 outline-none text-sm"
+              onFocus={() => setIsPaused(true)}
+              onBlur={() => setIsPaused(false)}
+            />
+            {message && (
+              <button
+                onClick={() => {
+                  // TODO: Implement send message functionality
+                  setMessage('');
+                }}
+                className="text-white hover:text-white/80 transition-colors"
+                aria-label="Send message"
+              >
+                <Send className="size-5" />
+              </button>
+            )}
           </div>
         </div>
 

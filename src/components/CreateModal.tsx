@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, MessageSquare, Users, ShoppingBag, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface CreateModalProps {
@@ -7,7 +7,8 @@ interface CreateModalProps {
   onClose: () => void;
 }
 
-const CreateAction = ({ label, description, onClick }: { 
+const CreateAction = ({ icon, label, description, onClick }: { 
+  icon: React.ReactNode;
   label: string; 
   description?: string; 
   onClick: () => void; 
@@ -27,7 +28,7 @@ const CreateAction = ({ label, description, onClick }: {
       </div>
     )}
     <div className="mt-2 h-6 w-6 rounded-md grid place-items-center group-hover:opacity-90 bg-tertiary" aria-hidden>
-      <Plus className="size-4 text-primary" />
+      {icon}
     </div>
   </button>
 );
@@ -38,10 +39,14 @@ const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const handleAction = (action: string) => {
-    if (action === 'Post') {
-      navigate('/create-post');
-    } else {
-      alert(`${action} flow - Coming soon!`);
+    if (action === 'post') {
+      navigate('/create/post');
+    } else if (action === 'video') {
+      navigate('/create/video');
+    } else if (action === 'circle') {
+      navigate('/create/circle');
+    } else if (action === 'shop') {
+      navigate('/create/shop');
     }
     onClose();
   };
@@ -71,21 +76,30 @@ const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose }) => {
           </p>
         </div>
         
-        <div className="px-3 pb-5 grid grid-cols-3 gap-3">
+        <div className="px-3 pb-5 grid grid-cols-2 gap-3">
           <CreateAction 
+            icon={<MessageSquare className="size-4 text-primary" />}
             label="Post" 
-            description="Text, photo, or short video" 
-            onClick={() => handleAction("Post")} 
+            description="Text or photo" 
+            onClick={() => handleAction("post")} 
           />
           <CreateAction 
+            icon={<Video className="size-4 text-primary" />}
+            label="Video" 
+            description="For Relax feed" 
+            onClick={() => handleAction("video")} 
+          />
+          <CreateAction 
+            icon={<Users className="size-4 text-primary" />}
             label="Circle" 
-            description="Start a private group" 
-            onClick={() => handleAction("Circle")} 
+            description="Start a group" 
+            onClick={() => handleAction("circle")} 
           />
           <CreateAction 
+            icon={<ShoppingBag className="size-4 text-primary" />}
             label="Shop" 
-            description="List or find items" 
-            onClick={() => handleAction("Shop")} 
+            description="List an item" 
+            onClick={() => handleAction("shop")} 
           />
         </div>
         

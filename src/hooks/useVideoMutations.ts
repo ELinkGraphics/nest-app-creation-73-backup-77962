@@ -148,11 +148,85 @@ export const useVideoMutations = () => {
     }
   }, []);
 
+  const createVideo = useCallback(async (data: {
+    video: File;
+    thumbnail?: File;
+    title: string;
+    description?: string;
+    tags?: string[];
+  }) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Please login to upload videos');
+        return { success: false };
+      }
+
+      // Upload video file
+      const videoFileName = `${user.id}/${Date.now()}-${data.video.name}`;
+      const { data: videoData, error: videoError } = await supabase.storage
+        .from('video-media')
+        .upload(videoFileName, data.video, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (videoError) throw videoError;
+
+      const { data: { publicUrl: videoUrl } } = supabase.storage
+        .from('video-media')
+        .getPublicUrl(videoFileName);
+
+      // Upload thumbnail if provided
+      let thumbnailUrl: string | null = null;
+      if (data.thumbnail) {
+        const thumbnailFileName = `${user.id}/${Date.now()}-thumb-${data.thumbnail.name}`;
+        const { data: thumbnailData, error: thumbnailError } = await supabase.storage
+          .from('video-media')
+          .upload(thumbnailFileName, data.thumbnail, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (!thumbnailError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('video-media')
+            .getPublicUrl(thumbnailFileName);
+          thumbnailUrl = publicUrl;
+        }
+      }
+
+      // Insert video record
+      const { data: videoRecord, error: insertError } = await supabase
+        .from('videos')
+        .insert({
+          user_id: user.id,
+          video_url: videoUrl,
+          thumbnail_url: thumbnailUrl,
+          title: data.title,
+          description: data.description || null,
+          tags: data.tags || []
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      toast.success('Video uploaded successfully');
+      return { success: true, video: videoRecord };
+    } catch (error: any) {
+      console.error('Error uploading video:', error);
+      toast.error('Failed to upload video');
+      return { success: false };
+    }
+  }, []);
+
   return {
     toggleLike,
     toggleSave,
     addComment,
     incrementShare,
-    deleteVideo
+    deleteVideo,
+    createVideo
   };
 };

@@ -9,6 +9,7 @@ export interface AppNavigation {
   navigateToMessages: () => void;
   navigateToShop: () => void;
   navigateToCreatePost: () => void;
+  navigateToCreateVideo: () => void;
   navigateToCreateCircle: () => void;
   navigateToCreateShop: () => void;
 }
@@ -54,6 +55,10 @@ export const useAppNav = (): AppNavigation => {
     navigate('/create/post');
   }, [navigate]);
 
+  const navigateToCreateVideo = useCallback(() => {
+    navigate('/create/video');
+  }, [navigate]);
+
   const navigateToCreateCircle = useCallback(() => {
     navigate('/create/circle');
   }, [navigate]);
@@ -68,6 +73,7 @@ export const useAppNav = (): AppNavigation => {
     navigateToMessages,
     navigateToShop,
     navigateToCreatePost,
+    navigateToCreateVideo,
     navigateToCreateCircle,
     navigateToCreateShop,
   };

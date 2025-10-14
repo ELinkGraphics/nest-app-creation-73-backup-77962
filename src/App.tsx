@@ -18,6 +18,7 @@ import CircleDetailWrapper from "./components/CircleDetailWrapper";
 import CirclePostDetail from "./pages/CirclePostDetail";
 import PostDetail from "./pages/PostDetail";
 import CreatePost from "./pages/CreatePost";
+import CreateVideo from "./pages/CreateVideo";
 import CreateCircle from "./pages/CreateCircle";
 import CreateShop from "./pages/CreateShop";
 import Login from "./pages/Login";
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/ask" element={<Ask activeTab="ask" onTabSelect={() => {}} onOpenCreate={() => {}} />} />
             <Route path="/ask/question/:questionId" element={<QuestionDetail />} />
             <Route path="/create/post" element={<CreatePost />} />
+            <Route path="/create/video" element={<CreateVideo />} />
             <Route path="/create/circle" element={<CreateCircle />} />
             <Route path="/create/shop" element={<CreateShop />} />
             <Route path="/sos/:category" element={<SOSSubCategories />} />

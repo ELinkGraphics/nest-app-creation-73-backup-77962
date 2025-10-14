@@ -22,7 +22,9 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("home");
   const [openCreate, setOpenCreate] = useState(false);
   const [openGoLive, setOpenGoLive] = useState(false);
-  const [feedMode, setFeedMode] = useState<FeedMode>("feed");
+  const [feedMode, setFeedMode] = useState<FeedMode>(
+    location.state?.feedMode === 'relax' ? 'relax' : 'feed'
+  );
   const [showCircles, setShowCircles] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showSafe, setShowSafe] = useState(false);

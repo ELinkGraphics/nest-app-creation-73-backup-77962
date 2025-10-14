@@ -215,7 +215,7 @@ const PostDetail: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/')}
           className="p-2 h-auto"
         >
           <ArrowLeft className="size-5" />

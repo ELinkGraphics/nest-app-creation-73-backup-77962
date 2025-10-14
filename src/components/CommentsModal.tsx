@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useVideoMutations } from '@/hooks/useVideoMutations';
+import { useUser } from '@/contexts/UserContext';
 
 interface Comment {
   id: string;
@@ -46,6 +47,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
   totalComments,
   onHeightChange
 }) => {
+  const { user } = useUser();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
@@ -647,18 +649,25 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
         </div>
 
         {/* Comment input - sticky at bottom */}
-        <div className="sticky bottom-0">
+        <div className="sticky bottom-0 bg-background border-t border-border">
           <div className="px-4 py-3">
             <div className="flex items-end gap-3 bg-background border border-border rounded-2xl p-3 shadow-lg">
-              <div className="size-8 rounded-full bg-gradient-primary flex items-center justify-center text-timestamp font-medium text-primary-foreground flex-shrink-0">
-                YU
+              <div 
+                className="size-8 rounded-full flex items-center justify-center text-xs font-medium text-white flex-shrink-0 overflow-hidden"
+                style={{ backgroundColor: user?.avatarColor || '#E08ED1' }}
+              >
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user.initials} className="w-full h-full object-cover" />
+                ) : (
+                  user?.initials || 'U'
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment..."
-                  className="w-full bg-transparent text-comment-text placeholder:text-muted-foreground outline-none resize-none min-h-[24px] leading-6"
+                  className="w-full bg-transparent text-sm placeholder:text-muted-foreground outline-none resize-none min-h-[24px] leading-6"
                   rows={1}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {

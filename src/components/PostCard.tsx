@@ -128,6 +128,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [imageHeights, setImageHeights] = useState<number[]>([]);
   const navigate = useNavigate();
   const { user } = useUser();
   const { toggleLike, toggleSave, incrementShare, deletePost } = usePostMutations();
@@ -162,6 +163,24 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const relative = formatRelativeTime(post.time);
   const content = expanded ? post.content : clampText(post.content, 140);
+
+  const DEFAULT_HEIGHT = 192; // h-48 in pixels
+
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>, index: number) => {
+    const img = e.currentTarget;
+    const containerWidth = img.parentElement?.clientWidth || window.innerWidth;
+    const aspectRatio = img.naturalHeight / img.naturalWidth;
+    const calculatedHeight = containerWidth * aspectRatio;
+    
+    // Only increase height if image is taller than default, otherwise keep default
+    const finalHeight = calculatedHeight > DEFAULT_HEIGHT ? calculatedHeight : DEFAULT_HEIGHT;
+    
+    setImageHeights(prev => {
+      const newHeights = [...prev];
+      newHeights[index] = finalHeight;
+      return newHeights;
+    });
+  };
 
   const handleLike = async () => {
     if (!user) return;
@@ -289,8 +308,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                     <img 
                       src={url} 
                       alt={`${post.media?.alt || 'Post image'} ${index + 1}`}
-                      className="w-full h-48 object-cover" 
+                      className="w-full object-cover" 
+                      style={{ height: imageHeights[index] ? `${imageHeights[index]}px` : '192px' }}
                       loading="lazy"
+                      onLoad={(e) => handleImageLoad(e, index)}
                     />
                   </div>
                 </CarouselItem>
@@ -315,13 +336,27 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
       ) : post.media && post.media.url ? (
         <div className="px-0">
-          <MediaBlock 
-            alt={post.media.alt} 
-            url={post.media.url} 
-            from={post.media.colorFrom || '#FEDAF7'} 
-            to={post.media.colorTo || '#E08ED1'} 
+          <div 
+            className="relative overflow-hidden group/media cursor-pointer"
             onClick={handleOpenPost}
-          />
+          >
+            <div 
+              className="rounded-none overflow-hidden relative"
+              aria-label={post.media.alt}
+              role="img"
+              style={{ background: `linear-gradient(135deg, ${post.media.colorFrom || '#FEDAF7'}, ${post.media.colorTo || '#E08ED1'})` }}
+            >
+              <img 
+                src={post.media.url} 
+                alt={post.media.alt || ""} 
+                className="w-full object-cover transition-transform duration-500 group-hover/media:scale-105" 
+                style={{ height: imageHeights[0] ? `${imageHeights[0]}px` : '192px' }}
+                loading="lazy"
+                onLoad={(e) => handleImageLoad(e, 0)}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover/media:opacity-100 transition-opacity duration-300" />
+            </div>
+          </div>
         </div>
       ) : null}
       

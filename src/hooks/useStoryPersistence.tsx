@@ -25,7 +25,8 @@ export const useStoryPersistence = () => {
           profiles:user_id (
             name,
             initials,
-            avatar_color
+            avatar_color,
+            avatar_url
           )
         `)
         .gt('expires_at', new Date().toISOString())
@@ -40,6 +41,7 @@ export const useStoryPersistence = () => {
           name: story.profiles?.name || 'Unknown',
           initials: story.profiles?.initials || '??',
           avatarColor: story.profiles?.avatar_color || '#4B164C',
+          avatar: story.profiles?.avatar_url,
         },
         image: story.media_url,
         isOwn: story.user_id === user?.id,
@@ -75,6 +77,7 @@ export const useStoryPersistence = () => {
             name: user.name,
             initials: user.initials,
             avatarColor: user.avatarColor || '#E08ED1',
+            avatar: user.avatar,
           },
           image: ownStories.length > 0 ? ownStories[0].image : '',
           isOwn: true,
@@ -105,6 +108,7 @@ export const useStoryPersistence = () => {
             name: user.name,
             initials: user.initials,
             avatarColor: user.avatarColor || '#E08ED1',
+            avatar: user.avatar,
           },
           image: '',
           isOwn: true,

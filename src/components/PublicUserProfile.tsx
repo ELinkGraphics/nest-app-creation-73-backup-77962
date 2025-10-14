@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Calendar, Link as LinkIcon, Check, MessageCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { formatDistanceToNow } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface PublicUserProfileProps {
   userId: string;
@@ -25,51 +27,240 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
   const [isFollowing, setIsFollowing] = useState(false);
   const [showAllBio, setShowAllBio] = useState(false);
   const [showLinksModal, setShowLinksModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [videos, setVideos] = useState<any[]>([]);
+  const navigate = useNavigate();
 
-  // TODO: Replace with actual data fetching based on userId
-  const isLoading = false;
-  const user = {
-    id: userId,
-    name: 'User Name',
-    username: '@username',
-    initials: 'UN',
-    avatar: '',
-    avatarColor: '#4B164C',
-    coverImage: '',
-    bio: 'This is a user bio...',
-    subtitle: 'Subtitle',
-    location: 'Location',
-    website: ['https://example.com'],
-    joinedDate: new Date().toISOString(),
-    isVerified: false,
-    stats: {
-      followers: 0,
-      following: 0,
-      posts: 0,
-      videos: 0
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch profile with stats
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select(`
+            *,
+            profile_stats(
+              followers_count,
+              following_count,
+              posts_count,
+              videos_count,
+              replies_count,
+              saves_count
+            )
+          `)
+          .eq('id', userId)
+          .single();
+
+        if (profileError) throw profileError;
+
+        if (profileData) {
+          setUser({
+            id: profileData.id,
+            name: profileData.name,
+            username: profileData.username,
+            initials: profileData.initials,
+            avatar: profileData.avatar_url,
+            avatarColor: profileData.avatar_color,
+            coverImage: profileData.cover_image_url,
+            bio: profileData.bio,
+            subtitle: profileData.subtitle,
+            location: profileData.location,
+            website: profileData.website ? [profileData.website] : [],
+            joinedDate: profileData.joined_date,
+            isVerified: profileData.is_verified,
+            stats: {
+              followers: profileData.profile_stats?.followers_count || 0,
+              following: profileData.profile_stats?.following_count || 0,
+              posts: profileData.profile_stats?.posts_count || 0,
+              videos: profileData.profile_stats?.videos_count || 0
+            }
+          });
+        }
+
+        // Fetch user's posts
+        const { data: postsData, error: postsError } = await supabase
+          .from('posts')
+          .select(`
+            *,
+            profiles:user_id(name, username, initials, avatar_url, avatar_color, is_verified),
+            post_stats(likes_count, comments_count, shares_count, saves_count)
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+
+        if (postsError) throw postsError;
+        setPosts(postsData || []);
+
+        // Fetch user's videos
+        const { data: videosData, error: videosError } = await supabase
+          .from('videos')
+          .select(`
+            *,
+            video_stats(likes_count, comments_count, shares_count, saves_count, views_count)
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+
+        if (videosError) throw videosError;
+        setVideos(videosData || []);
+
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (userId) {
+      fetchUserData();
     }
-  };
+  }, [userId]);
 
-  const posts: any[] = [];
-  const videos: any[] = [];
+  // Set up real-time subscriptions
+  useEffect(() => {
+    if (!userId) return;
+
+    // Subscribe to profile changes
+    const profileChannel = supabase
+      .channel('profile-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'profiles',
+        filter: `id=eq.${userId}`
+      }, () => {
+        // Refetch profile data on change
+        fetchUserData();
+      })
+      .subscribe();
+
+    // Subscribe to posts changes
+    const postsChannel = supabase
+      .channel('user-posts-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'posts',
+        filter: `user_id=eq.${userId}`
+      }, () => {
+        // Refetch posts on change
+        fetchUserData();
+      })
+      .subscribe();
+
+    // Subscribe to videos changes
+    const videosChannel = supabase
+      .channel('user-videos-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'videos',
+        filter: `user_id=eq.${userId}`
+      }, () => {
+        // Refetch videos on change
+        fetchUserData();
+      })
+      .subscribe();
+
+    const fetchUserData = async () => {
+      try {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select(`
+            *,
+            profile_stats(
+              followers_count,
+              following_count,
+              posts_count,
+              videos_count
+            )
+          `)
+          .eq('id', userId)
+          .single();
+
+        if (profileData) {
+          setUser({
+            id: profileData.id,
+            name: profileData.name,
+            username: profileData.username,
+            initials: profileData.initials,
+            avatar: profileData.avatar_url,
+            avatarColor: profileData.avatar_color,
+            coverImage: profileData.cover_image_url,
+            bio: profileData.bio,
+            subtitle: profileData.subtitle,
+            location: profileData.location,
+            website: profileData.website ? [profileData.website] : [],
+            joinedDate: profileData.joined_date,
+            isVerified: profileData.is_verified,
+            stats: {
+              followers: profileData.profile_stats?.followers_count || 0,
+              following: profileData.profile_stats?.following_count || 0,
+              posts: profileData.profile_stats?.posts_count || 0,
+              videos: profileData.profile_stats?.videos_count || 0
+            }
+          });
+        }
+
+        const { data: postsData } = await supabase
+          .from('posts')
+          .select(`
+            *,
+            profiles:user_id(name, username, initials, avatar_url, avatar_color, is_verified),
+            post_stats(likes_count, comments_count, shares_count, saves_count)
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+
+        setPosts(postsData || []);
+
+        const { data: videosData } = await supabase
+          .from('videos')
+          .select(`
+            *,
+            video_stats(likes_count, comments_count, shares_count, saves_count, views_count)
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+
+        setVideos(videosData || []);
+      } catch (error) {
+        console.error('Error refetching user data:', error);
+      }
+    };
+
+    return () => {
+      supabase.removeChannel(profileChannel);
+      supabase.removeChannel(postsChannel);
+      supabase.removeChannel(videosChannel);
+    };
+  }, [userId]);
 
   const formatTime = (dateString: string) => {
     return formatDistanceToNow(new Date(dateString), { addSuffix: true });
   };
 
   const PostCard = ({ post }: { post: any }) => (
-    <Card className="p-4 hover:bg-muted/50 transition-colors cursor-pointer">
+    <Card 
+      className="p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+      onClick={() => navigate(`/post/${post.id}`)}
+    >
       <div className="flex items-start gap-3">
         <Avatar className="h-10 w-10">
-          <AvatarImage src={post.user?.avatar_url} />
-          <AvatarFallback style={{ backgroundColor: post.user?.avatar_color }}>
-            {post.user?.initials}
+          <AvatarImage src={post.profiles?.avatar_url} />
+          <AvatarFallback style={{ backgroundColor: post.profiles?.avatar_color }}>
+            {post.profiles?.initials}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-semibold">{post.user?.name}</span>
-            <span className="text-muted-foreground text-sm">{post.user?.username}</span>
+            <span className="font-semibold">{post.profiles?.name}</span>
+            <span className="text-muted-foreground text-sm">@{post.profiles?.username}</span>
             <span className="text-muted-foreground text-sm">· {formatTime(post.created_at)}</span>
           </div>
           <p className="mt-2 whitespace-pre-wrap break-words">{post.content}</p>
@@ -79,8 +270,8 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
             </div>
           )}
           <div className="flex items-center gap-6 mt-3 text-muted-foreground text-sm">
-            <span>{post.likes_count || 0} likes</span>
-            <span>{post.comments_count || 0} comments</span>
+            <span>{post.post_stats?.likes_count || 0} likes</span>
+            <span>{post.post_stats?.comments_count || 0} comments</span>
           </div>
         </div>
       </div>
@@ -104,8 +295,8 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{video.description}</p>
         )}
         <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-          <span>{video.likes_count || 0} likes</span>
-          <span>{video.views_count || 0} views</span>
+          <span>{video.video_stats?.likes_count || 0} likes</span>
+          <span>{video.video_stats?.views_count || 0} views</span>
         </div>
       </div>
     </Card>
@@ -146,13 +337,7 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
     );
   };
 
-  const bioLimit = 150;
-  const shouldTruncateBio = user.bio && user.bio.length > bioLimit;
-  const displayBio = shouldTruncateBio && !showAllBio 
-    ? user.bio.slice(0, bioLimit) + '...' 
-    : user.bio;
-
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
       <div className={`w-full ${className}`}>
         <div className="space-y-4 p-4">
@@ -164,6 +349,12 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
       </div>
     );
   }
+
+  const bioLimit = 150;
+  const shouldTruncateBio = user.bio && user.bio.length > bioLimit;
+  const displayBio = shouldTruncateBio && !showAllBio 
+    ? user.bio.slice(0, bioLimit) + '...' 
+    : user.bio;
 
   const websites = Array.isArray(user.website) ? user.website : user.website ? [user.website] : [];
 
@@ -317,7 +508,7 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
         <TabsContent value="posts" className="mt-0">
           <div className="space-y-4 p-4">
             {posts.length > 0 ? (
-              posts.map((post) => <PostCard key={post.post_id} post={post} />)
+              posts.map((post) => <PostCard key={post.id} post={post} />)
             ) : (
               <EmptyState 
                 icon={MessageCircle}
@@ -330,7 +521,7 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
         <TabsContent value="videos" className="mt-0">
           <div className="grid grid-cols-3 gap-1 p-1">
             {videos.length > 0 ? (
-              videos.map((video) => <VideoCard key={video.video_id} video={video} />)
+              videos.map((video) => <VideoCard key={video.id} video={video} />)
             ) : (
               <div className="col-span-3">
                 <EmptyState 

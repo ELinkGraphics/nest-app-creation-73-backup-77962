@@ -17,7 +17,8 @@ export interface Post {
     alt?: string; 
     colorFrom?: string; 
     colorTo?: string; 
-    url?: string; 
+    url?: string;
+    urls?: string[];
   };
   tags?: string[];
   stats: { likes: number; comments: number; shares: number };

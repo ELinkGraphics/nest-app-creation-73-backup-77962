@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Heart, MessageCircle, Share, MoreHorizontal } from 'lucide-react';
 import { Post, Comment, MOCK_COMMENTS } from '@/data/mock';
 import { cn } from '@/lib/utils';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
 
 interface PostDetailModalProps {
   post: Post;
@@ -62,6 +63,21 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
 }) => {
   const reducedMotion = useReducedMotion();
   const comments = MOCK_COMMENTS[post.id] || [];
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    if (!carouselApi) return;
+
+    const onSelect = () => {
+      setCurrentSlide(carouselApi.selectedScrollSnap());
+    };
+
+    carouselApi.on('select', onSelect);
+    return () => {
+      carouselApi.off('select', onSelect);
+    };
+  }, [carouselApi]);
 
   if (!isOpen) return null;
 
@@ -152,7 +168,44 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
             </div>
 
             {/* Media */}
-            {post.media && (
+            {post.media && post.media.urls && post.media.urls.length > 0 ? (
+              <div className="mb-4 relative">
+                <Carousel className="w-full" setApi={setCarouselApi}>
+                  <CarouselContent>
+                    {post.media.urls.map((url, index) => (
+                      <CarouselItem key={index}>
+                        <img
+                          src={url}
+                          alt={`${post.media?.alt || 'Post image'} ${index + 1}`}
+                          loading="lazy"
+                          className="w-full rounded-2xl aspect-[4/5] object-cover"
+                        />
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                </Carousel>
+                
+                {post.media.urls.length > 1 && (
+                  <>
+                    <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm z-20">
+                      {currentSlide + 1} / {post.media.urls.length}
+                    </div>
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                      {post.media.urls.map((_, idx) => (
+                        <div 
+                          key={idx}
+                          className={`w-2 h-2 rounded-full transition-all ${
+                            idx === currentSlide 
+                              ? 'bg-white w-2.5' 
+                              : 'bg-white/50'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : post.media && post.media.url ? (
               <div className="mb-4">
                 <img
                   src={post.media.url}
@@ -161,7 +214,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({
                   className="w-full rounded-2xl aspect-[4/5] object-cover"
                 />
               </div>
-            )}
+            ) : null}
 
             {/* Stats */}
             <div className="flex items-center justify-between py-3 border-b border-gray-200 mb-4">

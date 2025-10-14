@@ -58,7 +58,14 @@ export const FeedView: React.FC<FeedViewProps> = ({ onRefresh }) => {
           },
           time: new Date(item.created_at).toISOString(),
           content: item.content,
-          media: item.media_url ? {
+          media: item.media_urls && item.media_urls.length > 0 ? {
+            kind: "image" as const,
+            alt: item.media_alt || '',
+            colorFrom: item.media_color_from || '#4B164C',
+            colorTo: item.media_color_to || '#22194D',
+            url: item.media_url,
+            urls: item.media_urls,
+          } : item.media_url ? {
             kind: "image" as const,
             alt: item.media_alt || '',
             colorFrom: item.media_color_from || '#4B164C',

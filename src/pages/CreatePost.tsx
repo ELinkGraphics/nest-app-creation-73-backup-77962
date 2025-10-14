@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, Camera, MapPin, Users, Globe, Image, Video, Mic } from 'lucide-react';
+import { ArrowLeft, Camera, MapPin, Users, Globe, Image, Video, Mic, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,20 +13,36 @@ const CreatePost: React.FC = () => {
   const { createPost, isCreating } = usePostMutations();
   const [postText, setPostText] = useState('');
   const [privacy, setPrivacy] = useState<'public' | 'friends' | 'private'>('public');
-  const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
-  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<File[]>([]);
+  const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const MAX_PHOTOS = 10;
 
-  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedMedia(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setMediaPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const handleMediaSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const newFiles = [...selectedMedia, ...files].slice(0, MAX_PHOTOS);
+    
+    const previews = await Promise.all(
+      newFiles.map(file => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+      })
+    );
+    
+    setSelectedMedia(newFiles);
+    setMediaPreviews(previews);
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
+  };
+
+  const removePhoto = (index: number) => {
+    setSelectedMedia(prev => prev.filter((_, i) => i !== index));
+    setMediaPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handlePost = async () => {
@@ -37,7 +53,7 @@ const CreatePost: React.FC = () => {
 
     try {
       await createPost(
-        { content: postText, media: selectedMedia || undefined },
+        { content: postText, media: selectedMedia.length > 0 ? selectedMedia : undefined },
         user.id
       );
       navigate('/');
@@ -115,18 +131,24 @@ const CreatePost: React.FC = () => {
         />
 
         {/* Media Preview */}
-        {mediaPreview && (
-          <div className="relative rounded-lg overflow-hidden">
-            <img src={mediaPreview} alt="Preview" className="w-full h-auto max-h-96 object-cover" />
-            <button
-              onClick={() => {
-                setSelectedMedia(null);
-                setMediaPreview(null);
-              }}
-              className="absolute top-2 right-2 p-2 bg-black/50 rounded-full text-white hover:bg-black/70"
-            >
-              ✕
-            </button>
+        {mediaPreviews.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {mediaPreviews.map((preview, index) => (
+                <div key={index} className="relative flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden">
+                  <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => removePhoto(index)}
+                    className="absolute -top-1 -right-1 p-1 bg-black/70 rounded-full text-white hover:bg-black/90 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {selectedMedia.length}/{MAX_PHOTOS} photos
+            </p>
           </div>
         )}
 
@@ -135,6 +157,7 @@ const CreatePost: React.FC = () => {
           ref={fileInputRef}
           type="file"
           accept="image/*,video/*"
+          multiple
           onChange={handleMediaSelect}
           className="hidden"
         />

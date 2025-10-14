@@ -7,6 +7,7 @@ import { usePostMutations } from '@/hooks/usePostMutations';
 import { useFollowMutations } from '@/hooks/useFollowMutations';
 import { toast } from '@/hooks/use-toast';
 import PublicProfileModal from '@/components/PublicProfileModal';
+import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
 
 interface PostCardProps {
   post: Post;
@@ -125,6 +126,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [sharesCount, setSharesCount] = useState(post.stats.shares);
   const [followState, setFollowState] = useState<'visible' | 'checked' | 'hidden'>('visible');
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
   const { user } = useUser();
   const { toggleLike, toggleSave, incrementShare, deletePost } = usePostMutations();
@@ -142,6 +145,20 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     };
     checkInitialFollowStatus();
   }, [post.user.id, user, checkFollowStatus]);
+
+  // Track carousel slide changes
+  useEffect(() => {
+    if (!carouselApi) return;
+
+    const onSelect = () => {
+      setCurrentSlide(carouselApi.selectedScrollSnap());
+    };
+
+    carouselApi.on('select', onSelect);
+    return () => {
+      carouselApi.off('select', onSelect);
+    };
+  }, [carouselApi]);
 
   const relative = formatRelativeTime(post.time);
   const content = expanded ? post.content : clampText(post.content, 140);
@@ -262,7 +279,41 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </button>
       </header>
       
-      {post.media && (
+      {post.media && post.media.urls && post.media.urls.length > 0 ? (
+        <div className="px-0 relative">
+          <Carousel className="w-full" setApi={setCarouselApi}>
+            <CarouselContent>
+              {post.media.urls.map((url, index) => (
+                <CarouselItem key={index}>
+                  <div className="relative overflow-hidden cursor-pointer" onClick={handleOpenPost}>
+                    <img 
+                      src={url} 
+                      alt={`${post.media?.alt || 'Post image'} ${index + 1}`}
+                      className="w-full h-48 object-cover" 
+                      loading="lazy"
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+          
+          {post.media.urls.length > 1 && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+              {post.media.urls.map((_, idx) => (
+                <div 
+                  key={idx}
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${
+                    idx === currentSlide 
+                      ? 'bg-white w-2' 
+                      : 'bg-white/50'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : post.media && post.media.url ? (
         <div className="px-0">
           <MediaBlock 
             alt={post.media.alt} 
@@ -272,7 +323,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             onClick={handleOpenPost}
           />
         </div>
-      )}
+      ) : null}
       
       <div className="px-4 pt-3">
         <p className={`text-post-content text-foreground leading-relaxed font-normal ${isTextLong && !expanded ? 'line-clamp-2' : ''}`}>

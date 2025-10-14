@@ -222,6 +222,7 @@ export type Database = {
           media_color_from: string | null
           media_color_to: string | null
           media_url: string | null
+          media_urls: string[] | null
           tags: string[] | null
           updated_at: string | null
           user_id: string
@@ -235,6 +236,7 @@ export type Database = {
           media_color_from?: string | null
           media_color_to?: string | null
           media_url?: string | null
+          media_urls?: string[] | null
           tags?: string[] | null
           updated_at?: string | null
           user_id: string
@@ -248,6 +250,7 @@ export type Database = {
           media_color_from?: string | null
           media_color_to?: string | null
           media_url?: string | null
+          media_urls?: string[] | null
           tags?: string[] | null
           updated_at?: string | null
           user_id?: string
@@ -739,6 +742,7 @@ export type Database = {
           media_color_from: string
           media_color_to: string
           media_url: string
+          media_urls: string[]
           name: string
           post_id: string
           saves_count: number

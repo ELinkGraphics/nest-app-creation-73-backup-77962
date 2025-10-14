@@ -4,7 +4,7 @@ import { toast } from '@/hooks/use-toast';
 
 export interface CreatePostData {
   content: string;
-  media?: File;
+  media?: File[];
   tags?: string[];
 }
 
@@ -15,34 +15,38 @@ export const usePostMutations = () => {
   const createPost = async (data: CreatePostData, userId: string) => {
     setIsCreating(true);
     try {
-      let mediaUrl: string | null = null;
+      let mediaUrls: string[] = [];
 
-      // Upload media if exists
-      if (data.media) {
-        const fileExt = data.media.name.split('.').pop();
-        const fileName = `${userId}/post-${Date.now()}.${fileExt}`;
+      // Upload multiple media files if exist
+      if (data.media && data.media.length > 0) {
+        const uploadPromises = data.media.map(async (file, index) => {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${userId}/post-${Date.now()}-${index}.${fileExt}`;
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('post-media')
+            .upload(fileName, file);
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('post-media')
+            .getPublicUrl(uploadData.path);
+          
+          return publicUrl;
+        });
         
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('post-media')
-          .upload(fileName, data.media);
-
-        if (uploadError) throw uploadError;
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('post-media')
-          .getPublicUrl(uploadData.path);
-        
-        mediaUrl = publicUrl;
+        mediaUrls = await Promise.all(uploadPromises);
       }
 
-      // Insert post
+      // Insert post with media_urls array
       const { data: post, error: postError } = await supabase
         .from('posts')
         .insert({
           user_id: userId,
           content: data.content,
-          media_url: mediaUrl,
+          media_url: mediaUrls[0] || null,
+          media_urls: mediaUrls,
           tags: data.tags || [],
           is_sponsored: false,
         })

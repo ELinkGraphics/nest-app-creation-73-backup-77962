@@ -225,20 +225,22 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 
   // Enhanced touch handlers for smooth drag-to-dismiss
   const handleTouchStart = (e: React.TouchEvent) => {
-    // Only allow dragging from header or when scroll is at top
+    // Only allow dragging from header and never from interactive elements
     const target = e.target as HTMLElement;
+    const isInteractive = target.closest('textarea, input, button, a, [role="textbox"], [contenteditable], [data-no-drag]');
+    if (isInteractive) return; // allow focusing/typing
+
     const isHeader = target.closest('[data-modal-header]');
-    
     if (!isHeader && !isScrollAtTop()) return;
-    
-    // Prevent any default behavior and stop propagation
+
+    // Begin drag gesture
     e.preventDefault();
     e.stopPropagation();
-    
+
     setIsDragging(true);
     setStartY(e.touches[0].clientY);
     setDragOffset(0);
-    
+
     // Disable body scroll
     document.body.style.overflow = 'hidden';
     document.body.style.touchAction = 'none';
@@ -299,13 +301,15 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
   // Mouse handlers for desktop support
   const handleMouseStart = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
+    const isInteractive = target.closest('textarea, input, button, a, [role="textbox"], [contenteditable], [data-no-drag]');
+    if (isInteractive) return; // allow focusing/typing/clicking controls
+
     const isHeader = target.closest('[data-modal-header]');
-    
     if (!isHeader && !isScrollAtTop()) return;
-    
+
     e.preventDefault();
     e.stopPropagation();
-    
+
     setIsDragging(true);
     setStartY(e.clientY);
     setDragOffset(0);
@@ -649,7 +653,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
         </div>
 
         {/* Comment input - sticky at bottom */}
-        <div className="sticky bottom-0 bg-background border-t border-border z-10">
+        <div className="sticky bottom-0 bg-background border-t border-border z-10" data-no-drag style={{ touchAction: 'auto' }}>
           <div className="px-4 py-3">
             <div className="flex items-end gap-3 bg-background border border-border rounded-2xl p-3 shadow-lg">
               <div 
@@ -662,7 +666,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
                   user?.initials || 'U'
                 )}
               </div>
-              <div className="flex-1 min-w-0 relative z-10">
+              <div className="flex-1 min-w-0 relative z-10" onTouchStart={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}

@@ -225,7 +225,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black z-[100] flex items-center justify-center">
       {/* Progress bars - only show current user's stories */}
       <div className="absolute top-4 left-4 right-4 flex gap-1 z-10">
         {(() => {
@@ -301,10 +301,14 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
         <div className="absolute bottom-6 left-4 right-4 text-white z-10">
           <div className="flex items-center gap-3">
             <div 
-              className="size-10 rounded-full flex items-center justify-center text-white font-medium text-sm"
+              className="size-10 rounded-full flex items-center justify-center text-white font-medium text-sm overflow-hidden"
               style={{ backgroundColor: currentStory.user.avatarColor }}
             >
-              {currentStory.user.initials}
+              {currentStory.user.avatar ? (
+                <img src={currentStory.user.avatar} alt={currentStory.user.name} className="w-full h-full object-cover" />
+              ) : (
+                currentStory.user.initials
+              )}
             </div>
             <div>
               <p className="font-medium">{currentStory.user.name}</p>

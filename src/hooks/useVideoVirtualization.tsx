@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Video } from '@/data/mock';
+import { Video } from '@/hooks/useVideoFeed';
 
 interface UseVideoVirtualizationOptions {
   videos: Video[];

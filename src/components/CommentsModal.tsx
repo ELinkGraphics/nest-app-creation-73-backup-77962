@@ -4,6 +4,8 @@ import { useSwipeGestures } from '@/hooks/useSwipeGestures';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useVideoMutations } from '@/hooks/useVideoMutations';
 
 interface Comment {
   id: string;
@@ -24,263 +26,12 @@ interface Comment {
 interface CommentsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  videoId: string;
   videoTitle: string;
   totalComments: number;
   onHeightChange?: (height: number) => void;
 }
 
-const sampleComments: Comment[] = [
-  {
-    id: '1',
-    user: {
-      name: 'Sarah Johnson',
-      initials: 'SJ',
-      avatarColor: '#FF6B6B',
-      verified: true
-    },
-    text: 'This is absolutely amazing! Love the creativity 😍',
-    likes: 234,
-    replies: 12,
-    timestamp: '2h',
-    isLiked: true
-  },
-  {
-    id: '2',
-    user: {
-      name: 'Mike Chen',
-      initials: 'MC',
-      avatarColor: '#4ECDC4'
-    },
-    text: 'How did you even think of this? Mind blown! 🤯',
-    likes: 89,
-    replies: 5,
-    timestamp: '4h'
-  },
-  {
-    id: '3',
-    user: {
-      name: 'Alex Rivera',
-      initials: 'AR',
-      avatarColor: '#45B7D1'
-    },
-    text: 'Tutorial please! Need to learn this technique',
-    likes: 156,
-    replies: 23,
-    timestamp: '6h'
-  },
-  {
-    id: '4',
-    user: {
-      name: 'Emma Wilson',
-      initials: 'EW',
-      avatarColor: '#96CEB4',
-      verified: true
-    },
-    text: 'Been following you for months and this is your best work yet! Keep it up 🔥',
-    likes: 445,
-    replies: 34,
-    timestamp: '8h',
-    isLiked: true
-  },
-  {
-    id: '5',
-    user: {
-      name: 'David Kim',
-      initials: 'DK',
-      avatarColor: '#FFEAA7'
-    },
-    text: 'The attention to detail is incredible',
-    likes: 67,
-    replies: 8,
-    timestamp: '12h'
-  },
-  {
-    id: '6',
-    user: {
-      name: 'Lisa Park',
-      initials: 'LP',
-      avatarColor: '#FF8B94'
-    },
-    text: 'This made my day! Thank you for sharing 💕',
-    likes: 203,
-    replies: 7,
-    timestamp: '14h'
-  },
-  {
-    id: '7',
-    user: {
-      name: 'James Wright',
-      initials: 'JW',
-      avatarColor: '#A8E6CF',
-      verified: true
-    },
-    text: 'Professional level work right here! Inspired 🙌',
-    likes: 512,
-    replies: 28,
-    timestamp: '16h',
-    isLiked: true
-  },
-  {
-    id: '8',
-    user: {
-      name: 'Maria Garcia',
-      initials: 'MG',
-      avatarColor: '#FFD93D'
-    },
-    text: 'Can you do a live session showing this technique?',
-    likes: 89,
-    replies: 15,
-    timestamp: '18h'
-  },
-  {
-    id: '9',
-    user: {
-      name: 'Tom Anderson',
-      initials: 'TA',
-      avatarColor: '#A8DADC'
-    },
-    text: 'This is exactly what I needed to see today! Motivational ✨',
-    likes: 134,
-    replies: 4,
-    timestamp: '20h'
-  },
-  {
-    id: '10',
-    user: {
-      name: 'Nina Rodriguez',
-      initials: 'NR',
-      avatarColor: '#F1C0E8',
-      verified: true
-    },
-    text: 'Your consistency in quality content is unmatched! Love following your journey',
-    likes: 378,
-    replies: 19,
-    timestamp: '22h'
-  },
-  {
-    id: '11',
-    user: {
-      name: 'Chris Taylor',
-      initials: 'CT',
-      avatarColor: '#CFBAF0'
-    },
-    text: 'Wow, the timing on this is perfect! 🎯',
-    likes: 45,
-    replies: 2,
-    timestamp: '1d'
-  },
-  {
-    id: '12',
-    user: {
-      name: 'Amanda Lee',
-      initials: 'AL',
-      avatarColor: '#B4F8C8'
-    },
-    text: 'I keep coming back to watch this. So good!',
-    likes: 67,
-    replies: 0,
-    timestamp: '1d'
-  },
-  {
-    id: '13',
-    user: {
-      name: 'Ryan Murphy',
-      initials: 'RM',
-      avatarColor: '#FBE7C6'
-    },
-    text: 'This should be trending everywhere! Share this people 📢',
-    likes: 156,
-    replies: 11,
-    timestamp: '1d'
-  },
-  {
-    id: '14',
-    user: {
-      name: 'Sophie Chen',
-      initials: 'SC',
-      avatarColor: '#FFAAA5',
-      verified: true
-    },
-    text: 'Teaching my students this technique tomorrow! Thanks for the inspiration 📚',
-    likes: 289,
-    replies: 25,
-    timestamp: '1d'
-  },
-  {
-    id: '15',
-    user: {
-      name: 'Kevin Johnson',
-      initials: 'KJ',
-      avatarColor: '#FF6B9D'
-    },
-    text: 'The way you break down complex concepts is amazing',
-    likes: 123,
-    replies: 6,
-    timestamp: '2d'
-  },
-  {
-    id: '16',
-    user: {
-      name: 'Rachel Smith',
-      initials: 'RS',
-      avatarColor: '#C7CEEA'
-    },
-    text: 'Been waiting for content like this! You never disappoint 🎉',
-    likes: 78,
-    replies: 3,
-    timestamp: '2d'
-  },
-  {
-    id: '17',
-    user: {
-      name: 'Daniel Brown',
-      initials: 'DB',
-      avatarColor: '#FFD1DC'
-    },
-    text: 'This is art! Pure creativity and skill combined 🎨',
-    likes: 201,
-    replies: 8,
-    timestamp: '2d'
-  },
-  {
-    id: '18',
-    user: {
-      name: 'Jessica Williams',
-      initials: 'JW',
-      avatarColor: '#E0BBE4'
-    },
-    text: 'My favorite creator on this platform! Keep being awesome ⭐',
-    likes: 167,
-    replies: 12,
-    timestamp: '2d'
-  },
-  {
-    id: '19',
-    user: {
-      name: 'Mark Davis',
-      initials: 'MD',
-      avatarColor: '#957DAD'
-    },
-    text: 'The production quality keeps getting better! What camera setup do you use?',
-    likes: 89,
-    replies: 14,
-    timestamp: '3d'
-  },
-  {
-    id: '20',
-    user: {
-      name: 'Ashley Martinez',
-      initials: 'AM',
-      avatarColor: '#D291BC',
-      verified: true
-    },
-    text: 'This is going straight into my inspiration folder! Absolutely brilliant work 💎',
-    likes: 445,
-    replies: 31,
-    timestamp: '3d',
-    isLiked: true
-  }
-];
 
 const formatCount = (count: number): string => {
   if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
@@ -290,11 +41,13 @@ const formatCount = (count: number): string => {
 export const CommentsModal: React.FC<CommentsModalProps> = ({
   isOpen,
   onClose,
+  videoId,
   videoTitle,
   totalComments,
   onHeightChange
 }) => {
-  const [comments, setComments] = useState(sampleComments);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -304,9 +57,108 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
   const [isClosing, setIsClosing] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { addComment: addCommentMutation } = useVideoMutations();
   
-  const DISMISS_THRESHOLD = 80; // Reduced threshold for easier dismissal
-  const SPRING_BACK_THRESHOLD = 40; // Lower threshold for showing dismiss hint
+  const DISMISS_THRESHOLD = 80;
+  const SPRING_BACK_THRESHOLD = 40;
+
+  // Fetch comments from database
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (!isOpen || !videoId) return;
+      
+      setLoading(true);
+      try {
+        const { data, error } = await supabase.rpc('get_video_comments', {
+          _video_id: videoId
+        });
+
+        if (error) throw error;
+
+        const formattedComments: Comment[] = (data || []).map((comment: any) => ({
+          id: comment.comment_id,
+          user: {
+            name: comment.name,
+            initials: comment.initials,
+            avatarColor: comment.avatar_color,
+            verified: false
+          },
+          text: comment.content,
+          likes: Number(comment.likes_count),
+          replies: 0,
+          timestamp: formatTimestamp(comment.created_at),
+          isLiked: comment.user_has_liked,
+          parentId: comment.parent_id
+        }));
+
+        setComments(formattedComments);
+      } catch (error) {
+        console.error('Error fetching comments:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchComments();
+  }, [isOpen, videoId]);
+
+  // Real-time subscription for new comments
+  useEffect(() => {
+    if (!isOpen || !videoId) return;
+
+    const channel = supabase
+      .channel(`video-comments-${videoId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'video_comments',
+        filter: `video_id=eq.${videoId}`
+      }, () => {
+        // Refetch comments when changes occur
+        const refetch = async () => {
+          const { data } = await supabase.rpc('get_video_comments', {
+            _video_id: videoId
+          });
+          if (data) {
+            const formattedComments: Comment[] = data.map((comment: any) => ({
+              id: comment.comment_id,
+              user: {
+                name: comment.name,
+                initials: comment.initials,
+                avatarColor: comment.avatar_color,
+                verified: false
+              },
+              text: comment.content,
+              likes: Number(comment.likes_count),
+              replies: 0,
+              timestamp: formatTimestamp(comment.created_at),
+              isLiked: comment.user_has_liked,
+              parentId: comment.parent_id
+            }));
+            setComments(formattedComments);
+          }
+        };
+        refetch();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isOpen, videoId]);
+
+  const formatTimestamp = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    return `${diffDays}d`;
+  };
 
   // Enhanced swipe gestures for smooth dismiss
   const swipeHandlers = useSwipeGestures({
@@ -346,50 +198,26 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
     ));
   };
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (newComment.trim()) {
-      const comment: Comment = {
-        id: Date.now().toString(),
-        user: {
-          name: 'You',
-          initials: 'YU',
-          avatarColor: '#667EEA'
-        },
-        text: newComment.trim(),
-        likes: 0,
-        replies: 0,
-        timestamp: 'now'
-      };
-      setComments(prev => [comment, ...prev]);
-      setNewComment('');
+      try {
+        await addCommentMutation(videoId, newComment.trim());
+        setNewComment('');
+      } catch (error) {
+        console.error('Error adding comment:', error);
+      }
     }
   };
 
-  const handleAddReply = (parentId: string) => {
+  const handleAddReply = async (parentId: string) => {
     if (replyText.trim()) {
-      const reply: Comment = {
-        id: Date.now().toString(),
-        user: {
-          name: 'You',
-          initials: 'YU',
-          avatarColor: '#667EEA'
-        },
-        text: replyText.trim(),
-        likes: 0,
-        replies: 0,
-        timestamp: 'now',
-        parentId
-      };
-      setComments(prev => [reply, ...prev]);
-      setReplyText('');
-      setReplyingTo(null);
-      
-      // Update reply count
-      setComments(prev => prev.map(comment => 
-        comment.id === parentId 
-          ? { ...comment, replies: comment.replies + 1 }
-          : comment
-      ));
+      try {
+        await addCommentMutation(videoId, replyText.trim(), parentId);
+        setReplyText('');
+        setReplyingTo(null);
+      } catch (error) {
+        console.error('Error adding reply:', error);
+      }
     }
   };
 

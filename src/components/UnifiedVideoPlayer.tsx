@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState, useCallback, memo } from 'react';
-import { Video } from '@/data/mock';
+import { Video } from '@/hooks/useVideoFeed';
 import { Heart, MessageCircle, Share, Bookmark, Volume2, VolumeX, Plus, Check } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useVideoMutations } from '@/hooks/useVideoMutations';
 import { cn } from '@/lib/utils';
 
 interface UnifiedVideoPlayerProps {
@@ -27,11 +28,19 @@ export const UnifiedVideoPlayer = memo<UnifiedVideoPlayerProps>(({
   onVideoClick = () => {}
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(video.liked);
+  const [isSaved, setIsSaved] = useState(video.saved);
   const [isMuted, setIsMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [followState, setFollowState] = useState<'visible' | 'checked' | 'hidden'>('visible');
   const { triggerHaptic } = useHapticFeedback();
+  const { toggleLike, toggleSave } = useVideoMutations();
+
+  // Update like/save state when video changes
+  useEffect(() => {
+    setIsLiked(video.liked);
+    setIsSaved(video.saved);
+  }, [video.liked, video.saved]);
 
   // Simplified video loading - prevent duplicates by ensuring unique src management
   useEffect(() => {
@@ -84,10 +93,27 @@ export const UnifiedVideoPlayer = memo<UnifiedVideoPlayerProps>(({
     };
   }, []);
 
-  const handleLike = useCallback(() => {
+  const handleLike = useCallback(async () => {
     setIsLiked(!isLiked);
     triggerHaptic('light');
-  }, [isLiked, triggerHaptic]);
+    try {
+      await toggleLike(video.id);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      setIsLiked(isLiked);
+    }
+  }, [isLiked, triggerHaptic, video.id, toggleLike]);
+
+  const handleSave = useCallback(async () => {
+    setIsSaved(!isSaved);
+    triggerHaptic('light');
+    try {
+      await toggleSave(video.id);
+    } catch (error) {
+      console.error('Error toggling save:', error);
+      setIsSaved(isSaved);
+    }
+  }, [isSaved, triggerHaptic, video.id, toggleSave]);
 
   const handleMute = useCallback(() => {
     const videoElement = videoRef.current;
@@ -225,11 +251,19 @@ export const UnifiedVideoPlayer = memo<UnifiedVideoPlayerProps>(({
         </button>
 
         <button 
-          onClick={handleAction}
+          onClick={handleSave}
           className="group flex flex-col items-center gap-1 transition-all duration-200"
         >
-          <div className="w-14 h-14 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center group-active:scale-95 hover:bg-white/25 transition-all duration-200 shadow-lg">
-            <Bookmark className="w-7 h-7 text-white" />
+          <div className={cn(
+            "w-14 h-14 rounded-full backdrop-blur-md border flex items-center justify-center group-active:scale-95 transition-all duration-200 shadow-lg",
+            isSaved 
+              ? "bg-yellow-500/20 border-yellow-500/30 shadow-yellow-500/25" 
+              : "bg-white/15 border-white/20 hover:bg-white/25"
+          )}>
+            <Bookmark className={cn(
+              "w-7 h-7 transition-all duration-200",
+              isSaved ? "fill-yellow-500 text-yellow-500" : "text-white"
+            )} />
           </div>
         </button>
 

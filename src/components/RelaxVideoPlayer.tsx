@@ -545,6 +545,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
               setIsCommentsOpen(false);
               setPipVideoIndex(null);
             }}
+            videoId={relaxVideos[currentIndex]?.id || ''}
             videoTitle={relaxVideos[currentIndex]?.title || relaxVideos[currentIndex]?.description || ''}
             totalComments={relaxVideos[currentIndex]?.stats.comments || 0}
           />

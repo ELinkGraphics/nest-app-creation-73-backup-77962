@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { UnifiedVideoPlayer } from './UnifiedVideoPlayer';
 import { VideoFullscreenModal } from './VideoFullscreenModal';
-import { MOCK_VIDEOS, Video } from '@/data/mock';
+import { useVideoFeed, Video } from '@/hooks/useVideoFeed';
 
 interface UnifiedRelaxViewProps {
   autoOpenFirstVideo?: boolean;
@@ -20,7 +20,7 @@ export const UnifiedRelaxView: React.FC<UnifiedRelaxViewProps> = ({
   onOpenCreate = () => {},
   onRefresh = () => {}
 }) => {
-  const [videos] = useState<Video[]>(MOCK_VIDEOS);
+  const { videos, loading, refetch } = useVideoFeed();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [fullscreenVideo, setFullscreenVideo] = useState<Video | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -53,6 +53,7 @@ export const UnifiedRelaxView: React.FC<UnifiedRelaxViewProps> = ({
 
     // Pull-to-refresh
     if (currentIndex === 0 && deltaY > 120 && velocity > 0.5) {
+      refetch();
       onRefresh();
       return;
     }
@@ -94,6 +95,22 @@ export const UnifiedRelaxView: React.FC<UnifiedRelaxViewProps> = ({
   const visibleIndices = [];
   for (let i = Math.max(0, currentIndex - 1); i <= Math.min(videos.length - 1, currentIndex + 1); i++) {
     visibleIndices.push(i);
+  }
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <div className="text-white">Loading videos...</div>
+      </div>
+    );
+  }
+
+  if (videos.length === 0) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <div className="text-white">No videos available</div>
+      </div>
+    );
   }
 
   return (

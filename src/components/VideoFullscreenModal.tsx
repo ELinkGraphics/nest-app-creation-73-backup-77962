@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ArrowLeft, Heart, MessageCircle, Share, Bookmark, Music } from 'lucide-react';
-import { Video } from '@/data/mock';
+import { Video } from '@/hooks/useVideoFeed';
+import { useVideoMutations } from '@/hooks/useVideoMutations';
 import { cn } from '@/lib/utils';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import FooterNav from './FooterNav';
@@ -69,10 +70,9 @@ export const VideoFullscreenModal: React.FC<VideoFullscreenModalProps> = ({
   onTabSelect = () => {},
   onOpenCreate = () => {},
 }) => {
-  // Force rebuild to clear currentVideoIndex references
   const initialIndex = videos.findIndex(v => v.id === initialVideo.id);
-  const [isLiked, setIsLiked] = useState(false);
   const [showHeartBurst, setShowHeartBurst] = useState(false);
+  const { toggleLike, toggleSave } = useVideoMutations();
   const [lastTap, setLastTap] = useState(0);
   const [expandedCaption, setExpandedCaption] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -97,6 +97,16 @@ export const VideoFullscreenModal: React.FC<VideoFullscreenModalProps> = ({
   } = useVideoPrebuffering({ currentIndex, videos });
 
   const currentVideo = videos[currentIndex];
+  const [isLiked, setIsLiked] = useState(currentVideo?.liked || false);
+  const [isSaved, setIsSaved] = useState(currentVideo?.saved || false);
+
+  // Update like/save state when video changes
+  useEffect(() => {
+    if (currentVideo) {
+      setIsLiked(currentVideo.liked);
+      setIsSaved(currentVideo.saved);
+    }
+  }, [currentVideo]);
 
   // Handle page visibility changes
   const handleVisibilityChange = useCallback((isVisible: boolean) => {
@@ -246,10 +256,31 @@ export const VideoFullscreenModal: React.FC<VideoFullscreenModalProps> = ({
     setShowHeartBurst(false);
   }, []);
 
-  const handleLike = useCallback((e: React.MouseEvent) => {
+  const handleLike = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!currentVideo) return;
+    
     setIsLiked(!isLiked);
-  }, [isLiked]);
+    try {
+      await toggleLike(currentVideo.id);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      setIsLiked(isLiked);
+    }
+  }, [isLiked, currentVideo, toggleLike]);
+
+  const handleSave = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!currentVideo) return;
+    
+    setIsSaved(!isSaved);
+    try {
+      await toggleSave(currentVideo.id);
+    } catch (error) {
+      console.error('Error toggling save:', error);
+      setIsSaved(isSaved);
+    }
+  }, [isSaved, currentVideo, toggleSave]);
 
   const handleAction = useCallback((action: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -487,15 +518,23 @@ export const VideoFullscreenModal: React.FC<VideoFullscreenModalProps> = ({
                   </button>
 
                   <button
-                    onClick={handleAction('save')}
-                    aria-label={`Save video by ${video.user.name}`}
-                    className="flex flex-col items-center gap-1 text-white"
+                    onClick={handleSave}
+                    aria-label={`${isSaved ? 'Unsave' : 'Save'} video by ${video.user.name}`}
+                    className={cn(
+                      "flex flex-col items-center gap-1 text-white transition-colors",
+                      isSaved && "text-yellow-500"
+                    )}
                   >
                     <div className="p-2.5 bg-white/20 rounded-full backdrop-blur-sm">
-                      <Bookmark className="size-5" />
+                      <Bookmark 
+                        className={cn(
+                          "size-5",
+                          isSaved && "fill-current"
+                        )} 
+                      />
                     </div>
                     <span className="text-xs font-medium">
-                      {formatCount(video.stats.saves)}
+                      {formatCount(video.stats.saves + (isSaved ? 1 : 0))}
                     </span>
                   </button>
 
@@ -534,6 +573,7 @@ export const VideoFullscreenModal: React.FC<VideoFullscreenModalProps> = ({
       <CommentsModal
         isOpen={showComments}
         onClose={() => setShowComments(false)}
+        videoId={currentVideo.id}
         videoTitle={currentVideo.title}
         totalComments={currentVideo.stats.comments}
         onHeightChange={setCommentModalHeight}

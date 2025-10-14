@@ -260,10 +260,8 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-semibold">{post.profiles?.name}</span>
-            <span className="text-muted-foreground text-sm">@{post.profiles?.username}</span>
-            <span className="text-muted-foreground text-sm">· {formatTime(post.created_at)}</span>
           </div>
-          <p className="mt-2 whitespace-pre-wrap break-words">{post.content}</p>
+          <p className="mt-2 whitespace-pre-wrap break-words line-clamp-2">{post.content}</p>
           {post.media_url && (
             <div className="mt-3 rounded-lg overflow-hidden">
               <img src={post.media_url} alt={post.media_alt || ''} className="w-full" />

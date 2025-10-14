@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Users, Plus, ShieldAlert, Camera, UserPlus, Store, Radio, HeartHandshake, Edit3 } from 'lucide-react';
+import { Home, Users, Plus, ShieldAlert, Camera, UserPlus, Store, Radio, HeartHandshake, Edit3, Video } from 'lucide-react';
 import { useAppNav, type TabKey } from '@/hooks/useAppNav';
 
 interface FooterNavProps {
@@ -21,20 +21,21 @@ const TABS = [
 
 const CREATE_OPTIONS = [
   { label: "Post", icon: Camera },
+  { label: "Video", icon: Video },
   { label: "Circle", icon: UserPlus },
   { label: "Shop", icon: Store },
   { label: "Go live", icon: Radio },
 ];
 
 const FooterNav: React.FC<FooterNavProps> = ({ active, onSelect, onOpenCreate, onOpenGoLive, onOpenStoryModal, videoMode = false }) => {
-  const { navigateToTab, navigateToCreatePost, navigateToCreateCircle, navigateToCreateShop } = useAppNav();
+  const { navigateToTab, navigateToCreatePost, navigateToCreateVideo, navigateToCreateCircle, navigateToCreateShop } = useAppNav();
   const [showCreatePopup, setShowCreatePopup] = useState(false);
 
   const handleCreateClick = () => {
     if (active === 'ask' && onOpenStoryModal) {
       onOpenStoryModal();
     } else {
-      onOpenCreate();
+      setShowCreatePopup(!showCreatePopup);
     }
   };
 
@@ -44,6 +45,8 @@ const FooterNav: React.FC<FooterNavProps> = ({ active, onSelect, onOpenCreate, o
       onOpenGoLive?.();
     } else if (option === 'Post') {
       navigateToCreatePost();
+    } else if (option === 'Video') {
+      navigateToCreateVideo();
     } else if (option === 'Circle') {
       navigateToCreateCircle();
     } else if (option === 'Shop') {

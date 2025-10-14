@@ -80,17 +80,17 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) 
       // Upload avatar if changed
       if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const filePath = `${user.id}/avatar-${Date.now()}.${fileExt}`;
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(fileName, avatarFile, { upsert: true });
+          .upload(filePath, avatarFile, { upsert: true, contentType: avatarFile.type });
 
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
           .from('avatars')
-          .getPublicUrl(fileName);
+          .getPublicUrl(filePath);
         
         avatarUrl = publicUrl;
       }
@@ -98,17 +98,17 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) 
       // Upload cover image if changed
       if (coverFile) {
         const fileExt = coverFile.name.split('.').pop();
-        const fileName = `cover-${user.id}-${Date.now()}.${fileExt}`;
+        const filePath = `${user.id}/cover-${Date.now()}.${fileExt}`;
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(fileName, coverFile, { upsert: true });
+          .upload(filePath, coverFile, { upsert: true, contentType: coverFile.type });
 
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
           .from('avatars')
-          .getPublicUrl(fileName);
+          .getPublicUrl(filePath);
         
         coverUrl = publicUrl;
       }

@@ -5,6 +5,7 @@ import { Post } from '@/data/mock';
 import { useUser } from '@/contexts/UserContext';
 import { usePostMutations } from '@/hooks/usePostMutations';
 import { toast } from '@/hooks/use-toast';
+import PublicProfileModal from '@/components/PublicProfileModal';
 
 interface PostCardProps {
   post: Post;
@@ -122,6 +123,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [saved, setSaved] = useState(false);
   const [sharesCount, setSharesCount] = useState(post.stats.shares);
   const [followState, setFollowState] = useState<'visible' | 'checked' | 'hidden'>('visible');
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const navigate = useNavigate();
   const { user } = useUser();
   const { toggleLike, toggleSave, incrementShare, deletePost } = usePostMutations();
@@ -210,7 +212,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h3 className="font-semibold truncate text-foreground text-username">
+            <h3 
+              className="font-semibold truncate text-foreground text-username cursor-pointer hover:underline"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowProfileModal(true);
+              }}
+            >
               {post.user.name}
             </h3>
             {post.user.verified && (
@@ -297,6 +305,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           label="Save"
         />
       </footer>
+
+      <PublicProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        userId={post.user.id || ''}
+      />
     </article>
   );
 };

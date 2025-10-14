@@ -49,6 +49,7 @@ export const FeedView: React.FC<FeedViewProps> = ({ onRefresh }) => {
         const formattedPosts: Post[] = data.map((item: any) => ({
           id: item.post_id,
           user: {
+            id: item.user_id,
             name: item.name,
             initials: item.initials,
             avatarColor: item.avatar_color,

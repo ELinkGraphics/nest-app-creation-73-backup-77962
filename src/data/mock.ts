@@ -3,6 +3,7 @@
 export interface Post {
   id: string | number;
   user: { 
+    id?: string;
     name: string; 
     initials: string; 
     avatarColor: string; 
@@ -39,6 +40,7 @@ export interface Comment {
 export interface Video {
   id: number;
   user: {
+    id?: string;
     name: string;
     initials: string;
     avatarColor: string;
@@ -56,6 +58,7 @@ export interface Video {
 export interface Story {
   id: number;
   user: {
+    id?: string;
     name: string;
     initials: string;
     avatarColor: string;

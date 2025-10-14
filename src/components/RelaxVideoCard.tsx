@@ -3,6 +3,7 @@ import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Plus, Check } fr
 import { Video } from '@/data/mock';
 import { cn } from '@/lib/utils';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import PublicProfileModal from '@/components/PublicProfileModal';
 
 interface RelaxVideoCardProps {
   video: Video;
@@ -25,6 +26,7 @@ export const RelaxVideoCard: React.FC<RelaxVideoCardProps> = ({
   const [isLiked, setIsLiked] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [followState, setFollowState] = useState<'visible' | 'checked' | 'hidden'>('visible');
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -125,7 +127,15 @@ export const RelaxVideoCard: React.FC<RelaxVideoCardProps> = ({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-white">{video.user.name}</span>
+              <span 
+                className="font-semibold text-white cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProfileModal(true);
+                }}
+              >
+                {video.user.name}
+              </span>
               {video.user.verified && (
                 <div className="size-4 bg-white rounded-full flex items-center justify-center">
                   <div className="size-2 bg-primary rounded-full" />
@@ -237,6 +247,12 @@ export const RelaxVideoCard: React.FC<RelaxVideoCardProps> = ({
           </svg>
         )}
       </button>
+
+      <PublicProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        userId={video.user.id || ''}
+      />
     </div>
   );
 };

@@ -38,6 +38,7 @@ export const useStoryPersistence = () => {
       const transformedStories: Story[] = data?.map((story: any) => ({
         id: story.id,
         user: {
+          id: story.user_id,
           name: story.profiles?.name || 'Unknown',
           initials: story.profiles?.initials || '??',
           avatarColor: story.profiles?.avatar_color || '#4B164C',
@@ -74,6 +75,7 @@ export const useStoryPersistence = () => {
         const yourStoryCircle: Story = {
           id: ownStories.length > 0 ? ownStories[0].id : -1,
           user: {
+            id: user.id,
             name: user.name,
             initials: user.initials,
             avatarColor: user.avatarColor || '#E08ED1',
@@ -105,6 +107,7 @@ export const useStoryPersistence = () => {
         setStories([{
           id: -1,
           user: {
+            id: user.id,
             name: user.name,
             initials: user.initials,
             avatarColor: user.avatarColor || '#E08ED1',

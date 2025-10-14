@@ -4,6 +4,7 @@ import { Story } from '@/data/mock';
 import { useSwipeGestures } from '@/hooks/useSwipeGestures';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useVisibilityHandler } from '@/hooks/useVisibilityHandler';
+import PublicProfileModal from '@/components/PublicProfileModal';
 
 interface StoryViewerProps {
   stories: Story[];
@@ -27,6 +28,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
   const [isImagePreloaded, setIsImagePreloaded] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [message, setMessage] = useState('');
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const { triggerHaptic } = useHapticFeedback();
   const STORY_DURATION = 5000; // 5 seconds
@@ -313,7 +315,12 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
               )}
             </div>
             <div>
-              <p className="font-medium">{currentStory.user.name}</p>
+              <p 
+                className="font-medium cursor-pointer hover:underline"
+                onClick={() => setShowProfileModal(true)}
+              >
+                {currentStory.user.name}
+              </p>
               <p className="text-sm text-white/80">
                 {(() => {
                   const { storyIndex, userStories } = getCurrentUserContext();
@@ -403,6 +410,12 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
           aria-label="Next story"
         />
       </div>
+
+      <PublicProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        userId={currentStory.user.id || ''}
+      />
     </div>
   );
 };

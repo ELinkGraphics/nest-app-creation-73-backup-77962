@@ -25,82 +25,118 @@ export const useUserPosts = (userId: string | undefined) => {
   const [posts, setPosts] = useState<PostData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchPosts = async () => {
     if (!userId) {
       setIsLoading(false);
       return;
     }
 
-    const fetchPosts = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('posts')
-          .select(`
-            id,
-            content,
-            media_url,
-            created_at,
-            profiles:user_id (
-              name,
-              username,
-              initials,
-              avatar_url,
-              avatar_color,
-              is_verified
-            ),
-            post_stats!inner (
-              likes_count,
-              comments_count,
-              shares_count,
-              saves_count
-            )
-          `)
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false });
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          id,
+          content,
+          media_url,
+          created_at,
+          profiles:user_id (
+            name,
+            username,
+            initials,
+            avatar_url,
+            avatar_color,
+            is_verified
+          ),
+          post_stats!inner (
+            likes_count,
+            comments_count,
+            shares_count,
+            saves_count
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        // Check which posts the current user has liked
-        const { data: { user } } = await supabase.auth.getUser();
-        const currentUserId = user?.id;
+      // Check which posts the current user has liked
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentUserId = user?.id;
 
-        let likesData: any[] = [];
-        if (currentUserId) {
-          const { data: likes } = await supabase
-            .from('likes')
-            .select('post_id')
-            .eq('user_id', currentUserId)
-            .in('post_id', data.map(p => p.id));
-          
-          likesData = likes || [];
-        }
-
-        const likedPostIds = new Set(likesData.map(l => l.post_id));
-
-        const formattedPosts = data.map(post => ({
-          id: post.id,
-          content: post.content,
-          media_url: post.media_url,
-          created_at: post.created_at,
-          profiles: post.profiles,
-          likes_count: post.post_stats[0]?.likes_count || 0,
-          comments_count: post.post_stats[0]?.comments_count || 0,
-          shares_count: post.post_stats[0]?.shares_count || 0,
-          saves_count: post.post_stats[0]?.saves_count || 0,
-          user_has_liked: likedPostIds.has(post.id),
-        }));
-
-        setPosts(formattedPosts);
-      } catch (error) {
-        console.error('Error fetching user posts:', error);
-      } finally {
-        setIsLoading(false);
+      let likesData: any[] = [];
+      if (currentUserId) {
+        const { data: likes } = await supabase
+          .from('likes')
+          .select('post_id')
+          .eq('user_id', currentUserId)
+          .in('post_id', data.map(p => p.id));
+        
+        likesData = likes || [];
       }
-    };
 
+      const likedPostIds = new Set(likesData.map(l => l.post_id));
+
+      const formattedPosts = data.map(post => ({
+        id: post.id,
+        content: post.content,
+        media_url: post.media_url,
+        created_at: post.created_at,
+        profiles: post.profiles,
+        likes_count: post.post_stats[0]?.likes_count || 0,
+        comments_count: post.post_stats[0]?.comments_count || 0,
+        shares_count: post.post_stats[0]?.shares_count || 0,
+        saves_count: post.post_stats[0]?.saves_count || 0,
+        user_has_liked: likedPostIds.has(post.id),
+      }));
+
+      setPosts(formattedPosts);
+    } catch (error) {
+      console.error('Error fetching user posts:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchPosts();
+
+    // Set up realtime subscriptions for likes and comments
+    const likesChannel = supabase
+      .channel('user-posts-likes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'likes'
+        },
+        () => {
+          fetchPosts();
+        }
+      )
+      .subscribe();
+
+    const commentsChannel = supabase
+      .channel('user-posts-comments')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'comments'
+        },
+        () => {
+          fetchPosts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(likesChannel);
+      supabase.removeChannel(commentsChannel);
+    };
   }, [userId]);
 
-  return { posts, isLoading, refetch: () => {} };
+  return { posts, isLoading, refetch: fetchPosts };
 };

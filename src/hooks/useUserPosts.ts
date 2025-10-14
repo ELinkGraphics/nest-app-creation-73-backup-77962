@@ -11,6 +11,14 @@ interface PostData {
   shares_count: number;
   saves_count: number;
   user_has_liked: boolean;
+  profiles?: {
+    name: string;
+    username: string;
+    initials: string;
+    avatar_url: string | null;
+    avatar_color: string;
+    is_verified: boolean;
+  };
 }
 
 export const useUserPosts = (userId: string | undefined) => {
@@ -33,6 +41,14 @@ export const useUserPosts = (userId: string | undefined) => {
             content,
             media_url,
             created_at,
+            profiles:user_id (
+              name,
+              username,
+              initials,
+              avatar_url,
+              avatar_color,
+              is_verified
+            ),
             post_stats!inner (
               likes_count,
               comments_count,
@@ -67,6 +83,7 @@ export const useUserPosts = (userId: string | undefined) => {
           content: post.content,
           media_url: post.media_url,
           created_at: post.created_at,
+          profiles: post.profiles,
           likes_count: post.post_stats[0]?.likes_count || 0,
           comments_count: post.post_stats[0]?.comments_count || 0,
           shares_count: post.post_stats[0]?.shares_count || 0,

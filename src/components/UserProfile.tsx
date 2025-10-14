@@ -87,20 +87,27 @@ const UserProfile: React.FC<UserProfileProps> = ({
       await toggleLike(post.id, user.id, isLiked);
     };
 
+    const postUser = post.profiles || user;
+
     return (
     <Card className="mb-4 overflow-hidden rounded-none border-x-0 border-t-0 border-b border-border/50 bg-card transition-all duration-200">
       <CardContent className="px-4 sm:px-6 py-6">
         <div className="flex items-start gap-3 mb-4">
           <Avatar className="h-10 w-10 ring-2 ring-border">
-            <AvatarImage src="https://picsum.photos/100/100?random=profile" alt={user.name} />
-            <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-              {user.initials}
+            {postUser.avatar_url ? (
+              <AvatarImage src={postUser.avatar_url} alt={postUser.name} />
+            ) : null}
+            <AvatarFallback 
+              className="text-primary-foreground font-semibold"
+              style={{ backgroundColor: postUser.avatar_color }}
+            >
+              {postUser.initials}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="font-semibold text-foreground truncate">{user.name}</span>
-              {user.isVerified && (
+              <span className="font-semibold text-foreground truncate">{postUser.name}</span>
+              {postUser.is_verified && (
                 <Badge variant="secondary" className="px-1.5 py-0.5 text-xs">
                   <Check className="h-3 w-3" />
                 </Badge>

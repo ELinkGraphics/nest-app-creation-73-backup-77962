@@ -12,6 +12,7 @@ import { MOCK_VIDEOS, type Video } from '@/data/mock';
 import EditProfileModal from '@/components/EditProfileModal';
 import { useUserPosts } from '@/hooks/useUserPosts';
 import { usePostMutations } from '@/hooks/usePostMutations';
+import { useSavedPosts } from '@/hooks/useSavedPosts';
 
 interface UserProfileProps {
   className?: string;
@@ -33,6 +34,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const [showEditProfile, setShowEditProfile] = useState(false);
   const { user, isLoading } = useUser();
   const { posts: userPosts, isLoading: postsLoading } = useUserPosts(user?.id);
+  const { savedPosts, isLoading: savedLoading } = useSavedPosts(user?.id);
   const { toggleLike } = usePostMutations();
 
   const userVideos = useMemo(() => {
@@ -498,15 +500,22 @@ const UserProfile: React.FC<UserProfileProps> = ({
 
           {/* Saved Tab */}
           <TabsContent value="saved">
-            <div className="px-4 sm:px-6">
-              <EmptyState
-                icon={Bookmark}
-                title="No saved content"
-                description="Save posts and videos to view them later"
-                ctaText="Explore content"
-                onCtaClick={() => {}}
-              />
-            </div>
+            {savedLoading ? (
+              <div className="px-4 sm:px-6">
+                <PostCardSkeleton />
+                <PostCardSkeleton />
+              </div>
+            ) : savedPosts.length > 0 ? (
+              savedPosts.map((post) => <PostCard key={post.id} post={post} />)
+            ) : (
+              <div className="px-4 sm:px-6">
+                <EmptyState
+                  icon={Bookmark}
+                  title="No saved content"
+                  description="Save posts and videos to view them later"
+                />
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Post } from '@/data/mock';
 import { useUser } from '@/contexts/UserContext';
 import { usePostMutations } from '@/hooks/usePostMutations';
+import { toast } from '@/hooks/use-toast';
 
 interface PostCardProps {
   post: Post;
@@ -151,16 +152,27 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     setSharesCount(prev => prev + 1);
     await incrementShare(String(post.id));
     
+    const postUrl = window.location.origin + `/post/${post.id}`;
+    
     // Web Share API if available
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${post.user.name}'s post`,
-          text: post.content,
-          url: window.location.origin + `/post/${post.id}`
+          url: postUrl
         });
       } catch (error) {
         console.log('Share cancelled');
+      }
+    } else {
+      // Fallback: copy link to clipboard
+      try {
+        await navigator.clipboard.writeText(postUrl);
+        toast({
+          title: "Link copied",
+          description: "Post link copied to clipboard",
+        });
+      } catch (error) {
+        console.error('Failed to copy link:', error);
       }
     }
   };

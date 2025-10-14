@@ -95,10 +95,14 @@ export const RelaxVideoCard: React.FC<RelaxVideoCardProps> = ({
         <div className="flex items-center gap-3 mb-3">
           <div className="relative">
             <div 
-              className="size-12 rounded-full flex items-center justify-center text-sm font-medium text-white border-2 border-white/30"
+              className="size-12 rounded-full flex items-center justify-center text-sm font-medium text-white border-2 border-white/30 overflow-hidden"
               style={{ backgroundColor: video.user.avatarColor }}
             >
-              {video.user.initials}
+              {video.user.avatar ? (
+                <img src={video.user.avatar} alt={video.user.name} className="w-full h-full object-cover" />
+              ) : (
+                video.user.initials
+              )}
             </div>
             {/* Follow button */}
             {followState !== 'hidden' && (

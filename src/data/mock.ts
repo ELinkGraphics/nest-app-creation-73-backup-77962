@@ -43,6 +43,7 @@ export interface Video {
     initials: string;
     avatarColor: string;
     verified?: boolean;
+    avatar?: string;
   };
   url: string;
   thumbnail: string;

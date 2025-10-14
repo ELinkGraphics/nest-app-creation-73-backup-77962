@@ -14,6 +14,7 @@ interface Comment {
     name: string;
     initials: string;
     avatarColor: string;
+    avatarUrl?: string;
     verified?: boolean;
   };
   text: string;
@@ -83,6 +84,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
             name: comment.name,
             initials: comment.initials,
             avatarColor: comment.avatar_color,
+            avatarUrl: comment.avatar_url,
             verified: false
           },
           text: comment.content,
@@ -128,6 +130,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
                 name: comment.name,
                 initials: comment.initials,
                 avatarColor: comment.avatar_color,
+                avatarUrl: comment.avatar_url,
                 verified: false
               },
               text: comment.content,
@@ -510,10 +513,14 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
                 <div className="flex gap-3">
                   {/* Avatar */}
                   <div 
-                    className="size-8 rounded-full flex items-center justify-center text-timestamp font-medium text-white flex-shrink-0"
+                    className="size-8 rounded-full flex items-center justify-center text-timestamp font-medium text-white flex-shrink-0 overflow-hidden"
                     style={{ backgroundColor: comment.user.avatarColor }}
                   >
-                    {comment.user.initials}
+                    {comment.user.avatarUrl ? (
+                      <img src={comment.user.avatarUrl} alt={comment.user.name} className="w-full h-full object-cover" />
+                    ) : (
+                      comment.user.initials
+                    )}
                   </div>
 
                   {/* Comment content */}
@@ -615,10 +622,14 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
                 {comments.filter(reply => reply.parentId === comment.id).map((reply) => (
                   <div key={reply.id} className="ml-11 flex gap-3">
                     <div 
-                      className="size-6 rounded-full flex items-center justify-center text-timestamp font-medium text-white flex-shrink-0"
+                      className="size-6 rounded-full flex items-center justify-center text-timestamp font-medium text-white flex-shrink-0 overflow-hidden"
                       style={{ backgroundColor: reply.user.avatarColor }}
                     >
-                      {reply.user.initials}
+                      {reply.user.avatarUrl ? (
+                        <img src={reply.user.avatarUrl} alt={reply.user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        reply.user.initials
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1 mb-1">

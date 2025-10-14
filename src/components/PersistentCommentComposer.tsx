@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import anonymousLogo from '@/assets/anonymous-logo.png';
+import { useUser } from '@/contexts/UserContext';
 
 interface PersistentCommentComposerProps {
   onSubmit: (comment: string) => void;
@@ -16,6 +16,7 @@ export const PersistentCommentComposer: React.FC<PersistentCommentComposerProps>
   const [comment, setComment] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { user } = useUser();
 
   // Auto-expand textarea up to 4 lines
   useEffect(() => {
@@ -58,16 +59,18 @@ export const PersistentCommentComposer: React.FC<PersistentCommentComposerProps>
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="max-w-2xl mx-auto">
             <div className="flex items-end gap-3 bg-background border border-border rounded-2xl p-3 shadow-lg">
-              {/* Anonymous user profile */}
+              {/* User profile */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                <img 
-                  src={anonymousLogo} 
-                  alt="Anonymous Asker" 
-                  className="size-8 rounded-full object-cover"
-                />
-                <span className="text-xs font-medium text-muted-foreground hidden sm:block">
-                  Anonymous Asker
-                </span>
+                <div 
+                  className="size-8 rounded-full grid place-items-center text-xs font-medium text-white overflow-hidden"
+                  style={{ backgroundColor: user?.avatarColor || '#E08ED1' }}
+                >
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt={user.initials} className="w-full h-full object-cover" />
+                  ) : (
+                    user?.initials || 'U'
+                  )}
+                </div>
               </div>
               
               {/* Comment input */}

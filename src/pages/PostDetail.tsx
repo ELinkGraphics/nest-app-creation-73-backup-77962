@@ -14,6 +14,7 @@ interface Comment {
     name: string;
     initials: string;
     avatarColor: string;
+    avatar?: string;
     verified?: boolean;
   };
   text: string;
@@ -158,15 +159,17 @@ const PostDetail: React.FC = () => {
     if (!user) return;
     
     try {
-      await addComment(postId!, user.id, commentText);
+      const newComment = await addComment(postId!, user.id, commentText);
       
-      // Add optimistic comment to UI
+      // Add the actual comment with user's real profile to UI
       const comment: Comment = {
-        id: Date.now().toString(),
+        id: newComment?.id || Date.now().toString(),
         user: {
-          name: user.name || 'You',
-          initials: user.initials || 'YU',
-          avatarColor: user.avatarColor || '#E08ED1',
+          name: user.name,
+          initials: user.initials,
+          avatarColor: user.avatarColor,
+          avatar: user.avatar,
+          verified: user.isVerified,
         },
         text: commentText,
         timestamp: 'now',
@@ -330,10 +333,14 @@ const PostDetail: React.FC = () => {
               <div key={comment.id} className="px-4 py-3 border-b border-gray-50">
                 <div className="flex gap-3">
                   <div 
-                    className="size-8 rounded-full grid place-items-center text-xs font-medium text-white shrink-0"
+                    className="size-8 rounded-full grid place-items-center text-xs font-medium text-white shrink-0 overflow-hidden"
                     style={{ backgroundColor: comment.user.avatarColor }}
                   >
-                    {comment.user.initials}
+                    {comment.user.avatar ? (
+                      <img src={comment.user.avatar} alt={comment.user.initials} className="w-full h-full object-cover" />
+                    ) : (
+                      comment.user.initials
+                    )}
                   </div>
                   
                   <div className="flex-1 min-w-0">

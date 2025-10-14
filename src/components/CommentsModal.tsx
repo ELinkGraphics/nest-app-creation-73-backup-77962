@@ -649,7 +649,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
         </div>
 
         {/* Comment input - sticky at bottom */}
-        <div className="sticky bottom-0 bg-background border-t border-border">
+        <div className="sticky bottom-0 bg-background border-t border-border z-10">
           <div className="px-4 py-3">
             <div className="flex items-end gap-3 bg-background border border-border rounded-2xl p-3 shadow-lg">
               <div 
@@ -662,13 +662,14 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
                   user?.initials || 'U'
                 )}
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 relative z-10">
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment..."
-                  className="w-full bg-transparent text-sm placeholder:text-muted-foreground outline-none resize-none min-h-[24px] leading-6"
+                  className="w-full bg-transparent text-foreground text-sm placeholder:text-muted-foreground outline-none resize-none min-h-[24px] leading-6 relative z-10"
                   rows={1}
+                  style={{ pointerEvents: 'auto' }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();

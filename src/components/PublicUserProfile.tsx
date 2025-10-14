@@ -277,13 +277,22 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
   );
 
   const VideoCard = ({ video }: { video: any }) => (
-    <Card className="overflow-hidden hover:bg-muted/50 transition-colors cursor-pointer">
+    <Card 
+      className="overflow-hidden hover:bg-muted/50 transition-colors cursor-pointer"
+      onClick={() => navigate(`/?view=relax&videoId=${video.id}`)}
+    >
       <div className="aspect-[9/16] bg-muted relative">
         {video.thumbnail_url ? (
           <img src={video.thumbnail_url} alt={video.title} className="w-full h-full object-cover" />
+        ) : video.video_url ? (
+          <video 
+            src={video.video_url} 
+            className="w-full h-full object-cover"
+            preload="metadata"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="text-muted-foreground">No thumbnail</span>
+            <span className="text-muted-foreground">No preview</span>
           </div>
         )}
       </div>
@@ -517,11 +526,11 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
         </TabsContent>
 
         <TabsContent value="videos" className="mt-0">
-          <div className="grid grid-cols-3 gap-1 p-1">
+          <div className="grid grid-cols-2 gap-2 p-2">
             {videos.length > 0 ? (
               videos.map((video) => <VideoCard key={video.id} video={video} />)
             ) : (
-              <div className="col-span-3">
+              <div className="col-span-2">
                 <EmptyState 
                   icon={MessageCircle}
                   message="No videos yet"

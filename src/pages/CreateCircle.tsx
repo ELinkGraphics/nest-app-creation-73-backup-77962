@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ArrowLeft, Camera, Users, Globe, Lock, MapPin, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,31 @@ const CreateCircle: React.FC = () => {
   const [privacy, setPrivacy] = useState<'public' | 'private'>('public');
   const [category, setCategory] = useState('');
   const [location, setLocation] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be less than 5MB');
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleCreate = async () => {
     if (!user) {
@@ -47,8 +72,10 @@ const CreateCircle: React.FC = () => {
         category: category,
         location: location || undefined,
         is_private: privacy === 'private',
+        avatar: avatarFile || undefined,
       }, user.id);
 
+      toast.success('Circle created successfully!');
       navigate(`/circle/${circle.id}`);
     } catch (error) {
       // Error already handled in mutation
@@ -97,10 +124,26 @@ const CreateCircle: React.FC = () => {
       <div className="p-4 space-y-6">
         {/* Circle Image */}
         <div className="text-center">
-          <div className="w-24 h-24 mx-auto rounded-full bg-muted border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors group">
-            <Camera className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            className="hidden"
+          />
+          <div 
+            onClick={() => fileInputRef.current?.click()}
+            className="w-24 h-24 mx-auto rounded-full bg-muted border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors group overflow-hidden"
+          >
+            {avatarPreview ? (
+              <img src={avatarPreview} alt="Circle avatar" className="w-full h-full object-cover" />
+            ) : (
+              <Camera className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
+            )}
           </div>
-          <p className="text-sm text-muted-foreground mt-2">Add circle photo</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            {avatarPreview ? 'Change circle photo' : 'Add circle photo (optional)'}
+          </p>
         </div>
 
         {/* Circle Name */}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Users, MessageCircle, Bell, MoreVertical, BadgeCheck } from 'lucide-react';
+import { ArrowLeft, MapPin, Users, MessageCircle, Bell, MoreVertical, BadgeCheck, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -13,11 +13,13 @@ import CircleEvents from '@/components/circles/CircleEvents';
 import CircleResources from '@/components/circles/CircleResources';
 import CircleMembers from '@/components/circles/CircleMembers';
 import CircleAbout from '@/components/circles/CircleAbout';
+import EditCircleModal from '@/components/circles/EditCircleModal';
 import { useCircle } from '@/hooks/useCircles';
 import { useCircleMutations } from '@/hooks/useCircleMutations';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 import { type TabKey } from '@/hooks/useAppNav';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CircleDetailProps {
   activeTab?: TabKey;
@@ -33,10 +35,16 @@ const CircleDetail: React.FC<CircleDetailProps> = ({
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
+  const queryClient = useQueryClient();
   const [circleActiveTab, setCircleActiveTab] = useState('posts');
+  const [editModalOpen, setEditModalOpen] = useState(false);
   
   const { data: circle, isLoading } = useCircle(id!, user?.id);
   const { joinCircle, leaveCircle, isJoining } = useCircleMutations();
+
+  const handleEditSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['circle', id] });
+  };
 
   const handleJoinLeave = async () => {
     if (!user) {
@@ -130,6 +138,16 @@ const CircleDetail: React.FC<CircleDetailProps> = ({
       <div className="pt-14 px-6 pb-4 text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
           <h1 className="text-2xl font-bold">{circle.name}</h1>
+          {circle.is_owned && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setEditModalOpen(true)}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
           {circle.is_premium && (
             <BadgeCheck className="size-6 text-secondary animate-scale-in" aria-label="Verified" />
           )}
@@ -242,6 +260,16 @@ const CircleDetail: React.FC<CircleDetailProps> = ({
 
       {/* Footer Navigation */}
       <FooterNav active={activeTab} onSelect={onTabSelect} onOpenCreate={onOpenCreate} />
+
+      {/* Edit Circle Modal */}
+      {circle && (
+        <EditCircleModal
+          open={editModalOpen}
+          onOpenChange={setEditModalOpen}
+          circle={circle}
+          onSuccess={handleEditSuccess}
+        />
+      )}
     </div>
   );
 };

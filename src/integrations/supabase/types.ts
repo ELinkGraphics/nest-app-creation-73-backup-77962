@@ -14,6 +14,452 @@ export type Database = {
   }
   public: {
     Tables: {
+      circle_event_attendees: {
+        Row: {
+          event_id: string
+          id: string
+          payment_status: string | null
+          registered_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          event_id: string
+          id?: string
+          payment_status?: string | null
+          registered_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          event_id?: string
+          id?: string
+          payment_status?: string | null
+          registered_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_event_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "circle_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "circle_event_attendees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      circle_events: {
+        Row: {
+          circle_id: string
+          created_at: string | null
+          creator_id: string
+          current_attendees: number | null
+          description: string
+          duration_minutes: number
+          event_date: string
+          event_time: string
+          event_type: string
+          id: string
+          max_attendees: number | null
+          meeting_url: string | null
+          platform: string | null
+          price: number | null
+          status: string
+          timezone: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          circle_id: string
+          created_at?: string | null
+          creator_id: string
+          current_attendees?: number | null
+          description: string
+          duration_minutes: number
+          event_date: string
+          event_time: string
+          event_type: string
+          id?: string
+          max_attendees?: number | null
+          meeting_url?: string | null
+          platform?: string | null
+          price?: number | null
+          status?: string
+          timezone?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          circle_id?: string
+          created_at?: string | null
+          creator_id?: string
+          current_attendees?: number | null
+          description?: string
+          duration_minutes?: number
+          event_date?: string
+          event_time?: string
+          event_type?: string
+          id?: string
+          max_attendees?: number | null
+          meeting_url?: string | null
+          platform?: string | null
+          price?: number | null
+          status?: string
+          timezone?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_events_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "circle_events_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      circle_members: {
+        Row: {
+          circle_id: string
+          id: string
+          joined_at: string | null
+          role: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          circle_id: string
+          id?: string
+          joined_at?: string | null
+          role?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          circle_id?: string
+          id?: string
+          joined_at?: string | null
+          role?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_members_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "circle_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      circle_resources: {
+        Row: {
+          circle_id: string
+          created_at: string | null
+          description: string
+          downloads_count: number | null
+          file_size_mb: number | null
+          file_url: string
+          id: string
+          is_premium: boolean | null
+          rating: number | null
+          resource_type: string
+          title: string
+          updated_at: string | null
+          uploader_id: string
+        }
+        Insert: {
+          circle_id: string
+          created_at?: string | null
+          description: string
+          downloads_count?: number | null
+          file_size_mb?: number | null
+          file_url: string
+          id?: string
+          is_premium?: boolean | null
+          rating?: number | null
+          resource_type: string
+          title: string
+          updated_at?: string | null
+          uploader_id: string
+        }
+        Update: {
+          circle_id?: string
+          created_at?: string | null
+          description?: string
+          downloads_count?: number | null
+          file_size_mb?: number | null
+          file_url?: string
+          id?: string
+          is_premium?: boolean | null
+          rating?: number | null
+          resource_type?: string
+          title?: string
+          updated_at?: string | null
+          uploader_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_resources_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "circle_resources_uploader_id_fkey"
+            columns: ["uploader_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      circle_services: {
+        Row: {
+          category: string
+          circle_id: string
+          created_at: string | null
+          description: string
+          duration_minutes: number
+          id: string
+          is_active: boolean | null
+          price: number
+          provider_id: string
+          rating: number | null
+          reviews_count: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          circle_id: string
+          created_at?: string | null
+          description: string
+          duration_minutes: number
+          id?: string
+          is_active?: boolean | null
+          price: number
+          provider_id: string
+          rating?: number | null
+          reviews_count?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          circle_id?: string
+          created_at?: string | null
+          description?: string
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          price?: number
+          provider_id?: string
+          rating?: number | null
+          reviews_count?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_services_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "circle_services_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      circle_stats: {
+        Row: {
+          circle_id: string
+          created_at: string | null
+          events_count: number | null
+          members_count: number | null
+          monthly_activity: number | null
+          posts_count: number | null
+          resources_count: number | null
+          services_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          circle_id: string
+          created_at?: string | null
+          events_count?: number | null
+          members_count?: number | null
+          monthly_activity?: number | null
+          posts_count?: number | null
+          resources_count?: number | null
+          services_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          circle_id?: string
+          created_at?: string | null
+          events_count?: number | null
+          members_count?: number | null
+          monthly_activity?: number | null
+          posts_count?: number | null
+          resources_count?: number | null
+          services_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_stats_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: true
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      circle_tips: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          id: string
+          post_id: string
+          recipient_id: string
+          status: string
+          tipper_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          post_id: string
+          recipient_id: string
+          status?: string
+          tipper_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          post_id?: string
+          recipient_id?: string
+          status?: string
+          tipper_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_tips_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "circle_tips_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "circle_tips_tipper_id_fkey"
+            columns: ["tipper_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      circles: {
+        Row: {
+          avatar_url: string | null
+          category: string
+          cover_image_url: string | null
+          created_at: string | null
+          creator_id: string
+          description: string
+          id: string
+          is_active: boolean | null
+          is_expert: boolean | null
+          is_premium: boolean | null
+          is_private: boolean | null
+          location: string | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          category: string
+          cover_image_url?: string | null
+          created_at?: string | null
+          creator_id: string
+          description: string
+          id?: string
+          is_active?: boolean | null
+          is_expert?: boolean | null
+          is_premium?: boolean | null
+          is_private?: boolean | null
+          location?: string | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          category?: string
+          cover_image_url?: string | null
+          created_at?: string | null
+          creator_id?: string
+          description?: string
+          id?: string
+          is_active?: boolean | null
+          is_expert?: boolean | null
+          is_premium?: boolean | null
+          is_private?: boolean | null
+          location?: string | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circles_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comment_likes: {
         Row: {
           comment_id: string
@@ -214,6 +660,7 @@ export type Database = {
       }
       posts: {
         Row: {
+          circle_id: string | null
           content: string
           created_at: string | null
           id: string
@@ -228,6 +675,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          circle_id?: string | null
           content: string
           created_at?: string | null
           id?: string
@@ -242,6 +690,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          circle_id?: string | null
           content?: string
           created_at?: string | null
           id?: string
@@ -256,6 +705,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "posts_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "posts_user_id_fkey"
             columns: ["user_id"]
@@ -726,6 +1182,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_circle_feed: {
+        Args: { _circle_id: string; page_num?: number; page_size?: number }
+        Returns: {
+          avatar_color: string
+          avatar_url: string
+          comments_count: number
+          content: string
+          created_at: string
+          initials: string
+          is_sponsored: boolean
+          is_verified: boolean
+          likes_count: number
+          media_alt: string
+          media_color_from: string
+          media_color_to: string
+          media_url: string
+          media_urls: string[]
+          name: string
+          post_id: string
+          saves_count: number
+          shares_count: number
+          tags: string[]
+          user_has_liked: boolean
+          user_id: string
+          username: string
+        }[]
+      }
       get_feed_posts: {
         Args: { page_num?: number; page_size?: number }
         Returns: {

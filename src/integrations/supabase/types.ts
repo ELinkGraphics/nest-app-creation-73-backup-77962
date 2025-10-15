@@ -403,12 +403,14 @@ export type Database = {
       }
       circles: {
         Row: {
+          about_text: string | null
           avatar_url: string | null
           category: string
           cover_image_url: string | null
           created_at: string | null
           creator_id: string
           description: string
+          guidelines: string[] | null
           id: string
           is_active: boolean | null
           is_expert: boolean | null
@@ -419,12 +421,14 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          about_text?: string | null
           avatar_url?: string | null
           category: string
           cover_image_url?: string | null
           created_at?: string | null
           creator_id: string
           description: string
+          guidelines?: string[] | null
           id?: string
           is_active?: boolean | null
           is_expert?: boolean | null
@@ -435,12 +439,14 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          about_text?: string | null
           avatar_url?: string | null
           category?: string
           cover_image_url?: string | null
           created_at?: string | null
           creator_id?: string
           description?: string
+          guidelines?: string[] | null
           id?: string
           is_active?: boolean | null
           is_expert?: boolean | null

@@ -18,15 +18,15 @@ const CircleAbout: React.FC<CircleAboutProps> = ({ circle }) => {
     monthlyActivity: 89
   };
 
-  const mockRules = [
-    'Be respectful and professional in all interactions',
-    'Share relevant content that adds value to the community',
-    'No spam, self-promotion without permission, or off-topic posts',
-    'Respect privacy and confidentiality when discussing business matters',
-    'Help create an inclusive environment for all members'
-  ];
-
   const mockTags = ['startup', 'technology', 'entrepreneurship', 'networking', 'funding', 'product-development'];
+  
+  // Use actual guidelines from database or empty array
+  const displayGuidelines = circle.guidelines && circle.guidelines.length > 0 
+    ? circle.guidelines 
+    : [];
+  
+  // Use actual about text from database or just the description
+  const displayAboutText = circle.about_text || circle.description;
 
   return (
     <div className="px-4 py-6 space-y-6">
@@ -40,9 +40,7 @@ const CircleAbout: React.FC<CircleAboutProps> = ({ circle }) => {
         </CardHeader>
         <CardContent>
           <p className="text-foreground leading-relaxed mb-4">
-            {circle.description} This is a community-driven space where entrepreneurs, 
-            developers, and innovators come together to share knowledge, collaborate on projects, 
-            and support each other's growth in the tech industry.
+            {displayAboutText}
           </p>
           
           {/* Tags */}
@@ -151,23 +149,25 @@ const CircleAbout: React.FC<CircleAboutProps> = ({ circle }) => {
       </Card>
 
       {/* Community Guidelines */}
-      <Card className="mx-0">
-        <CardHeader>
-          <CardTitle>Community Guidelines</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ol className="space-y-2">
-            {mockRules.map((rule, index) => (
-              <li key={index} className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">
-                  {index + 1}
-                </span>
-                <span className="text-sm text-foreground">{rule}</span>
-              </li>
-            ))}
-          </ol>
-        </CardContent>
-      </Card>
+      {displayGuidelines.length > 0 && (
+        <Card className="mx-0">
+          <CardHeader>
+            <CardTitle>Community Guidelines</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ol className="space-y-2">
+              {displayGuidelines.map((rule, index) => (
+                <li key={index} className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">
+                    {index + 1}
+                  </span>
+                  <span className="text-sm text-foreground">{rule}</span>
+                </li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Creator Info */}
       {circle.creator && (

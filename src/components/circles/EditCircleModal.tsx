@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import React, { useState, useRef, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,8 +28,18 @@ const EditCircleModal: React.FC<EditCircleModalProps> = ({
   
   const [name, setName] = useState(circle.name);
   const [description, setDescription] = useState(circle.description);
-  const [aboutSection, setAboutSection] = useState('');
-  const [guidelines, setGuidelines] = useState<string[]>(['']);
+  const [aboutSection, setAboutSection] = useState(circle.about_text || '');
+  const [guidelines, setGuidelines] = useState<string[]>(
+    circle.guidelines && circle.guidelines.length > 0 ? circle.guidelines : ['']
+  );
+
+  // Update state when circle data changes
+  useEffect(() => {
+    setName(circle.name);
+    setDescription(circle.description);
+    setAboutSection(circle.about_text || '');
+    setGuidelines(circle.guidelines && circle.guidelines.length > 0 ? circle.guidelines : ['']);
+  }, [circle]);
   
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(circle.avatar_url || null);
@@ -115,6 +125,8 @@ const EditCircleModal: React.FC<EditCircleModalProps> = ({
       const updates: any = {
         name: name.trim(),
         description: description.trim(),
+        about_text: aboutSection.trim() || null,
+        guidelines: guidelines.filter(g => g.trim() !== ''),
       };
 
       if (avatarFile) updates.avatar = avatarFile;
@@ -136,6 +148,9 @@ const EditCircleModal: React.FC<EditCircleModalProps> = ({
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Circle</DialogTitle>
+          <DialogDescription>
+            Update your circle's information, cover image, and community guidelines
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">

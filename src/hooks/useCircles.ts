@@ -15,6 +15,8 @@ export interface Circle {
   is_active: boolean;
   creator_id: string;
   created_at: string;
+  about_text?: string | null;
+  guidelines?: string[] | null;
   members_count?: number;
   posts_count?: number;
   is_joined?: boolean;
@@ -75,6 +77,8 @@ export const useCircles = (userId?: string) => {
         is_active: circle.is_active,
         creator_id: circle.creator_id,
         created_at: circle.created_at,
+        about_text: circle.about_text,
+        guidelines: circle.guidelines,
         members_count: circle.circle_stats?.members_count || 0,
         posts_count: circle.circle_stats?.posts_count || 0,
         is_joined: membershipData.some(m => m.circle_id === circle.id),
@@ -146,6 +150,8 @@ export const useCircle = (circleId: string, userId?: string) => {
         is_active: circle.is_active,
         creator_id: circle.creator_id,
         created_at: circle.created_at,
+        about_text: circle.about_text,
+        guidelines: circle.guidelines,
         members_count: circle.circle_stats?.members_count || 0,
         posts_count: circle.circle_stats?.posts_count || 0,
         is_joined: isJoined,
@@ -207,6 +213,8 @@ export const useMyCircles = (userId: string) => {
             is_active: circle.is_active,
             creator_id: circle.creator_id,
             created_at: circle.created_at,
+            about_text: circle.about_text,
+            guidelines: circle.guidelines,
             members_count: circle.circle_stats?.members_count || 0,
             posts_count: circle.circle_stats?.posts_count || 0,
             is_joined: true,
@@ -262,6 +270,8 @@ export const useOwnedCircles = (userId: string) => {
         is_active: circle.is_active,
         creator_id: circle.creator_id,
         created_at: circle.created_at,
+        about_text: circle.about_text,
+        guidelines: circle.guidelines,
         members_count: circle.circle_stats?.members_count || 0,
         posts_count: circle.circle_stats?.posts_count || 0,
         is_joined: true,

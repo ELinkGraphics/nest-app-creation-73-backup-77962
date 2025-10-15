@@ -12,6 +12,8 @@ interface CreateCircleData {
   is_expert?: boolean;
   avatar?: File;
   cover?: File;
+  about_text?: string | null;
+  guidelines?: string[];
 }
 
 export const useCircleMutations = () => {
@@ -186,6 +188,8 @@ export const useCircleMutations = () => {
       if (updates.category) updateData.category = updates.category;
       if (updates.location !== undefined) updateData.location = updates.location;
       if (updates.is_private !== undefined) updateData.is_private = updates.is_private;
+      if (updates.about_text !== undefined) updateData.about_text = updates.about_text;
+      if (updates.guidelines !== undefined) updateData.guidelines = updates.guidelines;
       if (avatarUrl) updateData.avatar_url = avatarUrl;
       if (coverUrl) updateData.cover_image_url = coverUrl;
 

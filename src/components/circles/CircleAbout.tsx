@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { type Circle } from '@/hooks/useCircles';
 
 interface CircleAboutProps {
-  circle: any;
+  circle: Circle;
 }
 
 const CircleAbout: React.FC<CircleAboutProps> = ({ circle }) => {
@@ -93,7 +94,13 @@ const CircleAbout: React.FC<CircleAboutProps> = ({ circle }) => {
             <Calendar className="h-5 w-5 text-muted-foreground" />
             <div>
               <p className="font-medium">Created</p>
-              <p className="text-sm text-muted-foreground">January 15, 2023</p>
+              <p className="text-sm text-muted-foreground">
+                {circle.created_at ? new Date(circle.created_at).toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                }) : 'N/A'}
+              </p>
             </div>
           </div>
           
@@ -101,7 +108,9 @@ const CircleAbout: React.FC<CircleAboutProps> = ({ circle }) => {
             <Users className="h-5 w-5 text-muted-foreground" />
             <div>
               <p className="font-medium">Members</p>
-              <p className="text-sm text-muted-foreground">{circle.members.toLocaleString()} active members</p>
+              <p className="text-sm text-muted-foreground">
+                {(circle.members_count || 0).toLocaleString()} active members
+              </p>
             </div>
           </div>
           
@@ -116,7 +125,7 @@ const CircleAbout: React.FC<CircleAboutProps> = ({ circle }) => {
           )}
           
           <div className="flex items-center gap-3">
-            {circle.isPrivate ? (
+            {circle.is_private ? (
               <Lock className="h-5 w-5 text-muted-foreground" />
             ) : (
               <Globe className="h-5 w-5 text-muted-foreground" />
@@ -124,12 +133,12 @@ const CircleAbout: React.FC<CircleAboutProps> = ({ circle }) => {
             <div>
               <p className="font-medium">Privacy</p>
               <p className="text-sm text-muted-foreground">
-                {circle.isPrivate ? 'Private - Invite only' : 'Public - Anyone can join'}
+                {circle.is_private ? 'Private - Invite only' : 'Public - Anyone can join'}
               </p>
             </div>
           </div>
           
-          {circle.isPremium && (
+          {circle.is_premium && (
             <div className="flex items-center gap-3">
               <Crown className="h-5 w-5 text-muted-foreground" />
               <div>
@@ -161,28 +170,38 @@ const CircleAbout: React.FC<CircleAboutProps> = ({ circle }) => {
       </Card>
 
       {/* Creator Info */}
-      <Card className="mx-0">
-        <CardHeader>
-          <CardTitle>Circle Creator</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-lg font-semibold">
-              {circle.creator.name.slice(0, 2).toUpperCase()}
+      {circle.creator && (
+        <Card className="mx-0">
+          <CardHeader>
+            <CardTitle>Circle Creator</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              {circle.creator.avatar_url ? (
+                <img 
+                  src={circle.creator.avatar_url} 
+                  alt={circle.creator.name}
+                  className="h-16 w-16 rounded-full object-cover"
+                />
+              ) : (
+                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-lg font-semibold">
+                  {circle.creator.name.slice(0, 2).toUpperCase()}
+                </div>
+              )}
+              <div className="flex-1">
+                <h4 className="font-semibold text-foreground">{circle.creator.name}</h4>
+                <p className="text-sm text-muted-foreground mb-2">
+                  @{circle.creator.username}
+                </p>
+                <Button variant="outline" size="sm">
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  View Profile
+                </Button>
+              </div>
             </div>
-            <div className="flex-1">
-              <h4 className="font-semibold text-foreground">{circle.creator.name}</h4>
-              <p className="text-sm text-muted-foreground mb-2">
-                Tech entrepreneur and startup advisor with 10+ years of experience
-              </p>
-              <Button variant="outline" size="sm">
-                <ExternalLink className="h-4 w-4 mr-1" />
-                View Profile
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
 import FooterNav from '@/components/FooterNav';
 import CirclePosts from '@/components/circles/CirclePosts';
 import CircleServices from '@/components/circles/CircleServices';
@@ -12,38 +13,94 @@ import CircleEvents from '@/components/circles/CircleEvents';
 import CircleResources from '@/components/circles/CircleResources';
 import CircleMembers from '@/components/circles/CircleMembers';
 import CircleAbout from '@/components/circles/CircleAbout';
-import { mockCircles } from '@/data/circles';
+import { useCircle } from '@/hooks/useCircles';
+import { useCircleMutations } from '@/hooks/useCircleMutations';
+import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
 import { type TabKey } from '@/hooks/useAppNav';
+
 interface CircleDetailProps {
   activeTab?: TabKey;
   onTabSelect?: (tab: TabKey) => void;
   onOpenCreate?: () => void;
 }
+
 const CircleDetail: React.FC<CircleDetailProps> = ({
   activeTab = "circles",
   onTabSelect = () => {},
   onOpenCreate = () => {}
 }) => {
-  const {
-    id
-  } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useUser();
   const [circleActiveTab, setCircleActiveTab] = useState('posts');
-  const circle = mockCircles.find(c => c.id === id);
-  if (!circle) {
-    return <div className="min-h-[100dvh] w-full max-w-[480px] mx-auto bg-background text-foreground flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-xl font-semibold mb-2">Circle Not Found</h1>
-          <Button onClick={() => navigate(-1)}>Go Back</Button>
+  
+  const { data: circle, isLoading } = useCircle(id!, user?.id);
+  const { joinCircle, leaveCircle, isJoining } = useCircleMutations();
+
+  const handleJoinLeave = async () => {
+    if (!user) {
+      toast.error('Please log in to join circles');
+      return;
+    }
+
+    if (!circle) return;
+
+    try {
+      if (circle.is_joined) {
+        await leaveCircle(circle.id, user.id);
+      } else {
+        await joinCircle(circle.id, user.id, circle.is_private);
+      }
+    } catch (error) {
+      // Error already handled in mutation
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[100dvh] w-full max-w-[480px] mx-auto bg-background text-foreground pb-20">
+        <div className="relative">
+          <Skeleton className="w-full h-48" />
+          <div className="absolute top-4 left-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-6 w-6" />
+            </Button>
+          </div>
         </div>
-      </div>;
+        <div className="px-6 -mt-12 mb-4">
+          <Skeleton className="w-24 h-24 rounded-full" />
+        </div>
+        <div className="px-6 space-y-4">
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      </div>
+    );
   }
-  return <div className="min-h-[100dvh] w-full max-w-[480px] mx-auto bg-background text-foreground relative border-l border-r border-border pb-24">
+
+  if (!circle) {
+    return (
+      <div className="min-h-[100dvh] w-full max-w-[480px] mx-auto bg-background text-foreground flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Circle not found</h2>
+          <Button onClick={() => navigate('/circles')}>Back to Circles</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-[100dvh] w-full max-w-[480px] mx-auto bg-background text-foreground relative border-l border-r border-border pb-24">
       {/* Header with Banner and Profile */}
       <div className="relative">
         {/* Banner Background */}
         <div className="h-48 overflow-hidden relative">
-          <img src={circle.coverImage} alt={circle.name} className="w-full h-full object-cover" />
+          {circle.cover_image_url ? (
+            <img src={circle.cover_image_url} alt={circle.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5" />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           
           {/* Back Button */}
@@ -60,7 +117,11 @@ const CircleDetail: React.FC<CircleDetailProps> = ({
         {/* Profile Image - Centered and Overlapping */}
         <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-48">
           <div className="h-24 w-24 rounded-full bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center text-white text-2xl font-bold border-4 border-background shadow-lg">
-            {circle.name.slice(0, 2).toUpperCase()}
+            {circle.avatar_url ? (
+              <img src={circle.avatar_url} alt={circle.name} className="w-full h-full rounded-full object-cover" />
+            ) : (
+              circle.name.slice(0, 2).toUpperCase()
+            )}
           </div>
         </div>
       </div>
@@ -69,7 +130,7 @@ const CircleDetail: React.FC<CircleDetailProps> = ({
       <div className="pt-14 px-6 pb-4 text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
           <h1 className="text-2xl font-bold">{circle.name}</h1>
-          {circle.isPremium && (
+          {circle.is_premium && (
             <BadgeCheck className="size-6 text-secondary animate-scale-in" aria-label="Verified" />
           )}
         </div>
@@ -78,12 +139,14 @@ const CircleDetail: React.FC<CircleDetailProps> = ({
         <div className="flex items-center justify-center gap-6 text-sm mb-4">
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="font-semibold text-foreground">{circle.members.toLocaleString()} members</span>
+            <span className="font-semibold text-foreground">{circle.members_count?.toLocaleString() || 0} members</span>
           </div>
-          {circle.location && <div className="flex items-center gap-1">
+          {circle.location && (
+            <div className="flex items-center gap-1">
               <MapPin className="h-4 w-4 text-muted-foreground" />
               <span className="font-semibold text-foreground">{circle.location}</span>
-            </div>}
+            </div>
+          )}
         </div>
       </div>
 
@@ -92,11 +155,15 @@ const CircleDetail: React.FC<CircleDetailProps> = ({
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-              {circle.creator.name.slice(0, 2).toUpperCase()}
+              {circle.creator?.avatar_url ? (
+                <img src={circle.creator.avatar_url} alt={circle.creator.name} className="w-full h-full rounded-full object-cover" />
+              ) : (
+                circle.creator?.name?.slice(0, 2).toUpperCase() || 'UN'
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-medium text-foreground truncate text-sm sm:text-base">
-                {circle.creator.name}
+                {circle.creator?.name || 'Unknown'}
               </p>
               <p className="text-sm text-muted-foreground">Circle Creator</p>
             </div>
@@ -104,9 +171,16 @@ const CircleDetail: React.FC<CircleDetailProps> = ({
           
           {/* Action Buttons */}
           <div className="flex gap-2">
-            <Button size="sm">
-              {circle.isJoined ? 'Joined' : 'Join Circle'}
-            </Button>
+            {!circle.is_owned && (
+              <Button 
+                size="sm"
+                variant={circle.is_joined ? "outline" : "default"}
+                onClick={handleJoinLeave}
+                disabled={isJoining}
+              >
+                {isJoining ? 'Loading...' : circle.is_joined ? 'Leave' : 'Join Circle'}
+              </Button>
+            )}
             
             <Button variant="outline" size="icon">
               <Bell className="h-4 w-4" />
@@ -168,6 +242,8 @@ const CircleDetail: React.FC<CircleDetailProps> = ({
 
       {/* Footer Navigation */}
       <FooterNav active={activeTab} onSelect={onTabSelect} onOpenCreate={onOpenCreate} />
-    </div>;
+    </div>
+  );
 };
+
 export default CircleDetail;

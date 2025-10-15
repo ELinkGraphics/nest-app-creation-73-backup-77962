@@ -4,28 +4,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Circle } from '@/hooks/useCircles';
 
 interface CircleCardProps {
-  circle: {
-    id: string;
-    name: string;
-    description: string;
-    members: number;
-    location?: string;
-    category: string;
-    avatar: string;
-    coverImage: string;
-    isPrivate: boolean;
-    isPremium: boolean;
-    isExpert: boolean;
-    isActive: boolean;
-    isJoined?: boolean;
-    isOwned?: boolean;
-    creator: {
-      name: string;
-      avatar: string;
-    };
-  };
+  circle: Circle;
   onClick: () => void;
   showManageButton?: boolean;
 }
@@ -43,22 +25,26 @@ const CircleCard: React.FC<CircleCardProps> = ({ circle, onClick, showManageButt
     >
       {/* Cover Image */}
       <div className="relative h-32 overflow-hidden rounded-t-lg">
-        <img 
-          src={circle.coverImage} 
-          alt={circle.name}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
+        {circle.cover_image_url ? (
+          <img 
+            src={circle.cover_image_url} 
+            alt={circle.name}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
         {/* Badges */}
         <div className="absolute top-3 right-3 flex gap-2">
-          {circle.isPremium && (
+          {circle.is_premium && (
             <Badge variant="default" className="bg-gradient-secondary text-primary-foreground shadow-glow">
               <Crown className="h-3 w-3 mr-1" />
               Premium
             </Badge>
           )}
-          {circle.isPrivate && (
+          {circle.is_private && (
             <Badge variant="secondary" className="bg-secondary/20 text-secondary border-secondary/30">
               <Lock className="h-3 w-3 mr-1" />
               Private
@@ -69,7 +55,11 @@ const CircleCard: React.FC<CircleCardProps> = ({ circle, onClick, showManageButt
         {/* Avatar */}
         <div className="absolute bottom-3 left-3">
           <div className="h-12 w-12 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground text-sm font-semibold border-2 border-background shadow-glow">
-            {circle.name.slice(0, 2).toUpperCase()}
+            {circle.avatar_url ? (
+              <img src={circle.avatar_url} alt={circle.name} className="w-full h-full rounded-full object-cover" />
+            ) : (
+              circle.name.slice(0, 2).toUpperCase()
+            )}
           </div>
         </div>
       </div>
@@ -82,13 +72,13 @@ const CircleCard: React.FC<CircleCardProps> = ({ circle, onClick, showManageButt
               {circle.name}
             </h3>
             <div className="flex items-center gap-1">
-              <p className="text-username text-muted-foreground">by {circle.creator.name}</p>
-              {circle.isPremium && (
+              <p className="text-username text-muted-foreground">by {circle.creator?.name || 'Unknown'}</p>
+              {circle.is_premium && (
                 <BadgeCheck className="size-4 text-secondary animate-scale-in" aria-label="Verified" />
               )}
             </div>
           </div>
-          {circle.isActive && (
+          {circle.is_active && (
             <div className="flex items-center gap-1 text-green-500">
               <TrendingUp className="h-3 w-3" />
               <span className="text-xs">Active</span>
@@ -105,7 +95,7 @@ const CircleCard: React.FC<CircleCardProps> = ({ circle, onClick, showManageButt
         <div className="flex items-center gap-4 mb-3 text-meta-info text-muted-foreground">
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
-            <span>{circle.members.toLocaleString()}</span>
+            <span>{circle.members_count?.toLocaleString() || 0}</span>
           </div>
           {circle.location && (
             <div className="flex items-center gap-1">
@@ -127,7 +117,7 @@ const CircleCard: React.FC<CircleCardProps> = ({ circle, onClick, showManageButt
               <Button variant="outline" size="sm">
                 Manage
               </Button>
-            ) : circle.isJoined ? (
+            ) : circle.is_joined ? (
               <Button variant="secondary" size="sm">
                 Joined
               </Button>
@@ -135,9 +125,9 @@ const CircleCard: React.FC<CircleCardProps> = ({ circle, onClick, showManageButt
               <Button 
                 size="sm" 
                 onClick={handleJoinClick}
-                className={circle.isPremium ? "bg-gradient-primary text-primary-foreground hover:bg-gradient-primary/90 shadow-glow" : ""}
+                className={circle.is_premium ? "bg-gradient-primary text-primary-foreground hover:bg-gradient-primary/90 shadow-glow" : ""}
               >
-                {circle.isPremium ? 'Subscribe' : 'Join'}
+                {circle.is_premium ? 'Subscribe' : 'Join'}
               </Button>
             )}
           </div>

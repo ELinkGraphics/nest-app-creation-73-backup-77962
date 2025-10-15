@@ -5,18 +5,54 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { useCircleMutations } from '@/hooks/useCircleMutations';
+import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
 
 const CreateCircle: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
+  const { createCircle, isCreating } = useCircleMutations();
   const [circleName, setCircleName] = useState('');
   const [description, setDescription] = useState('');
   const [privacy, setPrivacy] = useState<'public' | 'private'>('public');
   const [category, setCategory] = useState('');
+  const [location, setLocation] = useState('');
 
-  const handleCreate = () => {
-    // Handle circle creation logic here
-    console.log('Creating circle:', { name: circleName, description, privacy, category });
-    navigate('/');
+  const handleCreate = async () => {
+    if (!user) {
+      toast.error('You must be logged in to create a circle');
+      return;
+    }
+
+    if (!circleName.trim()) {
+      toast.error('Please enter a circle name');
+      return;
+    }
+
+    if (!description.trim()) {
+      toast.error('Please enter a description');
+      return;
+    }
+
+    if (!category) {
+      toast.error('Please select a category');
+      return;
+    }
+
+    try {
+      const circle = await createCircle({
+        name: circleName,
+        description: description,
+        category: category,
+        location: location || undefined,
+        is_private: privacy === 'private',
+      }, user.id);
+
+      navigate(`/circle/${circle.id}`);
+    } catch (error) {
+      // Error already handled in mutation
+    }
   };
 
   const categories = [
@@ -49,10 +85,10 @@ const CreateCircle: React.FC = () => {
           <h1 className="text-lg font-semibold">Create Circle</h1>
           <Button 
             onClick={handleCreate}
-            disabled={!circleName.trim() || !description.trim()}
+            disabled={!circleName.trim() || !description.trim() || !category || isCreating}
             className="px-6"
           >
-            Create
+            {isCreating ? 'Creating...' : 'Create'}
           </Button>
         </div>
       </div>
@@ -87,6 +123,17 @@ const CreateCircle: React.FC = () => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="min-h-[100px]"
+          />
+        </div>
+
+        {/* Location */}
+        <div className="space-y-2">
+          <Label htmlFor="location">Location (Optional)</Label>
+          <Input
+            id="location"
+            placeholder="e.g., San Francisco, CA or Online"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
           />
         </div>
 
@@ -142,19 +189,6 @@ const CreateCircle: React.FC = () => {
               </div>
             </button>
           </div>
-        </div>
-
-        {/* Additional Options */}
-        <div className="space-y-3">
-          <button className="w-full flex items-center p-3 rounded-lg hover:bg-muted/50 transition-colors">
-            <MapPin className="w-5 h-5 text-muted-foreground mr-3" />
-            <span className="text-muted-foreground">Add location</span>
-          </button>
-          
-          <button className="w-full flex items-center p-3 rounded-lg hover:bg-muted/50 transition-colors">
-            <Calendar className="w-5 h-5 text-muted-foreground mr-3" />
-            <span className="text-muted-foreground">Schedule events</span>
-          </button>
         </div>
       </div>
     </div>

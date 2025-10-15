@@ -7,7 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CircleCard from '@/components/circles/CircleCard';
 import CreateCircleModal from '@/components/circles/CreateCircleModal';
 import FooterNav from '@/components/FooterNav';
-import { mockCircles } from '@/data/circles';
+import { useCircles, useMyCircles, useOwnedCircles } from '@/hooks/useCircles';
+import { useUser } from '@/contexts/UserContext';
+import { Skeleton } from '@/components/ui/skeleton';
 import { type TabKey } from '@/hooks/useAppNav';
 
 interface CirclesProps {
@@ -18,11 +20,28 @@ interface CirclesProps {
 
 const Circles: React.FC<CirclesProps> = ({ activeTab, onTabSelect, onOpenCreate }) => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [circleTab, setCircleTab] = useState('browse');
 
-  const filteredCircles = mockCircles.filter(circle =>
+  const { data: allCircles = [], isLoading: isLoadingAll } = useCircles(user?.id);
+  const { data: myCircles = [], isLoading: isLoadingMy } = useMyCircles(user?.id || '');
+  const { data: ownedCircles = [], isLoading: isLoadingOwned } = useOwnedCircles(user?.id || '');
+
+  const filteredAllCircles = allCircles.filter(circle =>
+    circle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    circle.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    circle.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredMyCircles = myCircles.filter(circle =>
+    circle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    circle.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    circle.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredOwnedCircles = ownedCircles.filter(circle =>
     circle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     circle.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
     circle.category.toLowerCase().includes(searchQuery.toLowerCase())
@@ -72,13 +91,25 @@ const Circles: React.FC<CirclesProps> = ({ activeTab, onTabSelect, onOpenCreate 
           <TabsContent value="browse" className="mt-4">
             <div className="px-4">
               <div className="grid gap-4">
-                {filteredCircles.map((circle) => (
-                  <CircleCard
-                    key={circle.id}
-                    circle={circle}
-                    onClick={() => navigate(`/circle/${circle.id}`)}
-                  />
-                ))}
+                {isLoadingAll ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="space-y-3">
+                      <Skeleton className="h-48 w-full rounded-lg" />
+                    </div>
+                  ))
+                ) : filteredAllCircles.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    {searchQuery ? 'No circles found matching your search' : 'No circles available yet'}
+                  </div>
+                ) : (
+                  filteredAllCircles.map((circle) => (
+                    <CircleCard
+                      key={circle.id}
+                      circle={circle}
+                      onClick={() => navigate(`/circle/${circle.id}`)}
+                    />
+                  ))
+                )}
               </div>
             </div>
           </TabsContent>
@@ -86,14 +117,26 @@ const Circles: React.FC<CirclesProps> = ({ activeTab, onTabSelect, onOpenCreate 
           <TabsContent value="my-circles" className="mt-4">
             <div className="px-4">
               <div className="grid gap-4">
-                {filteredCircles.filter(c => c.isJoined).map((circle) => (
-                  <CircleCard
-                    key={circle.id}
-                    circle={circle}
-                    onClick={() => navigate(`/circle/${circle.id}`)}
-                    showManageButton
-                  />
-                ))}
+                {isLoadingMy ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="space-y-3">
+                      <Skeleton className="h-48 w-full rounded-lg" />
+                    </div>
+                  ))
+                ) : filteredMyCircles.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    {searchQuery ? 'No circles found matching your search' : "You haven't joined any circles yet"}
+                  </div>
+                ) : (
+                  filteredMyCircles.map((circle) => (
+                    <CircleCard
+                      key={circle.id}
+                      circle={circle}
+                      onClick={() => navigate(`/circle/${circle.id}`)}
+                      showManageButton
+                    />
+                  ))
+                )}
               </div>
             </div>
           </TabsContent>
@@ -101,14 +144,26 @@ const Circles: React.FC<CirclesProps> = ({ activeTab, onTabSelect, onOpenCreate 
           <TabsContent value="my-communities" className="mt-4">
             <div className="px-4">
               <div className="grid gap-4">
-                {filteredCircles.filter(c => c.isOwned).map((circle) => (
-                  <CircleCard
-                    key={circle.id}
-                    circle={circle}
-                    onClick={() => navigate(`/circle/${circle.id}`)}
-                    showManageButton
-                  />
-                ))}
+                {isLoadingOwned ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="space-y-3">
+                      <Skeleton className="h-48 w-full rounded-lg" />
+                    </div>
+                  ))
+                ) : filteredOwnedCircles.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    {searchQuery ? 'No circles found matching your search' : "You haven't created any circles yet"}
+                  </div>
+                ) : (
+                  filteredOwnedCircles.map((circle) => (
+                    <CircleCard
+                      key={circle.id}
+                      circle={circle}
+                      onClick={() => navigate(`/circle/${circle.id}`)}
+                      showManageButton
+                    />
+                  ))
+                )}
               </div>
             </div>
           </TabsContent>

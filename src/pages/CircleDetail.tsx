@@ -38,6 +38,7 @@ const CircleDetail: React.FC<CircleDetailProps> = ({
   const queryClient = useQueryClient();
   const [circleActiveTab, setCircleActiveTab] = useState('posts');
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   
   const { data: circle, isLoading } = useCircle(id!, user?.id);
   const { joinCircle, leaveCircle, isJoining } = useCircleMutations();
@@ -200,9 +201,18 @@ const CircleDetail: React.FC<CircleDetailProps> = ({
               </Button>
             )}
             
-            <Button variant="outline" size="icon">
-              <Bell className="h-4 w-4" />
-            </Button>
+            {!circle.is_owned && circle.is_joined && (
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={() => {
+                  setNotificationsEnabled(!notificationsEnabled);
+                  toast.success(notificationsEnabled ? 'Notifications disabled' : 'Notifications enabled');
+                }}
+              >
+                <Bell className={`h-4 w-4 ${notificationsEnabled ? 'fill-current' : ''}`} />
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -237,19 +247,19 @@ const CircleDetail: React.FC<CircleDetailProps> = ({
 
           <div className="min-h-[400px]">
             <TabsContent value="posts">
-              <CirclePosts circle={circle} />
+              <CirclePosts circle={circle} isOwner={circle.is_owned || false} />
             </TabsContent>
             <TabsContent value="services">
-              <CircleServices circle={circle} />
+              <CircleServices circle={circle} isOwner={circle.is_owned || false} />
             </TabsContent>
             <TabsContent value="events">
-              <CircleEvents circle={circle} />
+              <CircleEvents circle={circle} isOwner={circle.is_owned || false} />
             </TabsContent>
             <TabsContent value="resources">
-              <CircleResources circle={circle} />
+              <CircleResources circle={circle} isOwner={circle.is_owned || false} />
             </TabsContent>
             <TabsContent value="members">
-              <CircleMembers circle={circle} />
+              <CircleMembers circle={circle} isOwner={circle.is_owned || false} />
             </TabsContent>
             <TabsContent value="about">
               <CircleAbout circle={circle} />

@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 
 interface CircleServicesProps {
   circle: any;
+  isOwner: boolean;
 }
 
-const CircleServices: React.FC<CircleServicesProps> = ({ circle }) => {
+const CircleServices: React.FC<CircleServicesProps> = ({ circle, isOwner }) => {
   const mockServices = [
     {
       id: '1',
@@ -46,7 +47,7 @@ const CircleServices: React.FC<CircleServicesProps> = ({ circle }) => {
     <div className="px-4 py-6 space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Services & Offerings</h3>
-        <Button size="sm">Request Custom Service</Button>
+        <Button size="sm">{isOwner ? 'Add Your Service' : 'Request Custom Service'}</Button>
       </div>
 
       {mockServices.map((service) => (

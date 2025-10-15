@@ -7,9 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface CircleResourcesProps {
   circle: any;
+  isOwner: boolean;
 }
 
-const CircleResources: React.FC<CircleResourcesProps> = ({ circle }) => {
+const CircleResources: React.FC<CircleResourcesProps> = ({ circle, isOwner }) => {
   const [filter, setFilter] = useState('all');
 
   const mockResources = [
@@ -81,10 +82,12 @@ const CircleResources: React.FC<CircleResourcesProps> = ({ circle }) => {
     <div className="px-4 py-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Resources</h3>
-        <Button size="sm">
-          <Upload className="h-4 w-4 mr-1" />
-          Upload
-        </Button>
+        {isOwner && (
+          <Button size="sm">
+            <Upload className="h-4 w-4 mr-1" />
+            Upload File
+          </Button>
+        )}
       </div>
 
       <Tabs value={filter} onValueChange={setFilter} className="mb-4">
@@ -152,18 +155,20 @@ const CircleResources: React.FC<CircleResourcesProps> = ({ circle }) => {
         </div>
       </Tabs>
 
-      <Card className="border-dashed mt-4 mx-0">
-        <CardContent className="p-4 text-center">
-          <h4 className="font-medium mb-2">Share Your Resources</h4>
-          <p className="text-sm text-muted-foreground mb-4">
-            Upload helpful documents, videos, or tools for the community
-          </p>
-          <Button variant="outline">
-            <Upload className="h-4 w-4 mr-1" />
-            Upload Resource
-          </Button>
-        </CardContent>
-      </Card>
+      {isOwner && (
+        <Card className="border-dashed mt-4 mx-0">
+          <CardContent className="p-4 text-center">
+            <h4 className="font-medium mb-2">Share Your Resources</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Upload helpful documents, videos, or tools for the community
+            </p>
+            <Button variant="outline">
+              <Upload className="h-4 w-4 mr-1" />
+              Upload Resource
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

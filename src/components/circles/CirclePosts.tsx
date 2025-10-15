@@ -8,9 +8,10 @@ import { TipButton } from './TipButton';
 
 interface CirclePostsProps {
   circle: any;
+  isOwner: boolean;
 }
 
-const CirclePosts: React.FC<CirclePostsProps> = ({ circle }) => {
+const CirclePosts: React.FC<CirclePostsProps> = ({ circle, isOwner }) => {
   const navigate = useNavigate();
   const { id: circleId } = useParams();
 
@@ -89,17 +90,19 @@ const CirclePosts: React.FC<CirclePostsProps> = ({ circle }) => {
 
   return (
     <div className="space-y-0 scroll-smooth">
-      {/* Create Post */}
-      <div className="px-4 py-6 bg-muted/30 border-b border-border animate-fade-in">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground text-sm font-semibold flex-shrink-0">
-            ME
-          </div>
-          <div className="flex-1 bg-background/80 rounded-full px-4 py-3 cursor-pointer border border-border hover:bg-background transition-smooth hover-scale">
-            <p className="text-sm text-muted-foreground">Share something with the circle...</p>
+      {/* Create Post - Only for Owners */}
+      {isOwner && (
+        <div className="px-4 py-6 bg-muted/30 border-b border-border animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground text-sm font-semibold flex-shrink-0">
+              ME
+            </div>
+            <div className="flex-1 bg-background/80 rounded-full px-4 py-3 cursor-pointer border border-border hover:bg-background transition-smooth hover-scale">
+              <p className="text-sm text-muted-foreground">Share something with the circle...</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Section Header */}
       <div className="px-6 py-4 bg-background/50 border-b border-border/50">

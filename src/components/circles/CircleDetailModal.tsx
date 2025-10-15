@@ -137,19 +137,19 @@ const CircleDetailModal: React.FC<CircleDetailModalProps> = ({
 
             <div className="flex-1 overflow-y-auto">
               <TabsContent value="posts">
-                <CirclePosts circle={circle} />
+                <CirclePosts circle={circle} isOwner={false} />
               </TabsContent>
               <TabsContent value="services">
-                <CircleServices circle={circle} />
+                <CircleServices circle={circle} isOwner={false} />
               </TabsContent>
               <TabsContent value="events">
-                <CircleEvents circle={circle} />
+                <CircleEvents circle={circle} isOwner={false} />
               </TabsContent>
               <TabsContent value="resources">
-                <CircleResources circle={circle} />
+                <CircleResources circle={circle} isOwner={false} />
               </TabsContent>
               <TabsContent value="members">
-                <CircleMembers circle={circle} />
+                <CircleMembers circle={circle} isOwner={false} />
               </TabsContent>
               <TabsContent value="about">
                 <CircleAbout circle={circle} />

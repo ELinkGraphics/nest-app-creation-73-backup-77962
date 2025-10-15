@@ -7,9 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface CircleEventsProps {
   circle: any;
+  isOwner: boolean;
 }
 
-const CircleEvents: React.FC<CircleEventsProps> = ({ circle }) => {
+const CircleEvents: React.FC<CircleEventsProps> = ({ circle, isOwner }) => {
   const [filter, setFilter] = useState('upcoming');
 
   const mockEvents = [
@@ -63,10 +64,12 @@ const CircleEvents: React.FC<CircleEventsProps> = ({ circle }) => {
     <div className="px-4 py-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Events</h3>
-        <Button size="sm">
-          <Plus className="h-4 w-4 mr-1" />
-          Create Event
-        </Button>
+        {isOwner && (
+          <Button size="sm">
+            <Plus className="h-4 w-4 mr-1" />
+            Create Event
+          </Button>
+        )}
       </div>
 
       <Tabs value={filter} onValueChange={setFilter} className="mb-4">

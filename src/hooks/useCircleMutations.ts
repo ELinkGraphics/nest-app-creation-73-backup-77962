@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CreateCircleData {
   name: string;
@@ -19,6 +20,7 @@ interface CreateCircleData {
 export const useCircleMutations = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+  const queryClient = useQueryClient();
 
   const createCircle = async (data: CreateCircleData, userId: string) => {
     setIsCreating(true);
@@ -107,6 +109,10 @@ export const useCircleMutations = () => {
 
       if (error) throw error;
 
+      // Invalidate queries to refresh circle data
+      queryClient.invalidateQueries({ queryKey: ['circle', circleId] });
+      queryClient.invalidateQueries({ queryKey: ['circles'] });
+
       toast.success(isPrivate ? 'Join request sent!' : 'Joined circle successfully!');
     } catch (error: any) {
       console.error('Error joining circle:', error);
@@ -126,6 +132,10 @@ export const useCircleMutations = () => {
         .eq('user_id', userId);
 
       if (error) throw error;
+
+      // Invalidate queries to refresh circle data
+      queryClient.invalidateQueries({ queryKey: ['circle', circleId] });
+      queryClient.invalidateQueries({ queryKey: ['circles'] });
 
       toast.success('Left circle successfully!');
     } catch (error: any) {

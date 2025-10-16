@@ -346,6 +346,54 @@ export type Database = {
           },
         ]
       }
+      circle_subscriptions: {
+        Row: {
+          circle_id: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          started_at: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          circle_id: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          circle_id?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_subscriptions_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "circle_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       circle_tips: {
         Row: {
           amount: number
@@ -668,8 +716,11 @@ export type Database = {
         Row: {
           circle_id: string | null
           content: string
+          cover_image_url: string | null
           created_at: string | null
+          has_tips_enabled: boolean | null
           id: string
+          is_premium: boolean | null
           is_sponsored: boolean | null
           media_alt: string | null
           media_color_from: string | null
@@ -683,8 +734,11 @@ export type Database = {
         Insert: {
           circle_id?: string | null
           content: string
+          cover_image_url?: string | null
           created_at?: string | null
+          has_tips_enabled?: boolean | null
           id?: string
+          is_premium?: boolean | null
           is_sponsored?: boolean | null
           media_alt?: string | null
           media_color_from?: string | null
@@ -698,8 +752,11 @@ export type Database = {
         Update: {
           circle_id?: string | null
           content?: string
+          cover_image_url?: string | null
           created_at?: string | null
+          has_tips_enabled?: boolean | null
           id?: string
+          is_premium?: boolean | null
           is_sponsored?: boolean | null
           media_alt?: string | null
           media_color_from?: string | null
@@ -1301,6 +1358,10 @@ export type Database = {
           video_url: string
           views_count: number
         }[]
+      }
+      has_circle_subscription: {
+        Args: { _circle_id: string; _user_id: string }
+        Returns: boolean
       }
       is_circle_member: {
         Args: { _circle_id: string; _user_id: string }

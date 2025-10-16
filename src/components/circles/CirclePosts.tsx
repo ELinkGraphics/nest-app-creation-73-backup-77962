@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Heart, MessageCircle, Share, Share2, MoreHorizontal, Crown, Bookmark, DollarSign } from 'lucide-react';
+import { Heart, MessageCircle, Crown, Bookmark, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent } from '@/components/ui/card';
 import { TipButton } from './TipButton';
+import { CreateCirclePostModal } from './CreateCirclePostModal';
+import { SubscribeCircleModal } from './SubscribeCircleModal';
+import { useCirclePosts } from '@/hooks/useCirclePosts';
+import { useCircleSubscription } from '@/hooks/useCircleSubscription';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CirclePostsProps {
   circle: any;
@@ -14,79 +19,69 @@ interface CirclePostsProps {
 const CirclePosts: React.FC<CirclePostsProps> = ({ circle, isOwner }) => {
   const navigate = useNavigate();
   const { id: circleId } = useParams();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [subscribeModalOpen, setSubscribeModalOpen] = useState(false);
+  
+  const { data: posts = [], isLoading } = useCirclePosts(circleId);
+  const { data: subscription } = useCircleSubscription(circleId);
+
+  const hasSubscription = !!subscription;
 
   const handleReadMore = (post: any) => {
+    // Check if post is premium and user doesn't have access
+    if (post.is_premium && !hasSubscription && !isOwner) {
+      setSubscribeModalOpen(true);
+      return;
+    }
     navigate(`/circle/${circleId}/post/${post.id}`);
   };
 
-  const mockPosts = [
-    {
-      id: '1',
-      author: {
-        name: circle?.creator?.name || 'Circle Owner',
-        avatar: circle?.creator?.avatar || 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-        isOwner: true
-      },
-      title: 'New Product Feature Launch',
-      content: 'Excited to announce our latest innovation! We\'re looking for beta testers from our amazing community to help us perfect this feature.',
-      timestamp: '2h',
-      likes: 128,
-      comments: 34,
-      shares: 12,
-      tips: 8,
-      image: 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&h=600&fit=crop',
-      isPremium: true
-    },
-    {
-      id: '2',
-      author: {
-        name: 'Alex Kumar',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-        isOwner: false
-      },
-      title: 'Networking Event Success',
-      content: 'What an incredible evening! Thank you to everyone who joined our networking event. The connections made were truly inspiring.',
-      timestamp: '5h',
-      likes: 89,
-      comments: 23,
-      shares: 8,
-      tips: 12,
-      image: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&h=600&fit=crop',
-      isPremium: false
-    },
-    {
-      id: '3',
-      author: {
-        name: 'Maria Rodriguez',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
-        isOwner: false
-      },
-      title: 'Community Workshop Recap',
-      content: 'Just wrapped up an amazing workshop on digital transformation. The insights shared by our community members were incredible!',
-      timestamp: '1d',
-      likes: 67,
-      comments: 15,
-      shares: 6,
-      image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop',
-      isPremium: false
-    },
-    {
-      id: '4',
-      author: {
-        name: circle?.creator?.name || 'Circle Owner',
-        avatar: circle?.creator?.avatar || 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-        isOwner: true
-      },
-      title: 'Exclusive Member Benefits',
-      content: 'Thrilled to introduce our new premium membership benefits! Access to exclusive content, priority support, and early feature previews.',
-      timestamp: '2d',
-      likes: 156,
-      comments: 45,
-      shares: 18,
-      image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop',
-      isPremium: true
+  const handleLike = async (postId: string, isLiked: boolean) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: "Please log in to like posts", variant: "destructive" });
+        return;
+      }
+
+      if (isLiked) {
+        await supabase.from('likes').delete().eq('post_id', postId).eq('user_id', user.id);
+      } else {
+        await supabase.from('likes').insert({ post_id: postId, user_id: user.id });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['circle-posts', circleId] });
+    } catch (error: any) {
+      console.error('Error liking post:', error);
+      toast({ title: "Failed to like post", description: error.message, variant: "destructive" });
     }
-  ];
+  };
+
+  const handleTip = async (postId: string, amount: number, recipientId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: "Please log in to tip", variant: "destructive" });
+        return;
+      }
+
+      await supabase.from('circle_tips').insert({
+        post_id: postId,
+        tipper_id: user.id,
+        recipient_id: recipientId,
+        amount,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['circle-posts', circleId] });
+      toast({ title: "Tip sent successfully!", description: `You tipped $${amount}` });
+    } catch (error: any) {
+      console.error('Error sending tip:', error);
+      toast({ title: "Failed to send tip", description: error.message, variant: "destructive" });
+    }
+  };
 
   return (
     <div className="space-y-0 scroll-smooth">
@@ -97,7 +92,10 @@ const CirclePosts: React.FC<CirclePostsProps> = ({ circle, isOwner }) => {
             <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground text-sm font-semibold flex-shrink-0">
               ME
             </div>
-            <div className="flex-1 bg-background/80 rounded-full px-4 py-3 cursor-pointer border border-border hover:bg-background transition-smooth hover-scale">
+            <div 
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex-1 bg-background/80 rounded-full px-4 py-3 cursor-pointer border border-border hover:bg-background transition-smooth hover-scale"
+            >
               <p className="text-sm text-muted-foreground">Share something with the circle...</p>
             </div>
           </div>
@@ -114,24 +112,54 @@ const CirclePosts: React.FC<CirclePostsProps> = ({ circle, isOwner }) => {
 
       {/* Posts Grid Container */}
       <div className="bg-muted/20 min-h-screen">
-        {/* Posts Grid - Enhanced Spacing */}
-        <div className="px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-            {mockPosts.map((post, index) => (
-              <div 
-                key={post.id} 
-                className="relative w-full max-w-[420px] h-[550px] overflow-hidden bg-neutral-900 text-white mx-auto animate-fade-in hover-scale shadow-elegant rounded-lg"
-                style={{ 
-                  animationDelay: `${index * 100}ms`,
-                  animationFillMode: 'both'
-                }}
-              >
-                {/* Full-bleed background image */}
-                <img
-                  src={post.image}
-                  alt={post.title}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-muted-foreground">Loading posts...</div>
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="text-muted-foreground mb-2">No posts yet</p>
+            {isOwner && (
+              <p className="text-sm text-muted-foreground">Be the first to share something!</p>
+            )}
+          </div>
+        ) : (
+          <div className="px-4 py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+              {posts.map((post, index) => {
+                const canView = !post.is_premium || hasSubscription || isOwner;
+                return (
+                <div 
+                  key={post.id} 
+                  className="relative w-full max-w-[420px] h-[550px] overflow-hidden bg-neutral-900 text-white mx-auto animate-fade-in hover-scale shadow-elegant rounded-lg"
+                  style={{ 
+                    animationDelay: `${index * 100}ms`,
+                    animationFillMode: 'both'
+                  }}
+                >
+                  {/* Full-bleed background image */}
+                  {post.cover_image_url ? (
+                    <img
+                      src={post.cover_image_url}
+                      alt="Post cover"
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-primary/20 to-primary/5" />
+                  )}
+
+                  {/* Premium lock overlay for locked posts */}
+                  {!canView && (
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md z-10 flex items-center justify-center">
+                      <div className="text-center space-y-4">
+                        <Lock className="w-16 h-16 mx-auto text-white" />
+                        <div>
+                          <h4 className="text-xl font-bold text-white mb-2">Premium Content</h4>
+                          <p className="text-white/80 text-sm">Subscribe to view this post</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                 {/* Top-right bookmark chip */}
                 <div className="absolute top-4 right-4 z-30">
@@ -144,65 +172,104 @@ const CirclePosts: React.FC<CirclePostsProps> = ({ circle, isOwner }) => {
                 <div className="absolute inset-x-0 bottom-0 h-[180px] bg-gray-900/80 backdrop-blur-md" />
                 <div className="absolute inset-x-0 bottom-[180px] h-[60px] bg-gradient-to-t from-gray-900/80 to-transparent" />
 
-                {/* Content */}
-                <div className="absolute inset-x-0 bottom-0 z-20 p-6">
-                  {/* Title + optional Premium pill */}
-                  <div className="mb-3 flex items-start gap-3">
-                    <h3 className="text-xl font-bold text-white leading-tight flex-1">
-                      {post.title}
-                    </h3>
-                    {post.isPremium && (
-                      <span className="rounded-full bg-gradient-secondary px-3 py-1 text-xs font-semibold text-primary-foreground animate-scale-in shadow-glow">
-                        Premium
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-white/90 text-sm leading-relaxed mb-4 line-clamp-2">
-                    {post.content}
-                  </p>
-
-                  {/* Row with social buttons including tip button */}
-                  <div className="flex gap-2 mb-4">
-                    <button className="flex-1 flex items-center justify-center gap-2 rounded-full bg-white/15 backdrop-blur-sm px-4 py-2 text-sm font-medium text-white hover:bg-white/25 transition-smooth hover-scale">
-                      <Heart className="h-4 w-4" />
-                      <span>{post.likes}</span>
-                    </button>
-                    <button className="flex-1 flex items-center justify-center gap-2 rounded-full bg-white/15 backdrop-blur-sm px-4 py-2 text-sm font-medium text-white hover:bg-white/25 transition-smooth hover-scale">
-                      <MessageCircle className="h-4 w-4" />
-                      <span>{post.comments}</span>
-                    </button>
-                    <div className="flex-1 rounded-full bg-white/15 backdrop-blur-sm hover:bg-white/25 transition-smooth">
-                      <TipButton
-                        postId={post.id}
-                        authorName={post.author.name}
-                        tipCount={post.tips || 0}
-                        userHasTipped={false}
-                        variant="card"
-                        onTip={(amount) => console.log(`Tipped $${amount} to ${post.author.name}`)}
-                      />
+                  {/* Content */}
+                  <div className="absolute inset-x-0 bottom-0 z-20 p-6">
+                    {/* Title + optional Premium pill */}
+                    <div className="mb-3 flex items-start gap-3">
+                      <h3 className="text-xl font-bold text-white leading-tight flex-1">
+                        {post.author.name}'s Post
+                      </h3>
+                      {post.is_premium && (
+                        <span className="rounded-full bg-gradient-secondary px-3 py-1 text-xs font-semibold text-primary-foreground animate-scale-in shadow-glow">
+                          <Crown className="w-3 h-3 inline mr-1" />
+                          Premium
+                        </span>
+                      )}
                     </div>
-                  </div>
 
-                  {/* Full-width Read more button styled like rounded gradient CTA */}
-                  <button 
-                    onClick={() => handleReadMore(post)}
-                    className="w-full rounded-full py-3 px-6 text-base font-semibold bg-white text-gray-900 shadow-glow hover:shadow-xl hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
-                  >
-                    Read more
-                  </button>
+                    {/* Description */}
+                    <p className="text-white/90 text-sm leading-relaxed mb-4 line-clamp-2">
+                      {canView ? post.content : 'Subscribe to read this exclusive content...'}
+                    </p>
+
+                    {/* Row with social buttons including tip button */}
+                    {canView && (
+                      <div className="flex gap-2 mb-4">
+                        <button 
+                          onClick={() => handleLike(post.id, post.user_has_liked)}
+                          className={`flex-1 flex items-center justify-center gap-2 rounded-full backdrop-blur-sm px-4 py-2 text-sm font-medium text-white transition-smooth hover-scale ${
+                            post.user_has_liked ? 'bg-red-500/30' : 'bg-white/15 hover:bg-white/25'
+                          }`}
+                        >
+                          <Heart className={`h-4 w-4 ${post.user_has_liked ? 'fill-current' : ''}`} />
+                          <span>{post.stats.likes_count}</span>
+                        </button>
+                        <button className="flex-1 flex items-center justify-center gap-2 rounded-full bg-white/15 backdrop-blur-sm px-4 py-2 text-sm font-medium text-white hover:bg-white/25 transition-smooth hover-scale">
+                          <MessageCircle className="h-4 w-4" />
+                          <span>{post.stats.comments_count}</span>
+                        </button>
+                        {post.has_tips_enabled && (
+                          <div className="flex-1 rounded-full bg-white/15 backdrop-blur-sm hover:bg-white/25 transition-smooth">
+                            <TipButton
+                              postId={post.id}
+                              authorName={post.author.name}
+                              tipCount={post.tip_count}
+                              userHasTipped={post.user_has_tipped}
+                              variant="card"
+                              onTip={(amount) => handleTip(post.id, amount, post.user_id)}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Full-width Read more button */}
+                    <button 
+                      onClick={() => handleReadMore(post)}
+                      className="w-full rounded-full py-3 px-6 text-base font-semibold bg-white text-gray-900 shadow-glow hover:shadow-xl hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    >
+                      {!canView ? (
+                        <>
+                          <Lock className="w-4 h-4 inline mr-2" />
+                          Subscribe to Read
+                        </>
+                      ) : (
+                        'Read more'
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Bottom Spacer for better scroll experience */}
         <div className="h-24 flex items-center justify-center">
           <div className="w-16 h-1 bg-muted rounded-full animate-pulse"></div>
         </div>
       </div>
+
+      {/* Modals */}
+      <CreateCirclePostModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        circleId={circleId || ''}
+        onPostCreated={() => {
+          queryClient.invalidateQueries({ queryKey: ['circle-posts', circleId] });
+        }}
+      />
+
+      <SubscribeCircleModal
+        isOpen={subscribeModalOpen}
+        onClose={() => setSubscribeModalOpen(false)}
+        circleId={circleId || ''}
+        circleName={circle?.name || 'this circle'}
+        onSubscribed={() => {
+          queryClient.invalidateQueries({ queryKey: ['circle-subscription', circleId] });
+        }}
+      />
     </div>
   );
 };

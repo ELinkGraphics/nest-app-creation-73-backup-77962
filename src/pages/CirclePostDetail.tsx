@@ -1,121 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, MessageCircle, Share2, Bookmark, Crown, Lock, Sparkles, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Share2, Bookmark, Crown, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TipButton } from '@/components/circles/TipButton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PersistentCommentComposer } from '@/components/PersistentCommentComposer';
-import FooterNav from '@/components/FooterNav';
+
 import { cn } from '@/lib/utils';
-import { type TabKey } from '@/hooks/useAppNav';
-
-interface CirclePost {
-  id: string;
-  author: {
-    name: string;
-    avatar: string;
-    isOwner: boolean;
-  };
-  title: string;
-  content: string;
-  fullContent?: string;
-  timestamp: string;
-  likes: number;
-  comments: number;
-  shares: number;
-  tips: number;
-  image: string;
-  isPremium: boolean;
-}
-
-const mockPosts: Record<string, CirclePost> = {
-  '1': {
-    id: '1',
-    author: {
-      name: 'Circle Owner',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-      isOwner: true
-    },
-    title: 'New Product Feature Launch',
-    content: 'Excited to announce our latest innovation! We\'re looking for beta testers from our amazing community to help us perfect this feature.',
-    fullContent: 'Excited to announce our latest innovation! We\'re looking for beta testers from our amazing community to help us perfect this feature.\n\nThis groundbreaking feature represents months of research and development. Our team has been working tirelessly to create something that will revolutionize how our community interacts and engages.\n\nKey highlights of this new feature:\n• Enhanced user experience with intuitive design\n• Advanced analytics and insights\n• Seamless integration with existing tools\n• Mobile-first approach for better accessibility\n• Real-time collaboration capabilities\n\nWe believe this feature will significantly improve productivity and user satisfaction. The beta testing phase will help us identify any potential issues and gather valuable feedback from our most engaged users.\n\nIf you\'re interested in becoming a beta tester, please reach out to our team. We\'re looking for users who are active in the community and can provide constructive feedback.',
-    timestamp: '2h',
-    likes: 128,
-    comments: 34,
-    shares: 12,
-    tips: 23,
-    image: 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&h=600&fit=crop',
-    isPremium: true
-  },
-  '2': {
-    id: '2',
-    author: {
-      name: 'Alex Kumar',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-      isOwner: false
-    },
-    title: 'Networking Event Success',
-    content: 'What an incredible evening! Thank you to everyone who joined our networking event. The connections made were truly inspiring.',
-    fullContent: 'What an incredible evening! Thank you to everyone who joined our networking event. The connections made were truly inspiring.\n\nThe event brought together over 150 professionals from various industries, creating an amazing atmosphere of collaboration and innovation. We witnessed some fantastic conversations and saw many potential partnerships forming.\n\nEvent highlights:\n• 150+ attendees from diverse backgrounds\n• 3 keynote speakers sharing industry insights\n• Interactive workshops and breakout sessions\n• Networking reception with local cuisine\n• Live music and entertainment\n\nThe feedback has been overwhelmingly positive, with many attendees already planning follow-up meetings and collaborations. This is exactly what we hoped to achieve - bringing our community together and fostering meaningful connections.\n\nWe\'re already planning our next event based on your suggestions. Stay tuned for more details!',
-    timestamp: '5h',
-    likes: 89,
-    comments: 23,
-    shares: 8,
-    tips: 15,
-    image: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&h=600&fit=crop',
-    isPremium: false
-  }
-};
-
-const mockComments = [
-  {
-    id: '1',
-    user: { name: 'Sarah Johnson', initials: 'SJ' },
-    content: 'This is exactly what I was looking for! Thanks for sharing.',
-    time: '2h',
-    likes: 12
-  },
-  {
-    id: '2', 
-    user: { name: 'Mike Chen', initials: 'MC' },
-    content: 'Great insights! Would love to see more content like this.',
-    time: '4h',
-    likes: 8
-  },
-  {
-    id: '3',
-    user: { name: 'Emma Davis', initials: 'ED' },
-    content: 'Thanks for the detailed breakdown. Very helpful!',
-    time: '6h',
-    likes: 5
-  }
-];
-
-const CommentItem: React.FC<{ comment: any }> = ({ comment }) => {
-  return (
-    <div className="flex gap-3 py-4 border-b border-border last:border-b-0">
-      <div className="size-10 rounded-full bg-gradient-primary flex items-center justify-center text-sm font-medium text-white flex-shrink-0">
-        {comment.user.initials}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-medium text-sm text-foreground">{comment.user.name}</span>
-          <span className="text-xs text-muted-foreground">{comment.time}</span>
-        </div>
-        <p className="text-sm text-foreground leading-relaxed">{comment.content}</p>
-        <div className="flex items-center gap-4 mt-2">
-          <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-            <Heart className="size-3" />
-            {comment.likes}
-          </button>
-          <button className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-            Reply
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCircleSubscription } from '@/hooks/useCircleSubscription';
+import { useToast } from '@/hooks/use-toast';
+import { SubscribeCircleModal } from '@/components/circles/SubscribeCircleModal';
 
 const PremiumSubscriptionBanner: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe }) => {
   return (
@@ -156,25 +51,99 @@ const PremiumSubscriptionBanner: React.FC<{ onSubscribe: () => void }> = ({ onSu
 const CirclePostDetail: React.FC = () => {
   const { circleId, postId } = useParams();
   const navigate = useNavigate();
-  const [isLiked, setIsLiked] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [hasSubscription, setHasSubscription] = useState(false);
-  const [comments, setComments] = useState(mockComments);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const [subscribeModalOpen, setSubscribeModalOpen] = useState(false);
+  const [circleName, setCircleName] = useState('');
 
-  console.log('Route params:', { circleId, postId });
-  console.log('Available posts:', Object.keys(mockPosts));
-  const post = mockPosts[postId || '1'];
-  console.log('Found post:', post);
+  // Fetch circle details
+  const { data: circle } = useQuery({
+    queryKey: ['circle', circleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('circles')
+        .select('*')
+        .eq('id', circleId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!circleId,
+  });
 
   useEffect(() => {
-    if (!post) {
-      console.log('Post not found');
-      return;
+    if (circle) {
+      setCircleName(circle.name);
     }
-    
-    console.log('Post data:', { isPremium: post?.isPremium, hasSubscription, shouldShowPaywall: post?.isPremium && !hasSubscription });
-  }, [post?.isPremium, hasSubscription]);
+  }, [circle]);
+
+  // Fetch post details
+  const { data: post, isLoading } = useQuery({
+    queryKey: ['circle-post', postId],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          profiles:user_id (
+            id,
+            name,
+            username,
+            avatar_url,
+            initials,
+            avatar_color
+          ),
+          post_stats (
+            likes_count,
+            comments_count,
+            shares_count
+          )
+        `)
+        .eq('id', postId)
+        .single();
+
+      if (error) throw error;
+
+      // Check if user has liked the post
+      const { data: likeData } = await supabase
+        .from('likes')
+        .select('id')
+        .eq('post_id', postId)
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      // Get tip count for this post
+      const { count: tipCount } = await supabase
+        .from('circle_tips')
+        .select('*', { count: 'exact', head: true })
+        .eq('post_id', postId);
+
+      return {
+        ...data,
+        author: data.profiles,
+        stats: data.post_stats,
+        user_has_liked: !!likeData,
+        tip_count: tipCount || 0,
+      };
+    },
+    enabled: !!postId,
+  });
+
+  // Check subscription status
+  const { data: subscription } = useCircleSubscription(circleId);
+  const hasSubscription = !!subscription;
+  const isOwner = circle?.creator_id === post?.user_id;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (!post) {
     return (
@@ -191,16 +160,58 @@ const CirclePostDetail: React.FC = () => {
   }
 
   const handleSubscribe = () => {
-    setHasSubscription(true);
+    setSubscribeModalOpen(true);
+  };
+
+  const handleLike = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: "Please log in to like posts", variant: "destructive" });
+        return;
+      }
+
+      if (post.user_has_liked) {
+        await supabase.from('likes').delete().eq('post_id', postId).eq('user_id', user.id);
+      } else {
+        await supabase.from('likes').insert({ post_id: postId, user_id: user.id });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['circle-post', postId] });
+    } catch (error: any) {
+      toast({ title: "Failed to like post", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleTip = async (amount: number) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: "Please log in to tip", variant: "destructive" });
+        return;
+      }
+
+      await supabase.from('circle_tips').insert({
+        post_id: postId,
+        tipper_id: user.id,
+        recipient_id: post.user_id,
+        amount,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['circle-post', postId] });
+      toast({ title: "Tip sent successfully!", description: `You tipped $${amount}` });
+    } catch (error: any) {
+      toast({ title: "Failed to send tip", description: error.message, variant: "destructive" });
+    }
   };
 
   const getDisplayContent = () => {
-    if (!post?.isPremium || hasSubscription) {
-      return post?.fullContent || post?.content;
+    if (!post?.is_premium || hasSubscription || isOwner) {
+      return post?.content;
     }
     
     // For premium posts without subscription, show first two paragraphs
-    const fullContent = post?.fullContent || post?.content;
+    const fullContent = post?.content || '';
     const paragraphs = fullContent.split('\n\n');
     if (paragraphs.length <= 2) {
       return fullContent;
@@ -210,18 +221,7 @@ const CirclePostDetail: React.FC = () => {
     return paragraphs.slice(0, 2).join('\n\n');
   };
 
-  const shouldShowPaywall = post?.isPremium && !hasSubscription;
-
-  const handleCommentSubmit = (commentText: string) => {
-    const newComment = {
-      id: Date.now().toString(),
-      user: { name: 'You', initials: 'ME' },
-      content: commentText,
-      time: 'now',
-      likes: 0
-    };
-    setComments([newComment, ...comments]);
-  };
+  const shouldShowPaywall = post?.is_premium && !hasSubscription && !isOwner;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -230,19 +230,16 @@ const CirclePostDetail: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-4">
           <button
             onClick={() => navigate(`/circle/${circleId}`)}
-            className="p-2 bg-background hover:bg-background rounded-full transition-colors"
+            className="p-2 hover:bg-muted rounded-full transition-colors"
           >
             <ArrowLeft className="size-5" />
           </button>
           <div className="flex items-center gap-2 flex-1">
             <h1 className="font-semibold text-lg">Post</h1>
-            {post?.isPremium && (
+            {post?.is_premium && (
               <Crown className="size-4 text-primary" />
             )}
           </div>
-          <button className="p-2 bg-background hover:bg-background rounded-full transition-colors">
-            <MoreHorizontal className="size-5" />
-          </button>
         </div>
       </header>
 
@@ -250,14 +247,14 @@ const CirclePostDetail: React.FC = () => {
       <main className="max-w-4xl mx-auto px-4 py-6">
         <article className="max-w-3xl mx-auto">
           {/* Hero Image */}
-          {post?.image && (
+          {post?.cover_image_url && (
             <div className="mb-6 relative">
               <img
-                src={post.image}
-                alt={post?.title || 'Post image'}
+                src={post.cover_image_url}
+                alt="Post cover"
                 className="w-full h-64 md:h-80 object-cover rounded-2xl"
               />
-              {post?.isPremium && (
+              {post?.is_premium && (
                 <div className="absolute top-4 right-4 bg-gradient-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold shadow-glow">
                   Premium
                 </div>
@@ -267,34 +264,37 @@ const CirclePostDetail: React.FC = () => {
 
           {/* Post Header */}
           <div className="mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4 leading-tight">
-              {post.title}
-            </h1>
-            
             {/* Author info */}
             <div className="flex items-center gap-3 mb-4">
               <Avatar className="size-12">
-                <AvatarImage src={post.author.avatar} />
-                <AvatarFallback className="bg-gradient-primary text-primary-foreground">
-                  {post.author.name.split(' ').map(n => n[0]).join('')}
+                <AvatarImage src={post.author.avatar_url} />
+                <AvatarFallback className="bg-gradient-primary text-primary-foreground" style={{ backgroundColor: post.author.avatar_color }}>
+                  {post.author.initials}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">{post.author.name}</span>
-                  {post.author.isOwner && (
+                  {isOwner && (
                     <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
                       Owner
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">{post.timestamp}</p>
+                <p className="text-sm text-muted-foreground">
+                  {new Date(post.created_at).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                  })}
+                </p>
               </div>
               <button 
                 onClick={() => setIsBookmarked(!isBookmarked)}
                 className={cn(
                   "p-2 rounded-full transition-colors",
-                  isBookmarked ? "bg-primary text-primary-foreground" : "bg-background hover:bg-background"
+                  isBookmarked ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 )}
               >
                 <Bookmark className="size-5" />
@@ -304,33 +304,35 @@ const CirclePostDetail: React.FC = () => {
             {/* Interaction buttons */}
             <div className="flex items-center gap-6 py-4 border-y border-border">
               <button 
-                onClick={() => setIsLiked(!isLiked)}
+                onClick={handleLike}
                 className={cn(
                   "flex items-center gap-2 transition-colors",
-                  isLiked ? "text-red-500" : "text-muted-foreground hover:text-foreground"
+                  post.user_has_liked ? "text-red-500" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Heart className={cn("size-5", isLiked && "fill-current")} />
-                <span className="text-sm">{post.likes + (isLiked ? 1 : 0)}</span>
+                <Heart className={cn("size-5", post.user_has_liked && "fill-current")} />
+                <span className="text-sm">{post.stats?.likes_count || 0}</span>
               </button>
               
               <button className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
                 <MessageCircle className="size-5" />
-                <span className="text-sm">{post.comments}</span>
+                <span className="text-sm">{post.stats?.comments_count || 0}</span>
               </button>
               
               <button className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
                 <Share2 className="size-5" />
-                <span className="text-sm">{post.shares}</span>
+                <span className="text-sm">{post.stats?.shares_count || 0}</span>
               </button>
 
-              <TipButton
-                postId={postId!}
-                authorName={post.author.name}
-                tipCount={post.tips || 0}
-                userHasTipped={false}
-                onTip={(amount) => console.log(`Tipped $${amount} to ${post.author.name}`)}
-              />
+              {post.has_tips_enabled && (
+                <TipButton
+                  postId={postId!}
+                  authorName={post.author.name}
+                  tipCount={post.tip_count || 0}
+                  userHasTipped={false}
+                  onTip={handleTip}
+                />
+              )}
             </div>
           </div>
 
@@ -354,7 +356,7 @@ const CirclePostDetail: React.FC = () => {
                   >
                     {/* Show remaining content faded */}
                     {(() => {
-                      const fullContent = post?.fullContent || post?.content;
+                      const fullContent = post?.content || '';
                       const paragraphs = fullContent.split('\n\n');
                       if (paragraphs.length > 2) {
                         return paragraphs.slice(2).join('\n\n');
@@ -377,10 +379,10 @@ const CirclePostDetail: React.FC = () => {
             )}
             
             {/* Show full content if subscribed */}
-            {!shouldShowPaywall && (post?.fullContent || post?.content) !== getDisplayContent() && (
+            {!shouldShowPaywall && post?.content !== getDisplayContent() && (
               <div className="text-foreground leading-relaxed text-base whitespace-pre-line mt-8">
                 {(() => {
-                  const fullContent = post?.fullContent || post?.content;
+                  const fullContent = post?.content || '';
                   const paragraphs = fullContent.split('\n\n');
                   if (paragraphs.length > 2) {
                     return paragraphs.slice(2).join('\n\n');
@@ -395,35 +397,27 @@ const CirclePostDetail: React.FC = () => {
           {!shouldShowPaywall && (
             <div className="mt-12 pt-8 border-t border-border">
               <h2 className="text-2xl font-bold text-foreground mb-6">
-                Comments ({comments.length})
+                Comments ({post.stats?.comments_count || 0})
               </h2>
               
-              {/* Comments list */}
-              {comments.length > 0 ? (
-                <div className="space-y-0">
-                  {comments.map((comment) => (
-                    <CommentItem key={comment.id} comment={comment} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-center py-12">
-                  No comments yet. Be the first to comment!
-                </p>
-              )}
+              <p className="text-muted-foreground text-center py-12">
+                No comments yet. Be the first to comment!
+              </p>
             </div>
           )}
         </article>
       </main>
-      
-      {/* Persistent Comment Composer */}
-      {!shouldShowPaywall && (
-        <PersistentCommentComposer onSubmit={handleCommentSubmit} />
-      )}
 
-      <FooterNav 
-        active="circles"
-        onSelect={() => {}} // Navigation handled by FooterNav directly
-        onOpenCreate={() => {}}
+      {/* Subscribe Modal */}
+      <SubscribeCircleModal
+        isOpen={subscribeModalOpen}
+        onClose={() => setSubscribeModalOpen(false)}
+        circleId={circleId || ''}
+        circleName={circleName}
+        onSubscribed={() => {
+          queryClient.invalidateQueries({ queryKey: ['circle-subscription', circleId] });
+          setSubscribeModalOpen(false);
+        }}
       />
     </div>
   );

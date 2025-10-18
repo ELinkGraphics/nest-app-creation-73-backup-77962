@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Plus, Check } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Plus, Check, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Post } from '@/data/mock';
 import { useUser } from '@/contexts/UserContext';
@@ -8,6 +8,12 @@ import { useFollowMutations } from '@/hooks/useFollowMutations';
 import { toast } from '@/hooks/use-toast';
 import PublicProfileModal from '@/components/PublicProfileModal';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PostCardProps {
   post: Post;
@@ -232,9 +238,29 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const handleOpenPost = () => {
     if (post.circleId) {
-      navigate(`/circle-post/${post.id}`);
+      navigate(`/circle/${post.circleId}/post/${post.id}`);
     } else {
       navigate(`/post/${post.id}`);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!user || !post.user.id) return;
+    
+    if (window.confirm('Are you sure you want to delete this post?')) {
+      await deletePost(String(post.id), user.id);
+      toast({
+        title: "Post deleted",
+        description: "Your post has been deleted successfully",
+      });
+      window.location.reload();
+    }
+  };
+
+  const handleCircleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (post.circleId) {
+      navigate(`/circle/${post.circleId}`);
     }
   };
 
@@ -248,7 +274,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             verified={post.user.verified}
             avatar={post.user.avatar}
           />
-          {followState !== 'hidden' && user?.id !== post.user.id && (
+          {!post.circleId && followState !== 'hidden' && user?.id !== post.user.id && (
             <button
               onClick={async (e) => {
                 e.stopPropagation();
@@ -277,7 +303,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           <div className="flex items-center gap-1.5">
             <h3 
               className="font-semibold truncate text-foreground text-username cursor-pointer hover:underline"
-              onClick={(e) => {
+              onClick={post.circleId ? handleCircleClick : (e) => {
                 e.stopPropagation();
                 setShowProfileModal(true);
               }}
@@ -297,9 +323,21 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             {relative}
           </div>
         </div>
-        <button className="ml-auto p-2 rounded-full hover:bg-muted/50 transition-all duration-200 hover:scale-110 group/btn" aria-label="More options">
-          <MoreHorizontal className="size-4 text-muted-foreground group-hover/btn:text-foreground transition-colors" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="ml-auto p-2 rounded-full hover:bg-muted/50 transition-all duration-200 hover:scale-110 group/btn" aria-label="More options">
+              <MoreHorizontal className="size-4 text-muted-foreground group-hover/btn:text-foreground transition-colors" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {user?.id === post.user.id && (
+              <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+                <Trash2 className="size-4 mr-2" />
+                Delete Post
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
       
       {post.media && post.media.urls && post.media.urls.length > 0 ? (

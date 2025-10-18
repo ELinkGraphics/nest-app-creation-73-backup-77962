@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Heart, MessageCircle, Crown, Bookmark, Lock } from 'lucide-react';
+import { Heart, MessageCircle, Crown, Bookmark, Lock, MoreVertical, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TipButton } from './TipButton';
 import { CreateCirclePostModal } from './CreateCirclePostModal';
@@ -10,6 +10,12 @@ import { useCircleSubscription } from '@/hooks/useCircleSubscription';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CirclePostsProps {
   circle: any;
@@ -80,6 +86,28 @@ const CirclePosts: React.FC<CirclePostsProps> = ({ circle, isOwner }) => {
     } catch (error: any) {
       console.error('Error sending tip:', error);
       toast({ title: "Failed to send tip", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: "Please log in to delete posts", variant: "destructive" });
+        return;
+      }
+
+      const { error } = await supabase.from('posts').delete().eq('id', postId).eq('user_id', user.id);
+      
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['circle-posts', circleId] });
+      toast({ title: "Post deleted successfully" });
+    } catch (error: any) {
+      console.error('Error deleting post:', error);
+      toast({ title: "Failed to delete post", description: error.message, variant: "destructive" });
     }
   };
 
@@ -162,10 +190,25 @@ const CirclePosts: React.FC<CirclePostsProps> = ({ circle, isOwner }) => {
                   )}
 
                 {/* Top-right bookmark chip */}
-                <div className="absolute top-4 right-4 z-30">
+                <div className="absolute top-4 right-4 z-30 flex gap-2">
                   <div className="rounded-full bg-white/20 backdrop-blur-sm p-2 hover:bg-white/30 transition-smooth cursor-pointer hover-scale">
                     <Bookmark className="h-4 w-4 text-white" />
                   </div>
+                  {isOwner && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="rounded-full bg-white/20 backdrop-blur-sm p-2 hover:bg-white/30 transition-smooth cursor-pointer hover-scale">
+                          <MoreVertical className="h-4 w-4 text-white" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleDeletePost(post.id)} className="text-red-600">
+                          <Trash2 className="size-4 mr-2" />
+                          Delete Post
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
 
                 {/* Bottom solid grey blurred overlay that feathers above */}

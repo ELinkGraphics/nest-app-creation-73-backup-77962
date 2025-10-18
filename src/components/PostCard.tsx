@@ -231,7 +231,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   };
 
   const handleOpenPost = () => {
-    navigate(`/post/${post.id}`);
+    if (post.circleId) {
+      navigate(`/circle-post/${post.id}`);
+    } else {
+      navigate(`/post/${post.id}`);
+    }
   };
 
   return (

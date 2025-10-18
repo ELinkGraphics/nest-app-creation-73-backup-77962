@@ -1277,6 +1277,9 @@ export type Database = {
         Returns: {
           avatar_color: string
           avatar_url: string
+          circle_avatar_url: string
+          circle_id: string
+          circle_name: string
           comments_count: number
           content: string
           created_at: string

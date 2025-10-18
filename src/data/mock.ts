@@ -24,6 +24,7 @@ export interface Post {
   stats: { likes: number; comments: number; shares: number };
   sponsored?: boolean;
   userHasLiked?: boolean;
+  circleId?: string;
 }
 
 export interface Comment {

@@ -39,11 +39,11 @@ const Feed: React.FC = () => {
         const formattedPosts: Post[] = data.map((item: any) => ({
           id: item.post_id,
           user: {
-            name: item.name,
-            initials: item.initials,
+            name: item.circle_id ? item.circle_name : item.name,
+            initials: item.circle_id ? (item.circle_name?.substring(0, 2).toUpperCase() || 'CI') : item.initials,
             avatarColor: item.avatar_color,
             verified: item.is_verified,
-            avatar: item.avatar_url,
+            avatar: item.circle_id ? item.circle_avatar_url : item.avatar_url,
           },
           time: new Date(item.created_at).toISOString(),
           content: item.content,
@@ -53,6 +53,12 @@ const Feed: React.FC = () => {
             colorFrom: item.media_color_from || '#4B164C',
             colorTo: item.media_color_to || '#22194D',
             url: item.media_url,
+          } : item.media_urls && item.media_urls.length > 0 ? {
+            kind: "image" as const,
+            alt: item.media_alt || '',
+            colorFrom: item.media_color_from || '#4B164C',
+            colorTo: item.media_color_to || '#22194D',
+            urls: item.media_urls,
           } : undefined,
           tags: item.tags || [],
           stats: { 
@@ -62,6 +68,7 @@ const Feed: React.FC = () => {
           },
           sponsored: item.is_sponsored || false,
           userHasLiked: item.user_has_liked || false,
+          circleId: item.circle_id || undefined,
         }));
         setPosts(formattedPosts);
       }

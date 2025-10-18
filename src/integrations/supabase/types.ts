@@ -1282,6 +1282,7 @@ export type Database = {
           circle_name: string
           comments_count: number
           content: string
+          cover_image_url: string
           created_at: string
           initials: string
           is_sponsored: boolean

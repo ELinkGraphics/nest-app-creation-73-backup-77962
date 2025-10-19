@@ -25,6 +25,8 @@ export interface Post {
   sponsored?: boolean;
   userHasLiked?: boolean;
   circleId?: string;
+  circleName?: string;
+  circleAvatar?: string;
 }
 
 export interface Comment {

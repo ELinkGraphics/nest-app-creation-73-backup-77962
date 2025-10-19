@@ -39,11 +39,12 @@ const Feed: React.FC = () => {
         const formattedPosts: Post[] = data.map((item: any) => ({
           id: item.post_id,
           user: {
-            name: item.circle_id ? item.circle_name : item.name,
-            initials: item.circle_id ? (item.circle_name?.substring(0, 2).toUpperCase() || 'CI') : item.initials,
+            id: item.user_id,
+            name: item.name,
+            initials: item.initials,
             avatarColor: item.avatar_color,
             verified: item.is_verified,
-            avatar: item.circle_id ? item.circle_avatar_url : item.avatar_url,
+            avatar: item.avatar_url,
           },
           time: new Date(item.created_at).toISOString(),
           content: item.content,
@@ -75,6 +76,8 @@ const Feed: React.FC = () => {
           sponsored: item.is_sponsored || false,
           userHasLiked: item.user_has_liked || false,
           circleId: item.circle_id || undefined,
+          circleName: item.circle_name || undefined,
+          circleAvatar: item.circle_avatar_url || undefined,
         }));
         setPosts(formattedPosts);
       }

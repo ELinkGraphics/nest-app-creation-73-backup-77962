@@ -269,10 +269,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <header className="p-4 flex items-center gap-3">
         <div className="relative">
           <Avatar 
-            initials={post.user.initials} 
-            color={post.user.avatarColor} 
-            verified={post.user.verified}
-            avatar={post.user.avatar}
+            initials={post.circleId ? (post.circleName?.[0] || 'C') : post.user.initials} 
+            color={post.circleId ? '#4B164C' : post.user.avatarColor} 
+            verified={post.circleId ? false : post.user.verified}
+            avatar={post.circleId ? post.circleAvatar : post.user.avatar}
           />
           {!post.circleId && followState !== 'hidden' && user?.id !== post.user.id && (
             <button
@@ -308,7 +308,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 setShowProfileModal(true);
               }}
             >
-              {post.user.name}
+              {post.circleId ? post.circleName : post.user.name}
             </h3>
             {post.user.verified && (
               <BadgeCheck className="size-4 text-secondary animate-scale-in" aria-label="Verified" />

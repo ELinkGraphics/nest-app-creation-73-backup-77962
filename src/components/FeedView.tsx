@@ -58,19 +58,24 @@ export const FeedView: React.FC<FeedViewProps> = ({ onRefresh }) => {
           },
           time: new Date(item.created_at).toISOString(),
           content: item.content,
-          media: item.media_urls && item.media_urls.length > 0 ? {
+          media: item.cover_image_url ? {
             kind: "image" as const,
             alt: item.media_alt || '',
             colorFrom: item.media_color_from || '#4B164C',
             colorTo: item.media_color_to || '#22194D',
-            url: item.media_url,
-            urls: item.media_urls,
+            url: item.cover_image_url,
           } : item.media_url ? {
             kind: "image" as const,
             alt: item.media_alt || '',
             colorFrom: item.media_color_from || '#4B164C',
             colorTo: item.media_color_to || '#22194D',
             url: item.media_url,
+          } : item.media_urls && item.media_urls.length > 0 ? {
+            kind: "image" as const,
+            alt: item.media_alt || '',
+            colorFrom: item.media_color_from || '#4B164C',
+            colorTo: item.media_color_to || '#22194D',
+            urls: item.media_urls,
           } : undefined,
           tags: item.tags || [],
           stats: { 
@@ -80,6 +85,9 @@ export const FeedView: React.FC<FeedViewProps> = ({ onRefresh }) => {
           },
           sponsored: item.is_sponsored || false,
           userHasLiked: item.user_has_liked || false,
+          circleId: item.circle_id || undefined,
+          circleName: item.circle_name || undefined,
+          circleAvatar: item.circle_avatar_url || undefined,
         }));
         setPosts(formattedPosts);
       }

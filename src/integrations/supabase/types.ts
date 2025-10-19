@@ -239,6 +239,69 @@ export type Database = {
           },
         ]
       }
+      circle_service_bookings: {
+        Row: {
+          booking_date: string
+          booking_time: string
+          created_at: string | null
+          id: string
+          member_email: string
+          member_name: string
+          member_phone: string | null
+          notes: string | null
+          payment_status: string
+          service_id: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          booking_date: string
+          booking_time: string
+          created_at?: string | null
+          id?: string
+          member_email: string
+          member_name: string
+          member_phone?: string | null
+          notes?: string | null
+          payment_status?: string
+          service_id: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          booking_date?: string
+          booking_time?: string
+          created_at?: string | null
+          id?: string
+          member_email?: string
+          member_name?: string
+          member_phone?: string | null
+          notes?: string | null
+          payment_status?: string
+          service_id?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_service_bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "circle_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "circle_service_bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       circle_services: {
         Row: {
           category: string

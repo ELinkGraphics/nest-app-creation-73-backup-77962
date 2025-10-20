@@ -72,6 +72,7 @@ export type Database = {
           meeting_url: string | null
           platform: string | null
           price: number | null
+          recording_url: string | null
           status: string
           timezone: string | null
           title: string
@@ -92,6 +93,7 @@ export type Database = {
           meeting_url?: string | null
           platform?: string | null
           price?: number | null
+          recording_url?: string | null
           status?: string
           timezone?: string | null
           title: string
@@ -112,6 +114,7 @@ export type Database = {
           meeting_url?: string | null
           platform?: string | null
           price?: number | null
+          recording_url?: string | null
           status?: string
           timezone?: string | null
           title?: string

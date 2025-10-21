@@ -56,11 +56,17 @@ const Ask: React.FC<AskProps> = ({
 
         {/* Question Feed Tabs */}
         <Tabs value={activeQuestionTab} onValueChange={setActiveQuestionTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="recent">Recent</TabsTrigger>
-            <TabsTrigger value="trending">Trending</TabsTrigger>
-            <TabsTrigger value="unanswered">Expert </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between mb-4">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="recent">Recent</TabsTrigger>
+              <TabsTrigger value="trending">Trending</TabsTrigger>
+              <TabsTrigger value="unanswered">Expert</TabsTrigger>
+            </TabsList>
+            <Button onClick={() => setShowQuestionForm(true)} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Ask
+            </Button>
+          </div>
           
           <TabsContent value="recent" className="mt-6">
             <QuestionFeed filter="recent" />

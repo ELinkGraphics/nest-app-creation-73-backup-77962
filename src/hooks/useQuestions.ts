@@ -11,16 +11,7 @@ export const useQuestions = (filter: QuestionFilter = 'recent', page = 0, pageSi
       const sb = supabase as any;
       let query = sb
         .from('questions')
-        .select(`
-          *,
-          profiles:user_id (
-            username,
-            name,
-            avatar_url,
-            initials,
-            avatar_color
-          )
-        `)
+        .select('*')
         .range(page * pageSize, (page + 1) * pageSize - 1);
 
       // Apply filters (fallback to created_at until metrics are available)
@@ -54,16 +45,7 @@ export const useQuestion = (questionId: string) => {
       const sb = supabase as any;
       const { data, error } = await sb
         .from('questions')
-        .select(`
-          *,
-          profiles:user_id (
-            username,
-            name,
-            avatar_url,
-            initials,
-            avatar_color
-          )
-        `)
+        .select('*')
         .eq('id', questionId)
         .single();
 

@@ -99,7 +99,6 @@ export const QuestionFeed: React.FC<QuestionFeedProps> = ({ filter }) => {
             aiResponse: q.ai_response,
             is_anonymous: q.is_anonymous,
             anonymous_name: q.anonymous_name,
-            profiles: q.profiles,
             answers: []
           };
           

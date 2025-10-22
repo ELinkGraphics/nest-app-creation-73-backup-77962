@@ -101,7 +101,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
             <span className="text-timestamp font-medium text-foreground">
               {question.is_anonymous 
                 ? (question.anonymous_name || 'Anonymous') 
-                : (question.profiles?.name || question.profiles?.username || 'User')}
+                : 'User'}
             </span>
             <span className="text-timestamp text-muted-foreground">{question.timestamp}</span>
           </div>

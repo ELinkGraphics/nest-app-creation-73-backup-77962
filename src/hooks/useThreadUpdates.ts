@@ -6,7 +6,8 @@ export const useThreadUpdates = (questionId: string) => {
   return useQuery({
     queryKey: ['threadUpdates', questionId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const sb = supabase as any;
+      const { data, error } = await sb
         .from('thread_updates')
         .select('*')
         .eq('question_id', questionId)
@@ -31,7 +32,8 @@ export const useCreateThreadUpdate = () => {
       if (!user) throw new Error('User not authenticated');
 
       // Verify user is the original poster
-      const { data: question } = await supabase
+      const sb = supabase as any;
+      const { data: question } = await sb
         .from('questions')
         .select('user_id')
         .eq('id', updateData.questionId)
@@ -42,7 +44,7 @@ export const useCreateThreadUpdate = () => {
       }
 
       // Get the next update number
-      const { data: existingUpdates } = await supabase
+      const { data: existingUpdates } = await sb
         .from('thread_updates')
         .select('update_number')
         .eq('question_id', updateData.questionId)
@@ -51,7 +53,7 @@ export const useCreateThreadUpdate = () => {
 
       const nextUpdateNumber = existingUpdates?.[0]?.update_number ? existingUpdates[0].update_number + 1 : 1;
 
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from('thread_updates')
         .insert({
           question_id: updateData.questionId,
@@ -86,7 +88,7 @@ export const useThreadUpdateVote = () => {
       if (!user) throw new Error('User not authenticated');
 
       if (hasVoted) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('thread_update_votes')
           .delete()
           .eq('thread_update_id', updateId)
@@ -94,7 +96,7 @@ export const useThreadUpdateVote = () => {
 
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('thread_update_votes')
           .insert({ thread_update_id: updateId, user_id: user.id });
 

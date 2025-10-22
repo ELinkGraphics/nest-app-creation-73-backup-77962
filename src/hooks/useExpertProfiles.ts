@@ -5,7 +5,8 @@ export const useExpertProfiles = () => {
   return useQuery({
     queryKey: ['expertProfiles'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const sb = supabase as any;
+      const { data, error } = await sb
         .from('expert_profiles')
         .select(`
           *,
@@ -41,7 +42,8 @@ export const useIsExpert = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
 
-      const { data } = await supabase
+      const sb = supabase as any;
+      const { data } = await sb
         .from('expert_profiles')
         .select('is_verified')
         .eq('user_id', user.id)

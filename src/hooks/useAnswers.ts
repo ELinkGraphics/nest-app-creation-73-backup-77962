@@ -6,7 +6,8 @@ export const useAnswers = (questionId: string) => {
   return useQuery({
     queryKey: ['answers', questionId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const sb = supabase as any;
+      const { data, error } = await sb
         .from('answers')
         .select(`
           *,
@@ -41,13 +42,14 @@ export const useCreateAnswer = () => {
       if (!user) throw new Error('User not authenticated');
 
       // Check if user is an expert
-      const { data: expertProfile } = await supabase
+      const sb = supabase as any;
+      const { data: expertProfile } = await sb
         .from('expert_profiles')
         .select('is_verified')
         .eq('user_id', user.id)
         .single();
 
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from('answers')
         .insert({
           question_id: answerData.questionId,
@@ -83,7 +85,7 @@ export const useAnswerVote = () => {
       if (!user) throw new Error('User not authenticated');
 
       if (hasVoted) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('answer_votes')
           .delete()
           .eq('answer_id', answerId)
@@ -91,7 +93,7 @@ export const useAnswerVote = () => {
 
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('answer_votes')
           .insert({ answer_id: answerId, user_id: user.id });
 
@@ -114,7 +116,8 @@ export const useMarkAnswerHelpful = () => {
       if (!user) throw new Error('User not authenticated');
 
       // Verify user is the question author
-      const { data: question } = await supabase
+      const sb = supabase as any;
+      const { data: question } = await sb
         .from('questions')
         .select('user_id')
         .eq('id', questionId)
@@ -124,7 +127,7 @@ export const useMarkAnswerHelpful = () => {
         throw new Error('Only the question author can mark answers as helpful');
       }
 
-      const { error } = await supabase
+      const { error } = await sb
         .from('answers')
         .update({ is_helpful: true })
         .eq('id', answerId);

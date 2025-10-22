@@ -29,6 +29,12 @@ interface Question {
   isThread?: boolean;
   threadUpdates?: number;
   lastUpdate?: string;
+  is_anonymous?: boolean;
+  anonymous_name?: string;
+  profiles?: {
+    username: string;
+    name: string;
+  };
 }
 
 interface QuestionCardProps {
@@ -82,7 +88,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
           <div className="relative">
             <img 
               src="/src/assets/anonymous-logo.png" 
-              alt="Anonymous Asker" 
+              alt={question.is_anonymous ? "Anonymous Asker" : "User"} 
               className="w-8 h-8 rounded-full border-2 border-primary/20"
             />
             {question.isUrgent && (
@@ -92,7 +98,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
             )}
           </div>
           <div className="flex flex-col">
-            <span className="text-timestamp font-medium text-foreground">Anonymous Asker</span>
+            <span className="text-timestamp font-medium text-foreground">
+              {question.is_anonymous 
+                ? (question.anonymous_name || 'Anonymous') 
+                : (question.profiles?.name || question.profiles?.username || 'User')}
+            </span>
             <span className="text-timestamp text-muted-foreground">{question.timestamp}</span>
           </div>
         </div>

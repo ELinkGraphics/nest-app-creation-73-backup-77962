@@ -14,6 +14,73 @@ export type Database = {
   }
   public: {
     Tables: {
+      answer_votes: {
+        Row: {
+          answer_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          answer_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          answer_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answer_votes_answer_id_fkey"
+            columns: ["answer_id"]
+            isOneToOne: false
+            referencedRelation: "answers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      answers: {
+        Row: {
+          answer: string
+          created_at: string | null
+          id: string
+          is_helpful: boolean | null
+          question_id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          answer: string
+          created_at?: string | null
+          id?: string
+          is_helpful?: boolean | null
+          question_id: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          answer?: string
+          created_at?: string | null
+          id?: string
+          is_helpful?: boolean | null
+          question_id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       circle_event_attendees: {
         Row: {
           event_id: string
@@ -668,6 +735,42 @@ export type Database = {
           },
         ]
       }
+      expert_profiles: {
+        Row: {
+          bio: string | null
+          certifications: string[] | null
+          created_at: string | null
+          id: string
+          specialty: string
+          updated_at: string | null
+          user_id: string
+          verified: boolean | null
+          years_experience: number | null
+        }
+        Insert: {
+          bio?: string | null
+          certifications?: string[] | null
+          created_at?: string | null
+          id?: string
+          specialty: string
+          updated_at?: string | null
+          user_id: string
+          verified?: boolean | null
+          years_experience?: number | null
+        }
+        Update: {
+          bio?: string | null
+          certifications?: string[] | null
+          created_at?: string | null
+          id?: string
+          specialty?: string
+          updated_at?: string | null
+          user_id?: string
+          verified?: boolean | null
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string | null
@@ -954,6 +1057,77 @@ export type Database = {
         }
         Relationships: []
       }
+      question_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          question_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          question_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          question_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_votes_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questions: {
+        Row: {
+          ai_response: string | null
+          anonymous_name: string | null
+          category: string
+          created_at: string | null
+          id: string
+          is_anonymous: boolean | null
+          question: string
+          tags: string[] | null
+          updated_at: string | null
+          user_id: string | null
+          views: number | null
+        }
+        Insert: {
+          ai_response?: string | null
+          anonymous_name?: string | null
+          category: string
+          created_at?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          question: string
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id?: string | null
+          views?: number | null
+        }
+        Update: {
+          ai_response?: string | null
+          anonymous_name?: string | null
+          category?: string
+          created_at?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          question?: string
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id?: string | null
+          views?: number | null
+        }
+        Relationships: []
+      }
       saves: {
         Row: {
           created_at: string | null
@@ -1057,6 +1231,64 @@ export type Database = {
             columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      thread_update_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          thread_update_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          thread_update_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          thread_update_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thread_update_votes_thread_update_id_fkey"
+            columns: ["thread_update_id"]
+            isOneToOne: false
+            referencedRelation: "thread_updates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      thread_updates: {
+        Row: {
+          created_at: string | null
+          id: string
+          question_id: string
+          update_text: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          question_id: string
+          update_text: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          question_id?: string
+          update_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thread_updates_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
             referencedColumns: ["id"]
           },
         ]

@@ -92,18 +92,21 @@ export const useCreateQuestion = () => {
       isUrgent?: boolean;
       isThread?: boolean;
       threadTitle?: string;
+      isAnonymous?: boolean;
+      anonymousName?: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
 
       const sb = supabase as any;
       const { data, error } = await sb
         .from('questions')
         .insert({
-          user_id: user.id,
+          user_id: user?.id || null,
           question: questionData.question,
           category: questionData.category,
           tags: questionData.tags,
+          is_anonymous: questionData.isAnonymous || !user,
+          anonymous_name: questionData.anonymousName || (user ? null : 'Anonymous')
         })
         .select()
         .single();

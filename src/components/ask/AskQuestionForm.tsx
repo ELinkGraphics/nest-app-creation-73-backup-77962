@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,8 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Send, AlertCircle } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Sparkles, Send, AlertCircle, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useCreateQuestion } from '@/hooks/useQuestions';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AskQuestionFormProps {
   isOpen: boolean;
@@ -39,11 +42,39 @@ export const AskQuestionForm: React.FC<AskQuestionFormProps> = ({
   const [question, setQuestion] = useState('');
   const [category, setCategory] = useState('');
   const [tags, setTags] = useState<string[]>([]);
-  const [isAnonymous, setIsAnonymous] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [anonymousName, setAnonymousName] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState('');
   const [showAiSuggestion, setShowAiSuggestion] = useState(false);
   const { toast } = useToast();
+  const createQuestion = useCreateQuestion();
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (isAnonymous && isAuthenticated) {
+      generateAnonymousName();
+    } else {
+      setAnonymousName('');
+    }
+  }, [isAnonymous, isAuthenticated]);
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setIsAuthenticated(!!user);
+  };
+
+  const generateAnonymousName = () => {
+    const adjectives = ['Caring', 'Thoughtful', 'Curious', 'Brave', 'Kind', 'Wise', 'Hopeful', 'Strong', 'Gentle', 'Loving'];
+    const nouns = ['Mom', 'Dad', 'Parent', 'Friend', 'Helper', 'Soul', 'Heart', 'Voice', 'Spirit', 'Light'];
+    const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+    const randomNum = Math.floor(Math.random() * 999);
+    setAnonymousName(`${randomAdj}${randomNoun}${randomNum}`);
+  };
 
   const handleTagSelect = (tag: string) => {
     if (!tags.includes(tag) && tags.length < 5) {
@@ -79,13 +110,13 @@ export const AskQuestionForm: React.FC<AskQuestionFormProps> = ({
       return;
     }
 
-    setIsSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      toast({
-        title: "Question submitted!",
-        description: "Your anonymous question has been posted. You'll get notified when experts respond.",
+    try {
+      await createQuestion.mutateAsync({
+        question: question.trim(),
+        category,
+        tags,
+        isAnonymous: isAuthenticated ? isAnonymous : true,
+        anonymousName: (isAuthenticated && isAnonymous) ? anonymousName : undefined
       });
       
       setQuestion('');
@@ -93,9 +124,11 @@ export const AskQuestionForm: React.FC<AskQuestionFormProps> = ({
       setTags([]);
       setAiSuggestion('');
       setShowAiSuggestion(false);
-      setIsSubmitting(false);
+      setIsAnonymous(false);
       onClose();
-    }, 1500);
+    } catch (error) {
+      console.error('Error submitting question:', error);
+    }
   };
 
   return (
@@ -193,13 +226,37 @@ export const AskQuestionForm: React.FC<AskQuestionFormProps> = ({
             )}
           </div>
 
+          {/* Anonymous Toggle (only for authenticated users) */}
+          {isAuthenticated && (
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-primary/20">
+              <div className="flex items-center gap-3">
+                <UserX className="w-5 h-5 text-primary" />
+                <div>
+                  <Label htmlFor="anonymous-mode" className="text-sm font-medium cursor-pointer">
+                    Post Anonymously
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {isAnonymous ? `Your name will be: ${anonymousName}` : 'Post with your account'}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="anonymous-mode"
+                checked={isAnonymous}
+                onCheckedChange={setIsAnonymous}
+              />
+            </div>
+          )}
+
           {/* Anonymous Notice */}
-          <div className="p-3 bg-muted/50 rounded-lg">
-            <p className="text-xs text-muted-foreground">
-              🔒 Your question will be posted anonymously. No personal information will be shared. 
-              Our community experts and AI will provide helpful, judgment-free responses.
-            </p>
-          </div>
+          {!isAuthenticated && (
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground">
+                🔒 Your question will be posted anonymously. No personal information will be shared. 
+                Our community experts and AI will provide helpful, judgment-free responses.
+              </p>
+            </div>
+          )}
 
           {/* Submit Button */}
           <div className="flex gap-3 pt-4">
@@ -213,10 +270,10 @@ export const AskQuestionForm: React.FC<AskQuestionFormProps> = ({
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={createQuestion.isPending}
               className="flex-1 bg-gradient-to-r from-primary to-secondary"
             >
-              {isSubmitting ? (
+              {createQuestion.isPending ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
                   Submitting...

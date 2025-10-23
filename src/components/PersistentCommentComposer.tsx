@@ -7,16 +7,26 @@ import { useUser } from '@/contexts/UserContext';
 interface PersistentCommentComposerProps {
   onSubmit: (comment: string) => void;
   placeholder?: string;
+  displayName?: string;
+  displayAvatar?: string;
+  displayColor?: string;
 }
 
 export const PersistentCommentComposer: React.FC<PersistentCommentComposerProps> = ({
   onSubmit,
-  placeholder = "Add a comment..."
+  placeholder = "Add a comment...",
+  displayName,
+  displayAvatar,
+  displayColor
 }) => {
   const [comment, setComment] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useUser();
+
+  const avatarText = displayName || user?.initials || 'U';
+  const avatarColor = displayColor || user?.avatarColor || '#E08ED1';
+  const avatarImg = displayAvatar || user?.avatar;
 
   // Auto-expand textarea up to 4 lines
   useEffect(() => {
@@ -63,12 +73,12 @@ export const PersistentCommentComposer: React.FC<PersistentCommentComposerProps>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <div 
                   className="size-8 rounded-full grid place-items-center text-xs font-medium text-white overflow-hidden"
-                  style={{ backgroundColor: user?.avatarColor || '#E08ED1' }}
+                  style={{ backgroundColor: avatarColor }}
                 >
-                  {user?.avatar ? (
-                    <img src={user.avatar} alt={user.initials} className="w-full h-full object-cover" />
+                  {avatarImg ? (
+                    <img src={avatarImg} alt={avatarText} className="w-full h-full object-cover" />
                   ) : (
-                    user?.initials || 'U'
+                    avatarText
                   )}
                 </div>
               </div>

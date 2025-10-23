@@ -22,6 +22,8 @@ interface Question {
   lastUpdate?: string;
   is_anonymous?: boolean;
   anonymous_name?: string;
+  user_id?: string;
+  created_at?: string;
   profiles?: {
     username: string;
     name: string;
@@ -99,6 +101,8 @@ export const QuestionFeed: React.FC<QuestionFeedProps> = ({ filter }) => {
             aiResponse: q.ai_response,
             is_anonymous: q.is_anonymous,
             anonymous_name: q.anonymous_name,
+            user_id: q.user_id,
+            created_at: q.created_at,
             answers: []
           };
           

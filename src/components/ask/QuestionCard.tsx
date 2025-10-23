@@ -71,16 +71,10 @@ const getCategoryColor = (category: string) => {
 };
 
 export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick }) => {
-  const navigate = useNavigate();
-
-  const handleCardClick = () => {
-    navigate(`/ask/question/${question.id}`);
-  };
-
   return (
     <Card 
       className="cursor-pointer shadow-sm border-l-4 border-l-primary/20 border-r-4 border-r-primary/20 hover:border-l-primary hover:shadow-lg transition-all duration-200"
-      onClick={handleCardClick}
+      onClick={onClick}
     >
       <CardContent className="p-4">
         {/* Asker Profile */}
@@ -175,13 +169,13 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
             </div>
           </div>
 
-          <Button 
+            <Button 
             variant="ghost" 
             size="sm" 
             className="text-primary hover:text-primary/80"
             onClick={(e) => {
               e.stopPropagation();
-              handleCardClick();
+              onClick();
             }}
           >
             View Details

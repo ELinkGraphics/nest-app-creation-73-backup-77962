@@ -9,21 +9,35 @@ export const useAnswers = (questionId: string) => {
       const sb = supabase as any;
       const { data, error } = await sb
         .from('answers')
-        .select(`
-          *,
-          profiles:user_id (
-            username,
-            name,
-            avatar_url,
-            initials,
-            avatar_color
-          )
-        `)
+        .select('*')
         .eq('question_id', questionId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+
+      // Fetch profiles separately for non-null user_ids
+      const userIds = data
+        ?.filter((a: any) => a.user_id)
+        .map((a: any) => a.user_id) || [];
+
+      let profiles: any = {};
+      if (userIds.length > 0) {
+        const { data: profileData } = await sb
+          .from('profiles')
+          .select('id, username, name, avatar_url, initials, avatar_color')
+          .in('id', userIds);
+
+        profiles = (profileData || []).reduce((acc: any, p: any) => {
+          acc[p.id] = p;
+          return acc;
+        }, {});
+      }
+
+      // Attach profile to each answer
+      return data?.map((answer: any) => ({
+        ...answer,
+        profile: answer.user_id ? profiles[answer.user_id] : null
+      }));
     },
     enabled: !!questionId,
   });
@@ -35,28 +49,18 @@ export const useCreateAnswer = () => {
   return useMutation({
     mutationFn: async (answerData: {
       questionId: string;
-      content: string;
-      isAnonymous?: boolean;
+      answer: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Check if user is an expert
       const sb = supabase as any;
-      const { data: expertProfile } = await sb
-        .from('expert_profiles')
-        .select('is_verified')
-        .eq('user_id', user.id)
-        .single();
-
       const { data, error } = await sb
         .from('answers')
         .insert({
           question_id: answerData.questionId,
           user_id: user.id,
-          content: answerData.content,
-          is_anonymous: answerData.isAnonymous ?? true,
-          is_expert: expertProfile?.is_verified || false,
+          answer: answerData.answer,
         })
         .select()
         .single();

@@ -1,280 +1,268 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { PersistentCommentComposer } from '@/components/PersistentCommentComposer';
-import { ScrollTriggeredAIInsight } from '@/components/ask/ScrollTriggeredAIInsight';
-import AnonymousThreadComponent from '@/components/ask/AnonymousThread';
+import { useAnswers, useCreateAnswer, useAnswerVote } from '@/hooks/useAnswers';
+import { useQuestion, useQuestionVote, useUserVotes } from '@/hooks/useQuestions';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   ThumbsUp, 
   MessageCircle, 
-  Clock, 
-  Sparkles, 
-  AlertTriangle,
-  Award,
-  ArrowLeft,
+  Sparkles,
   Share2,
-  Bookmark
+  Bookmark,
+  Loader2,
+  ArrowLeft
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { formatDistanceToNow } from 'date-fns';
 
-interface Answer {
-  id: string;
-  content: string;
-  isExpert: boolean;
-  expertTitle?: string;
-  upvotes: number;
-  timestamp: string;
-  isHelpful: boolean;
-}
-
-interface Question {
-  id: string;
-  question: string;
-  category: string;
-  tags: string[];
-  timestamp: string;
-  answerCount: number;
-  upvotes: number;
-  isUrgent: boolean;
-  hasExpertAnswer: boolean;
-  aiResponse?: string;
-  answers: Answer[];
-  isThread?: boolean;
-  threadData?: {
-    canContinue: boolean;
-    updates: Array<{
-      id: string;
-      content: string;
-      timestamp: string;
-      upvotes: number;
-      isOriginalPoster: boolean;
-    }>;
-  };
-}
-
-// Mock data - in real app this would come from API
-const mockQuestions: { [key: string]: Question } = {
-  'thread-1': {
-    id: 'thread-1',
-    question: "My 3-year-old has been having meltdowns every morning when getting ready for daycare. I've tried different approaches but nothing seems to work. How can I make mornings less stressful for both of us?",
-    category: 'parenting',
-    tags: ['toddler', 'behavior', 'daycare', 'morning-routine'],
-    timestamp: '2 hours ago',
-    answerCount: 8,
-    upvotes: 24,
-    isUrgent: false,
-    hasExpertAnswer: true,
-    isThread: true,
-    aiResponse: "Morning transitions can be challenging for toddlers. Consider creating a visual schedule, allowing extra time, and establishing a consistent routine.",
-    threadData: {
-      canContinue: true,
-      updates: [
-        {
-          id: 'update-1',
-          content: "Update: I tried the visual schedule suggestion and it's been 3 days now. There's been some improvement! She seems to like checking off the pictures. Still some resistance with getting dressed though. Should I add a reward system?",
-          timestamp: '6 hours ago',
-          upvotes: 8,
-          isOriginalPoster: true
-        },
-        {
-          id: 'update-2', 
-          content: "Day 7 update: The visual schedule is working great! I added stickers as rewards and now she actually looks forward to morning routine. The key was letting her put the stickers on herself. Thanks everyone for the advice! 🙏",
-          timestamp: '2 hours ago',
-          upvotes: 15,
-          isOriginalPoster: true
-        },
-        {
-          id: 'update-3',
-          content: "Week 3 check-in: We've had such a transformation! Mornings are actually peaceful now. She even helps pack her daycare bag. The routine has become a bonding time for us. Amazing how small changes can make such a big difference.",
-          timestamp: '30 minutes ago',
-          upvotes: 22,
-          isOriginalPoster: true
-        }
-      ]
-    },
-    answers: [
-      {
-        id: 'a1',
-        content: "I had the same issue with my daughter. What worked was creating a morning checklist with pictures and letting her pick out her clothes the night before. It gave her some control and reduced the resistance.",
-        isExpert: false,
-        upvotes: 12,
-        timestamp: '1 hour ago',
-        isHelpful: true
-      },
-      {
-        id: 'a2',
-        content: "As a child psychologist, I recommend implementing a visual schedule with clear expectations. Toddlers thrive on routine and predictability. Also, consider if there are any sensory issues with clothing or if your child needs more transition time.",
-        isExpert: true,
-        expertTitle: 'Child Psychologist',
-        upvotes: 18,
-        timestamp: '30 minutes ago',
-        isHelpful: true
-      }
-    ]
-  },
-  '1': {
-    id: '1',
-    question: 'How do I handle my teenager who refuses to do homework and gets angry when I try to help?',
-    category: 'parenting',
-    tags: ['teenagers', 'homework', 'behavior', 'anger'],
-    timestamp: '2h',
-    answerCount: 12,
-    upvotes: 8,
-    isUrgent: false,
-    hasExpertAnswer: true,
-    aiResponse: 'This is a common challenge in parenting teenagers. Consider establishing clear boundaries while maintaining open communication. Setting up a structured homework time and creating a supportive environment can help.',
-    answers: [
-      {
-        id: '1',
-        content: 'I went through the same thing with my daughter. What worked for us was creating a homework schedule together and letting her choose her study space. Also, instead of helping directly, I started asking her what she thought the problem was asking for first.',
-        isExpert: false,
-        upvotes: 5,
-        timestamp: '1h',
-        isHelpful: true
-      },
-      {
-        id: '2',
-        content: 'As a child psychologist, I recommend focusing on the emotional aspect first. Teenagers often resist homework due to underlying anxiety or fear of failure. Try having a conversation about what makes homework difficult for them before addressing the behavior.',
-        isExpert: true,
-        expertTitle: 'Child Psychologist',
-        upvotes: 12,
-        timestamp: '45m',
-        isHelpful: true
-      }
-    ]
-  }
-};
-
-const QuestionDetail: React.FC = () => {
-  const { questionId } = useParams();
+export default function QuestionDetail() {
+  const { questionId } = useParams<{ questionId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Get question based on questionId, fallback to default question
-  const question = mockQuestions[questionId || '1'] || mockQuestions['1'];
+  const { data: question, isLoading: questionLoading } = useQuestion(questionId || '');
+  const { data: answers, isLoading: answersLoading } = useAnswers(questionId || '');
+  const { data: userVotes } = useUserVotes();
+  const createAnswer = useCreateAnswer();
+  const voteOnAnswer = useAnswerVote();
+  const voteOnQuestion = useQuestionVote();
+  
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
+  const [answerVoteCounts, setAnswerVoteCounts] = useState<Record<string, number>>({});
+  const [questionVoteCount, setQuestionVoteCount] = useState(0);
 
-  const handleCommentSubmit = (comment: string) => {
-    toast({
-      title: "Opinion submitted!",
-      description: "Your helpful response has been added to this question.",
-    });
-  };
-
-  const handleContinueThread = () => {
-    toast({
-      title: "Continue Story",
-      description: "Thread continuation feature coming soon!",
-    });
-  };
-
-  const handleThreadUpvote = (updateId: string) => {
-    toast({
-      title: "Upvoted!",
-      description: "Thanks for supporting this update.",
-    });
-  };
-
-  // If this is a thread post, show the enhanced thread view
-  if (question.isThread && question.threadData) {
-    const threadFormat = {
-      id: question.id,
-      originalQuestion: question.question,
-      category: question.category,
-      tags: question.tags,
-      timestamp: question.timestamp,
-      upvotes: question.upvotes,
-      isUrgent: question.isUrgent,
-      hasExpertAnswer: question.hasExpertAnswer,
-      canContinue: question.threadData.canContinue,
-      updates: question.threadData.updates
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+      
+      if (user) {
+        const { data: profile } = await (supabase as any)
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        setCurrentUserProfile(profile);
+      }
     };
+    fetchCurrentUser();
+  }, []);
 
+  // Fetch initial vote counts
+  useEffect(() => {
+    const fetchVoteCounts = async () => {
+      if (!questionId) return;
+
+      // Fetch question votes
+      const { data: qVotes } = await (supabase as any)
+        .from('question_votes')
+        .select('id')
+        .eq('question_id', questionId);
+      setQuestionVoteCount(qVotes?.length || 0);
+
+      // Fetch answer votes
+      if (answers && answers.length > 0) {
+        const answerIds = answers.map((a: any) => a.id);
+        const { data: aVotes } = await (supabase as any)
+          .from('answer_votes')
+          .select('answer_id')
+          .in('answer_id', answerIds);
+
+        const counts: Record<string, number> = {};
+        aVotes?.forEach((vote: any) => {
+          counts[vote.answer_id] = (counts[vote.answer_id] || 0) + 1;
+        });
+        setAnswerVoteCounts(counts);
+      }
+    };
+    fetchVoteCounts();
+  }, [questionId, answers]);
+
+  // Real-time subscription for answers
+  useEffect(() => {
+    if (!questionId) return;
+
+    const channel = supabase
+      .channel(`answers:${questionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'answers',
+          filter: `question_id=eq.${questionId}`
+        },
+        () => {
+          // Answers will auto-refresh via useQuery
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [questionId]);
+
+  // Real-time subscription for question votes
+  useEffect(() => {
+    if (!questionId) return;
+
+    const channel = supabase
+      .channel(`question_votes:${questionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'question_votes',
+          filter: `question_id=eq.${questionId}`
+        },
+        async () => {
+          const { data: qVotes } = await (supabase as any)
+            .from('question_votes')
+            .select('id')
+            .eq('question_id', questionId);
+          setQuestionVoteCount(qVotes?.length || 0);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [questionId]);
+
+  // Real-time subscription for answer votes
+  useEffect(() => {
+    if (!questionId || !answers || answers.length === 0) return;
+
+    const channel = supabase
+      .channel(`answer_votes:${questionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'answer_votes'
+        },
+        async (payload) => {
+          // Refresh vote counts for the specific answer
+          const answerIds = answers.map((a: any) => a.id);
+          const { data: aVotes } = await (supabase as any)
+            .from('answer_votes')
+            .select('answer_id')
+            .in('answer_id', answerIds);
+
+          const counts: Record<string, number> = {};
+          aVotes?.forEach((vote: any) => {
+            counts[vote.answer_id] = (counts[vote.answer_id] || 0) + 1;
+          });
+          setAnswerVoteCounts(counts);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [questionId, answers]);
+
+  const handleSubmitAnswer = async (answerText: string) => {
+    try {
+      await createAnswer.mutateAsync({
+        questionId: questionId || '',
+        answer: answerText,
+      });
+    } catch (error) {
+      console.error('Error submitting answer:', error);
+    }
+  };
+
+  const handleQuestionVote = async () => {
+    if (!currentUser || !questionId) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to vote",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const hasVoted = userVotes?.questions?.includes(questionId);
+    await voteOnQuestion.mutateAsync({ questionId, hasVoted: !!hasVoted });
+  };
+
+  const handleAnswerVote = async (answerId: string) => {
+    if (!currentUser || !questionId) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to vote",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const hasVoted = userVotes?.answers?.includes(answerId);
+    await voteOnAnswer.mutateAsync({ answerId, hasVoted: !!hasVoted, questionId });
+  };
+
+  if (questionLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
-          <div className="flex items-center justify-between p-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/ask')}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Button>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="active:bg-transparent active:text-primary">
-                <Share2 className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Bookmark className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Thread Content */}
-        <div className="max-w-4xl mx-auto px-4 pb-32 pt-6">
-          <div className="mb-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-              <Badge className="bg-gradient-to-r from-primary/10 to-secondary/10 text-primary border-primary/30">
-                📖 Story Thread
-              </Badge>
-              <span>Anonymous user sharing their journey</span>
-            </div>
-          </div>
-          
-          <AnonymousThreadComponent
-            thread={threadFormat}
-            onContinueThread={handleContinueThread}
-            onUpvote={handleThreadUpvote}
-          />
-        </div>
-
-        {/* Persistent Comment Input */}
-        <PersistentCommentComposer
-          onSubmit={handleCommentSubmit}
-          placeholder="Share your thoughts on this journey"
-        />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Regular question view for non-thread posts
+  if (!question) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <h2 className="text-xl font-semibold mb-2">Question not found</h2>
+        <Button onClick={() => navigate('/ask')}>Back to Ask</Button>
+      </div>
+    );
+  }
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'parenting': return '👶';
-      case 'health': return '🏥';
-      case 'relationships': return '💕';
-      case 'career': return '💼';
-      case 'mental-health': return '🧠';
-      case 'education': return '📚';
-      case 'lifestyle': return '🌟';
-      case 'family': return '👨‍👩‍👧‍👦';
-      default: return '❓';
-    }
-  };
+  const isQuestionAuthor = currentUser && question.user_id === currentUser.id;
+  const questionIsAnonymous = question.is_anonymous;
+
+  // Determine display name for current user in composer
+  let displayName: string | undefined;
+  let displayAvatar: string | undefined;
+  let displayColor: string | undefined;
+
+  if (isQuestionAuthor && questionIsAnonymous) {
+    displayName = question.anonymous_name || 'Anonymous';
+    displayColor = '#4B164C';
+  } else if (currentUserProfile) {
+    displayName = currentUserProfile.initials;
+    displayAvatar = currentUserProfile.avatar_url;
+    displayColor = currentUserProfile.avatar_color;
+  }
+
+  const hasVotedQuestion = userVotes?.questions?.includes(questionId || '');
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="flex items-center justify-between p-4">
-          <Button
-            variant="ghost"
-            size="sm"
+      <header className="sticky top-0 z-40 bg-background border-b border-border">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Button 
+            variant="ghost" 
+            size="sm" 
             onClick={() => navigate('/ask')}
-            className="flex items-center gap-2"
+            className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="active:bg-transparent active:text-primary">
+            <Button variant="ghost" size="sm">
               <Share2 className="w-4 h-4" />
             </Button>
             <Button variant="ghost" size="sm">
@@ -282,127 +270,168 @@ const QuestionDetail: React.FC = () => {
             </Button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 pb-32">
-        <div className="space-y-6 pt-6">
-          {/* Question Header */}
-          <div className="space-y-3">
-            {/* Asker Profile */}
-            <div className="flex items-center gap-3 mb-4">
-              <img 
-                src="/src/assets/anonymous-logo.png" 
-                alt="Anonymous Asker" 
-                className="w-10 h-10 rounded-full border-2 border-primary/20"
-              />
-              <div className="flex flex-col">
-                <span className="text-username font-medium text-foreground">Anonymous Asker</span>
-                <span className="text-timestamp text-muted-foreground">{question.timestamp}</span>
-              </div>
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {/* Question Header */}
+        <div className="space-y-4">
+          {/* Asker info */}
+          <div className="flex items-center gap-3">
+            <img 
+              src="/src/assets/anonymous-logo.png" 
+              alt="Asker" 
+              className="w-10 h-10 rounded-full border-2 border-primary/20"
+            />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-foreground">
+                {question.is_anonymous 
+                  ? (question.anonymous_name || 'Anonymous') 
+                  : 'User'}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {formatDistanceToNow(new Date(question.created_at), { addSuffix: true })}
+              </span>
             </div>
+          </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge className="bg-blue-100 text-blue-800">
-                {getCategoryIcon(question.category)} {question.category}
-              </Badge>
-              {question.isUrgent && (
-                <Badge variant="destructive" className="animate-pulse">
-                  <AlertTriangle className="w-3 h-3 mr-1" />
-                  Urgent
-                </Badge>
-              )}
-              {question.hasExpertAnswer && (
-                <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">
-                  <Award className="w-3 h-3 mr-1" />
-                  Expert Answered
-                </Badge>
-              )}
-            </div>
+          <h1 className="text-xl font-semibold text-foreground leading-relaxed">
+            {question.question}
+          </h1>
 
-            <p className="text-post-content text-foreground leading-relaxed font-normal">
-              {question.question}
-            </p>
-
-            {/* Tags */}
-            <div className="flex flex-wrap gap-1">
-              {question.tags.map((tag) => (
+          {/* Tags */}
+          {question.tags && question.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {question.tags.map((tag: string) => (
                 <Badge key={tag} variant="outline" className="text-xs">
                   #{tag}
                 </Badge>
               ))}
             </div>
+          )}
 
-            {/* AI Response with Scroll Animation */}
-            {question.aiResponse && (
-              <div className="mb-2">
-                <ScrollTriggeredAIInsight content={question.aiResponse} />
-              </div>
-            )}
-
-            {/* Stats */}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <ThumbsUp className="w-4 h-4" />
-                {question.upvotes} upvotes
-              </div>
-              <div className="flex items-center gap-1">
-                <MessageCircle className="w-4 h-4" />
-                {question.answerCount} opinions
-              </div>
+          {/* Stats */}
+          <div className="flex items-center gap-4 text-sm">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`h-auto p-0 ${hasVotedQuestion ? 'text-primary' : 'text-muted-foreground'} hover:text-primary`}
+              onClick={handleQuestionVote}
+            >
+              <ThumbsUp className={`w-4 h-4 mr-1 ${hasVotedQuestion ? 'fill-current' : ''}`} />
+              {questionVoteCount}
+            </Button>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <MessageCircle className="w-4 h-4" />
+              {answers?.length || 0} opinions
             </div>
           </div>
+        </div>
 
-          <Separator />
+        {/* AI Response */}
+        {question.ai_response && (
+          <div className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg p-4 border border-primary/20">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="font-medium text-primary">AI Insight</span>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {question.ai_response}
+            </p>
+          </div>
+        )}
 
-          {/* Opinions Section */}
-          <div className="space-y-4">
-            <h2 className="font-semibold text-lg">
-              {question.answers.length === 0 ? 'No opinions yet' : `${question.answers.length} Opinion${question.answers.length === 1 ? '' : 's'}`}
-            </h2>
+        <Separator />
 
-            {question.answers.map((answer) => (
+        {/* Answers Section */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">
+            {!answers || answers.length === 0 
+              ? 'No opinions yet' 
+              : `${answers.length} Opinion${answers.length === 1 ? '' : 's'}`}
+          </h2>
+
+          {answersLoading && (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          )}
+
+          {answers?.map((answer: any) => {
+            const isAnswerByQuestionAuthor = answer.user_id === question.user_id;
+            const showAnonymousName = isAnswerByQuestionAuthor && questionIsAnonymous;
+            
+            let answerDisplayName = 'Anonymous';
+            let answerAvatar = '/src/assets/anonymous-logo.png';
+            let answerColor = '#4B164C';
+
+            if (showAnonymousName) {
+              answerDisplayName = question.anonymous_name || 'Anonymous (OP)';
+            } else if (answer.profile) {
+              answerDisplayName = answer.profile.name || answer.profile.username || 'User';
+              answerAvatar = answer.profile.avatar_url || answerAvatar;
+              answerColor = answer.profile.avatar_color || answerColor;
+            }
+
+            const hasVotedAnswer = userVotes?.answers?.includes(answer.id);
+            const voteCount = answerVoteCounts[answer.id] || 0;
+
+            return (
               <div key={answer.id} className="p-4 bg-muted/30 rounded-lg space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {answer.isExpert && (
-                      <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">
-                        <Award className="w-3 h-3 mr-1" />
-                        {answer.expertTitle || 'Expert'}
-                      </Badge>
-                    )}
-                    <span className="text-xs text-muted-foreground">{answer.timestamp}</span>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="size-10 rounded-full grid place-items-center text-xs font-medium text-white overflow-hidden flex-shrink-0"
+                      style={{ backgroundColor: answerColor }}
+                    >
+                      {answer.profile?.avatar_url ? (
+                        <img src={answer.profile.avatar_url} alt={answerDisplayName} className="w-full h-full object-cover" />
+                      ) : (
+                        <img src={answerAvatar} alt={answerDisplayName} className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">
+                        {answerDisplayName}
+                        {showAnonymousName && ' (OP)'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(answer.created_at), { addSuffix: true })}
+                      </span>
+                    </div>
                   </div>
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className="text-muted-foreground hover:text-primary"
+                    className={`${hasVotedAnswer ? 'text-primary' : 'text-muted-foreground'} hover:text-primary`}
+                    onClick={() => handleAnswerVote(answer.id)}
                   >
-                    <ThumbsUp className="w-4 h-4 mr-1" />
-                    {answer.upvotes}
+                    <ThumbsUp className={`w-4 h-4 mr-1 ${hasVotedAnswer ? 'fill-current' : ''}`} />
+                    {voteCount}
                   </Button>
                 </div>
                 
-                <p className="text-post-content text-foreground leading-relaxed font-normal">{answer.content}</p>
+                <p className="text-sm leading-relaxed">{answer.answer}</p>
                 
-                {answer.isHelpful && (
+                {answer.is_helpful && (
                   <Badge variant="outline" className="text-xs">
                     ✅ Marked as helpful
                   </Badge>
                 )}
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Persistent Comment Input */}
+      {/* Persistent Comment Composer */}
       <PersistentCommentComposer
-        onSubmit={handleCommentSubmit}
-        placeholder="Write your opinion"
+        onSubmit={handleSubmitAnswer}
+        placeholder="Share your opinion..."
+        displayName={displayName}
+        displayAvatar={displayAvatar}
+        displayColor={displayColor}
       />
     </div>
   );
-};
-
-export default QuestionDetail;
+}

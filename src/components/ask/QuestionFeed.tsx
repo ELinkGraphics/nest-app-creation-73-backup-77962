@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { QuestionCard } from './QuestionCard';
-import { QuestionDetailModal } from './QuestionDetailModal';
 import { useQuestions } from '@/hooks/useQuestions';
 import { Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -55,7 +54,6 @@ interface QuestionFeedProps {
 }
 
 export const QuestionFeed: React.FC<QuestionFeedProps> = ({ filter }) => {
-  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const { data: questions, isLoading } = useQuestions(filter, 0, 20);
 
   if (isLoading) {
@@ -85,44 +83,34 @@ export const QuestionFeed: React.FC<QuestionFeedProps> = ({ filter }) => {
   }
 
   return (
-    <>
-      <div className="space-y-4">
-        {questions.map((q: any) => {
-          const formattedQuestion: Question = {
-            id: q.id,
-            question: q.question,
-            category: q.category,
-            tags: q.tags || [],
-            timestamp: formatDistanceToNow(new Date(q.created_at), { addSuffix: true }),
-            answerCount: 0,
-            upvotes: 0,
-            isUrgent: false,
-            hasExpertAnswer: !!q.ai_response,
-            aiResponse: q.ai_response,
-            is_anonymous: q.is_anonymous,
-            anonymous_name: q.anonymous_name,
-            user_id: q.user_id,
-            created_at: q.created_at,
-            answers: []
-          };
-          
-          return (
-            <QuestionCard
-              key={q.id}
-              question={formattedQuestion}
-              onClick={() => setSelectedQuestion(formattedQuestion)}
-            />
-          );
-        })}
-      </div>
-
-      {selectedQuestion && (
-        <QuestionDetailModal
-          question={selectedQuestion}
-          isOpen={!!selectedQuestion}
-          onClose={() => setSelectedQuestion(null)}
-        />
-      )}
-    </>
+    <div className="space-y-4">
+      {questions.map((q: any) => {
+        const formattedQuestion: Question = {
+          id: q.id,
+          question: q.question,
+          category: q.category,
+          tags: q.tags || [],
+          timestamp: formatDistanceToNow(new Date(q.created_at), { addSuffix: true }),
+          answerCount: 0,
+          upvotes: 0,
+          isUrgent: false,
+          hasExpertAnswer: !!q.ai_response,
+          aiResponse: q.ai_response,
+          is_anonymous: q.is_anonymous,
+          anonymous_name: q.anonymous_name,
+          user_id: q.user_id,
+          created_at: q.created_at,
+          answers: []
+        };
+        
+        return (
+          <QuestionCard
+            key={q.id}
+            question={formattedQuestion}
+            onClick={() => {}}
+          />
+        );
+      })}
+    </div>
   );
 };

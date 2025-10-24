@@ -6,9 +6,10 @@ import { AskQuestionForm } from '../components/ask/AskQuestionForm';
 import { QuestionFeed } from '../components/ask/QuestionFeed';
 import { ExpertAnswersCarousel } from '../components/ask/ExpertAnswersCarousel';
 import { AnonymousStoryModal } from '../components/ask/AnonymousStoryModal';
+import { SearchFilters } from '../components/ask/SearchFilters';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Plus, Sparkles, Edit3 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { type TabKey } from '@/hooks/useAppNav';
 interface AskProps {
   activeTab: TabKey;
@@ -23,6 +24,9 @@ const Ask: React.FC<AskProps> = ({
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const [showStoryModal, setShowStoryModal] = useState(false);
   const [activeQuestionTab, setActiveQuestionTab] = useState("recent");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('recent');
   const handleViewExpertAnswer = (answerId: string) => {
     // Navigate to answer detail or show in modal
     console.log('View expert answer:', answerId);
@@ -54,30 +58,45 @@ const Ask: React.FC<AskProps> = ({
         {/* Anonymous Story Modal */}
         {showStoryModal && <AnonymousStoryModal isOpen={showStoryModal} onClose={() => setShowStoryModal(false)} />}
 
+        {/* Search and Filters */}
+        <SearchFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          categoryFilter={categoryFilter}
+          onCategoryChange={setCategoryFilter}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+        />
+
         {/* Question Feed Tabs */}
         <Tabs value={activeQuestionTab} onValueChange={setActiveQuestionTab}>
           <div className="flex items-center justify-between mb-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="recent">Recent</TabsTrigger>
               <TabsTrigger value="trending">Trending</TabsTrigger>
-              <TabsTrigger value="unanswered">Expert</TabsTrigger>
+              <TabsTrigger value="unanswered">Unanswered</TabsTrigger>
+              <TabsTrigger value="expert">Expert</TabsTrigger>
             </TabsList>
-            <Button onClick={() => setShowQuestionForm(true)} size="sm">
+            <Button onClick={() => setShowQuestionForm(true)} size="sm" className="ml-2">
               <Plus className="h-4 w-4 mr-2" />
               Ask
             </Button>
           </div>
           
           <TabsContent value="recent" className="mt-6">
-            <QuestionFeed filter="recent" />
+            <QuestionFeed filter="recent" searchQuery={searchQuery} categoryFilter={categoryFilter} />
           </TabsContent>
           
           <TabsContent value="trending" className="mt-6">
-            <QuestionFeed filter="trending" />
+            <QuestionFeed filter="trending" searchQuery={searchQuery} categoryFilter={categoryFilter} />
           </TabsContent>
           
           <TabsContent value="unanswered" className="mt-6">
-            <QuestionFeed filter="unanswered" />
+            <QuestionFeed filter="unanswered" searchQuery={searchQuery} categoryFilter={categoryFilter} />
+          </TabsContent>
+
+          <TabsContent value="expert" className="mt-6">
+            <QuestionFeed filter="expert" searchQuery={searchQuery} categoryFilter={categoryFilter} />
           </TabsContent>
         </Tabs>
       </main>

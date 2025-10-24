@@ -4,25 +4,43 @@ import { toast } from 'sonner';
 
 export type QuestionFilter = 'recent' | 'trending' | 'unanswered' | 'expert';
 
-export const useQuestions = (filter: QuestionFilter = 'recent', page = 0, pageSize = 10) => {
+export const useQuestions = (filter: QuestionFilter = 'recent', page = 0, pageSize = 10, searchQuery?: string, categoryFilter?: string) => {
   return useQuery({
-    queryKey: ['questions', filter, page],
+    queryKey: ['questions', filter, page, searchQuery, categoryFilter],
     queryFn: async () => {
       const sb = supabase as any;
+      
+      // Get questions with answer counts
       let query = sb
         .from('questions')
-        .select('*')
+        .select(`
+          *,
+          answer_count:answers(count),
+          vote_count:question_votes(count)
+        `)
         .range(page * pageSize, (page + 1) * pageSize - 1);
 
-      // Apply filters (fallback to created_at until metrics are available)
+      // Search filter
+      if (searchQuery) {
+        query = query.or(`question.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`);
+      }
+
+      // Category filter
+      if (categoryFilter && categoryFilter !== 'all') {
+        query = query.eq('category', categoryFilter);
+      }
+
+      // Apply filters
       switch (filter) {
         case 'recent':
           query = query.order('created_at', { ascending: false });
           break;
         case 'trending':
-          query = query.order('created_at', { ascending: false });
+          // Calculate trending score based on votes, answers, and recency
+          query = query.order('views', { ascending: false });
           break;
         case 'unanswered':
+          // First get all questions, then filter by answer count in JS
           query = query.order('created_at', { ascending: false });
           break;
         case 'expert':
@@ -33,7 +51,20 @@ export const useQuestions = (filter: QuestionFilter = 'recent', page = 0, pageSi
       const { data, error } = await query;
 
       if (error) throw error;
-      return data;
+      
+      // Process answer counts from the aggregated query
+      const processedData = data?.map((q: any) => ({
+        ...q,
+        answerCount: q.answer_count?.[0]?.count || 0,
+        voteCount: q.vote_count?.[0]?.count || 0,
+      })) || [];
+
+      // Filter unanswered questions
+      if (filter === 'unanswered') {
+        return processedData.filter((q: any) => q.answerCount === 0);
+      }
+
+      return processedData;
     },
   });
 };
@@ -88,14 +119,15 @@ export const useCreateQuestion = () => {
           category: questionData.category,
           tags: questionData.tags,
           is_anonymous: questionData.isAnonymous || !user,
-          anonymous_name: questionData.anonymousName || (user ? null : 'Anonymous')
+          anonymous_name: questionData.anonymousName || (user ? null : 'Anonymous'),
+          is_thread: questionData.isThread || false
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Trigger AI insight generation asynchronously
+      // Trigger AI insight generation asynchronously (not for threads)
       if (!questionData.isThread) {
         supabase.functions.invoke('generate-ai-insight', {
           body: {

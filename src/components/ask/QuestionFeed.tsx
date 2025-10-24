@@ -51,10 +51,12 @@ interface Answer {
 
 interface QuestionFeedProps {
   filter: 'recent' | 'trending' | 'unanswered' | 'expert';
+  searchQuery?: string;
+  categoryFilter?: string;
 }
 
-export const QuestionFeed: React.FC<QuestionFeedProps> = ({ filter }) => {
-  const { data: questions, isLoading } = useQuestions(filter, 0, 20);
+export const QuestionFeed: React.FC<QuestionFeedProps> = ({ filter, searchQuery, categoryFilter }) => {
+  const { data: questions, isLoading } = useQuestions(filter, 0, 20, searchQuery, categoryFilter);
 
   if (isLoading) {
     return (
@@ -91,8 +93,8 @@ export const QuestionFeed: React.FC<QuestionFeedProps> = ({ filter }) => {
           category: q.category,
           tags: q.tags || [],
           timestamp: formatDistanceToNow(new Date(q.created_at), { addSuffix: true }),
-          answerCount: 0,
-          upvotes: 0,
+          answerCount: q.answerCount || 0,
+          upvotes: q.voteCount || 0,
           isUrgent: false,
           hasExpertAnswer: !!q.ai_response,
           aiResponse: q.ai_response,
@@ -100,6 +102,7 @@ export const QuestionFeed: React.FC<QuestionFeedProps> = ({ filter }) => {
           anonymous_name: q.anonymous_name,
           user_id: q.user_id,
           created_at: q.created_at,
+          isThread: q.is_thread || false,
           answers: []
         };
         

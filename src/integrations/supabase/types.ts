@@ -740,7 +740,9 @@ export type Database = {
           bio: string | null
           certifications: string[] | null
           created_at: string | null
+          featured_answer_id: string | null
           id: string
+          is_verified: boolean | null
           specialty: string
           updated_at: string | null
           user_id: string
@@ -751,7 +753,9 @@ export type Database = {
           bio?: string | null
           certifications?: string[] | null
           created_at?: string | null
+          featured_answer_id?: string | null
           id?: string
+          is_verified?: boolean | null
           specialty: string
           updated_at?: string | null
           user_id: string
@@ -762,14 +766,24 @@ export type Database = {
           bio?: string | null
           certifications?: string[] | null
           created_at?: string | null
+          featured_answer_id?: string | null
           id?: string
+          is_verified?: boolean | null
           specialty?: string
           updated_at?: string | null
           user_id?: string
           verified?: boolean | null
           years_experience?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expert_profiles_featured_answer_id_fkey"
+            columns: ["featured_answer_id"]
+            isOneToOne: false
+            referencedRelation: "answers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       follows: {
         Row: {
@@ -1094,6 +1108,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_anonymous: boolean | null
+          is_thread: boolean | null
           question: string
           tags: string[] | null
           updated_at: string | null
@@ -1107,6 +1122,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_anonymous?: boolean | null
+          is_thread?: boolean | null
           question: string
           tags?: string[] | null
           updated_at?: string | null
@@ -1120,6 +1136,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_anonymous?: boolean | null
+          is_thread?: boolean | null
           question?: string
           tags?: string[] | null
           updated_at?: string | null

@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { PersistentCommentComposer } from '@/components/PersistentCommentComposer';
 import { useAnswers, useCreateAnswer, useAnswerVote } from '@/hooks/useAnswers';
 import { useQuestion, useQuestionVote, useUserVotes } from '@/hooks/useQuestions';
+import { useThreadUpdates, useCreateThreadUpdate } from '@/hooks/useThreadUpdates';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   ThumbsUp, 
@@ -14,7 +15,9 @@ import {
   Share2,
   Bookmark,
   Loader2,
-  ArrowLeft
+  ArrowLeft,
+  Edit3,
+  CheckCircle2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
@@ -26,8 +29,10 @@ export default function QuestionDetail() {
   
   const { data: question, isLoading: questionLoading } = useQuestion(questionId || '');
   const { data: answers, isLoading: answersLoading } = useAnswers(questionId || '');
+  const { data: threadUpdates, isLoading: threadLoading } = useThreadUpdates(questionId || '');
   const { data: userVotes } = useUserVotes();
   const createAnswer = useCreateAnswer();
+  const createThreadUpdate = useCreateThreadUpdate();
   const voteOnAnswer = useAnswerVote();
   const voteOnQuestion = useQuestionVote();
   
@@ -35,6 +40,8 @@ export default function QuestionDetail() {
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [answerVoteCounts, setAnswerVoteCounts] = useState<Record<string, number>>({});
   const [questionVoteCount, setQuestionVoteCount] = useState(0);
+  const [showThreadForm, setShowThreadForm] = useState(false);
+  const [threadUpdate, setThreadUpdate] = useState('');
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -211,6 +218,59 @@ export default function QuestionDetail() {
     await voteOnAnswer.mutateAsync({ answerId, hasVoted: !!hasVoted, questionId });
   };
 
+  const handleContinueThread = () => {
+    setShowThreadForm(true);
+  };
+
+  const handleSubmitThreadUpdate = async () => {
+    if (!threadUpdate.trim() || !questionId) return;
+
+    try {
+      await createThreadUpdate.mutateAsync({
+        questionId,
+        content: threadUpdate.trim()
+      });
+      setThreadUpdate('');
+      setShowThreadForm(false);
+      toast({
+        title: "Thread updated",
+        description: "Your story update has been posted",
+      });
+    } catch (error) {
+      console.error('Error posting thread update:', error);
+    }
+  };
+
+  const handleMarkHelpful = async (answerId: string) => {
+    if (!currentUser || !isQuestionAuthor) {
+      toast({
+        title: "Not authorized",
+        description: "Only question authors can mark answers as helpful",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await (supabase as any)
+        .from('answers')
+        .update({ is_helpful: true })
+        .eq('id', answerId);
+      
+      toast({
+        title: "Marked as helpful",
+        description: "This answer has been marked as helpful",
+      });
+    } catch (error) {
+      console.error('Error marking answer as helpful:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark answer as helpful",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (questionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -341,6 +401,89 @@ export default function QuestionDetail() {
           </div>
         )}
 
+        {/* Thread Updates */}
+        {question.is_thread && (
+          <>
+            <Separator />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Edit3 className="w-5 h-5 text-primary" />
+                  Story Updates
+                </h2>
+                {isQuestionAuthor && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleContinueThread}
+                  >
+                    Continue Story
+                  </Button>
+                )}
+              </div>
+
+              {showThreadForm && (
+                <div className="p-4 bg-muted/30 rounded-lg space-y-3">
+                  <textarea
+                    value={threadUpdate}
+                    onChange={(e) => setThreadUpdate(e.target.value)}
+                    placeholder="Share your story update..."
+                    className="w-full min-h-[100px] p-3 bg-background rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowThreadForm(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={handleSubmitThreadUpdate}
+                      disabled={!threadUpdate.trim()}
+                    >
+                      Post Update
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {threadLoading && (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              )}
+
+              {threadUpdates && threadUpdates.length > 0 ? (
+                <div className="space-y-3">
+                  {threadUpdates.map((update: any, index: number) => (
+                    <div key={update.id} className="p-4 bg-muted/30 rounded-lg space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-xs">
+                            Update #{index + 1}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(update.created_at), { addSuffix: true })}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-sm leading-relaxed">{update.update_text}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                !threadLoading && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No updates yet
+                  </p>
+                )
+              )}
+            </div>
+          </>
+        )}
+
         <Separator />
 
         {/* Answers Section */}
@@ -413,11 +556,24 @@ export default function QuestionDetail() {
                 
                 <p className="text-sm leading-relaxed">{answer.answer}</p>
                 
-                {answer.is_helpful && (
-                  <Badge variant="outline" className="text-xs">
-                    ✅ Marked as helpful
-                  </Badge>
-                )}
+                <div className="flex items-center gap-2">
+                  {answer.is_helpful && (
+                    <Badge variant="outline" className="text-xs">
+                      ✅ Marked as helpful
+                    </Badge>
+                  )}
+                  {isQuestionAuthor && !answer.is_helpful && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => handleMarkHelpful(answer.id)}
+                    >
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Mark as helpful
+                    </Button>
+                  )}
+                </div>
               </div>
             );
           })}

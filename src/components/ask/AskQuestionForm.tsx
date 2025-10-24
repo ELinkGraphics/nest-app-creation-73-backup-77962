@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Sparkles, Send, AlertCircle, UserX } from 'lucide-react';
+import { Sparkles, Send, AlertCircle, UserX, Edit3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCreateQuestion } from '@/hooks/useQuestions';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,6 +47,7 @@ export const AskQuestionForm: React.FC<AskQuestionFormProps> = ({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState('');
   const [showAiSuggestion, setShowAiSuggestion] = useState(false);
+  const [isThread, setIsThread] = useState(false);
   const { toast } = useToast();
   const createQuestion = useCreateQuestion();
 
@@ -116,7 +117,8 @@ export const AskQuestionForm: React.FC<AskQuestionFormProps> = ({
         category,
         tags,
         isAnonymous: isAuthenticated ? isAnonymous : true,
-        anonymousName: (isAuthenticated && isAnonymous) ? anonymousName : undefined
+        anonymousName: (isAuthenticated && isAnonymous) ? anonymousName : undefined,
+        isThread
       });
       
       setQuestion('');
@@ -125,6 +127,7 @@ export const AskQuestionForm: React.FC<AskQuestionFormProps> = ({
       setAiSuggestion('');
       setShowAiSuggestion(false);
       setIsAnonymous(false);
+      setIsThread(false);
       onClose();
     } catch (error) {
       console.error('Error submitting question:', error);
@@ -225,6 +228,28 @@ export const AskQuestionForm: React.FC<AskQuestionFormProps> = ({
               </div>
             )}
           </div>
+
+          {/* Thread Toggle */}
+          {isAuthenticated && (
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-primary/20">
+              <div className="flex items-center gap-3">
+                <Edit3 className="w-5 h-5 text-primary" />
+                <div>
+                  <Label htmlFor="thread-mode" className="text-sm font-medium cursor-pointer">
+                    Create Thread Story
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Share an ongoing story you can update over time
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="thread-mode"
+                checked={isThread}
+                onCheckedChange={setIsThread}
+              />
+            </div>
+          )}
 
           {/* Anonymous Toggle (only for authenticated users) */}
           {isAuthenticated && (

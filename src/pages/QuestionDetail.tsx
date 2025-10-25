@@ -179,6 +179,31 @@ export default function QuestionDetail() {
     };
   }, [questionId, answers]);
 
+  // Real-time subscription for thread updates
+  useEffect(() => {
+    if (!questionId || !question?.is_thread) return;
+
+    const channel = supabase
+      .channel(`thread_updates:${questionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'thread_updates',
+          filter: `question_id=eq.${questionId}`
+        },
+        () => {
+          // Thread updates will auto-refresh via useQuery
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [questionId, question?.is_thread]);
+
   const handleSubmitAnswer = async (answerText: string) => {
     try {
       await createAnswer.mutateAsync({

@@ -35,9 +35,17 @@ export const useCreateThreadUpdate = () => {
       const sb = supabase as any;
       const { data: question } = await sb
         .from('questions')
-        .select('user_id')
+        .select('user_id, is_thread')
         .eq('id', updateData.questionId)
         .single();
+
+      if (!question) {
+        throw new Error('Question not found');
+      }
+
+      if (!question.is_thread) {
+        throw new Error('This is not a thread story');
+      }
 
       if (question?.user_id !== user.id) {
         throw new Error('Only the original poster can add thread updates');
@@ -58,7 +66,7 @@ export const useCreateThreadUpdate = () => {
         .insert({
           question_id: updateData.questionId,
           user_id: user.id,
-          content: updateData.content,
+          update_text: updateData.content,
           update_number: nextUpdateNumber,
         })
         .select()

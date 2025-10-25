@@ -1286,19 +1286,25 @@ export type Database = {
           created_at: string | null
           id: string
           question_id: string
+          update_number: number
           update_text: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           question_id: string
+          update_number?: number
           update_text: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           question_id?: string
+          update_number?: number
           update_text?: string
+          user_id?: string | null
         }
         Relationships: [
           {

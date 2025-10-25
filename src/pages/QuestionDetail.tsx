@@ -7,6 +7,7 @@ import { PersistentCommentComposer } from '@/components/PersistentCommentCompose
 import { useAnswers, useCreateAnswer, useAnswerVote } from '@/hooks/useAnswers';
 import { useQuestion, useQuestionVote, useUserVotes } from '@/hooks/useQuestions';
 import { useThreadUpdates, useCreateThreadUpdate } from '@/hooks/useThreadUpdates';
+import { useIsQuestionBookmarked, useToggleQuestionBookmark } from '@/hooks/useQuestionBookmarks';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   ThumbsUp, 
@@ -42,6 +43,10 @@ export default function QuestionDetail() {
   const [questionVoteCount, setQuestionVoteCount] = useState(0);
   const [showThreadForm, setShowThreadForm] = useState(false);
   const [threadUpdate, setThreadUpdate] = useState('');
+
+  // Bookmark functionality
+  const { data: isBookmarked = false } = useIsQuestionBookmarked(questionId, currentUser?.id);
+  const toggleBookmark = useToggleQuestionBookmark();
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -296,6 +301,27 @@ export default function QuestionDetail() {
     }
   };
 
+  const handleToggleBookmark = async () => {
+    if (!currentUser || !questionId) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to bookmark questions",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await toggleBookmark.mutateAsync({
+        questionId,
+        userId: currentUser.id,
+        isBookmarked
+      });
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    }
+  };
+
   if (questionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -350,8 +376,13 @@ export default function QuestionDetail() {
             <Button variant="ghost" size="sm">
               <Share2 className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="sm">
-              <Bookmark className="w-4 h-4" />
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleToggleBookmark}
+              className={isBookmarked ? 'text-primary' : ''}
+            >
+              <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
             </Button>
           </div>
         </div>

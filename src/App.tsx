@@ -12,6 +12,7 @@ import Messages from "./pages/Messages";
 import Shop from "./pages/Shop";
 import Ask from "./pages/Ask";
 import QuestionDetail from "./pages/QuestionDetail";
+import AskProfile from "./pages/AskProfile";
 import ProductDetail from "./pages/ProductDetail";
 import SellerProfile from "./pages/SellerProfile";
 import { SOSSubCategories } from "./pages/SOSSubCategories";
@@ -58,6 +59,7 @@ const AppRoutes = () => (
     <Route path="/shop/product/:id" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
     <Route path="/seller/:sellerId" element={<ProtectedRoute><SellerProfile /></ProtectedRoute>} />
     <Route path="/ask" element={<ProtectedRoute><Ask activeTab="ask" onTabSelect={() => {}} onOpenCreate={() => {}} /></ProtectedRoute>} />
+    <Route path="/ask/profile" element={<ProtectedRoute><AskProfile /></ProtectedRoute>} />
     <Route path="/ask/question/:questionId" element={<ProtectedRoute><QuestionDetail /></ProtectedRoute>} />
     <Route path="/create/post" element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
     <Route path="/create/video" element={<ProtectedRoute><CreateVideo /></ProtectedRoute>} />

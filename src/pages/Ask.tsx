@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import FooterNav from '../components/FooterNav';
 import { InstallPrompt } from '../components/InstallPrompt';
@@ -8,6 +9,8 @@ import { ExpertAnswersCarousel } from '../components/ask/ExpertAnswersCarousel';
 import { AnonymousStoryModal } from '../components/ask/AnonymousStoryModal';
 import { SearchFilters } from '../components/ask/SearchFilters';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { User } from 'lucide-react';
 import { type TabKey } from '@/hooks/useAppNav';
 interface AskProps {
   activeTab: TabKey;
@@ -19,6 +22,7 @@ const Ask: React.FC<AskProps> = ({
   onTabSelect,
   onOpenCreate
 }) => {
+  const navigate = useNavigate();
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const [showStoryModal, setShowStoryModal] = useState(false);
   const [activeQuestionTab, setActiveQuestionTab] = useState("recent");
@@ -42,7 +46,15 @@ const Ask: React.FC<AskProps> = ({
             <p className="text-muted-foreground text-sm">Get advice from our community without judgment</p>
           </div>
           
-          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/ask/profile')}
+            className="flex items-center gap-2"
+          >
+            <User className="h-4 w-4" />
+            Profile
+          </Button>
         </div>
 
         {/* Expert Answers Carousel */}

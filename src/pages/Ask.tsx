@@ -8,8 +8,6 @@ import { ExpertAnswersCarousel } from '../components/ask/ExpertAnswersCarousel';
 import { AnonymousStoryModal } from '../components/ask/AnonymousStoryModal';
 import { SearchFilters } from '../components/ask/SearchFilters';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
 import { type TabKey } from '@/hooks/useAppNav';
 interface AskProps {
   activeTab: TabKey;
@@ -70,18 +68,12 @@ const Ask: React.FC<AskProps> = ({
 
         {/* Question Feed Tabs */}
         <Tabs value={activeQuestionTab} onValueChange={setActiveQuestionTab}>
-          <div className="flex items-center justify-between mb-4">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="recent">Recent</TabsTrigger>
-              <TabsTrigger value="trending">Trending</TabsTrigger>
-              <TabsTrigger value="unanswered">Unanswered</TabsTrigger>
-              <TabsTrigger value="expert">Expert</TabsTrigger>
-            </TabsList>
-            <Button onClick={() => setShowQuestionForm(true)} size="sm" className="ml-2">
-              <Plus className="h-4 w-4 mr-2" />
-              Ask
-            </Button>
-          </div>
+          <TabsList className="grid w-full grid-cols-4 mb-4">
+            <TabsTrigger value="recent">Recent</TabsTrigger>
+            <TabsTrigger value="trending">Trending</TabsTrigger>
+            <TabsTrigger value="unanswered">Unanswered</TabsTrigger>
+            <TabsTrigger value="expert">Expert</TabsTrigger>
+          </TabsList>
           
           <TabsContent value="recent" className="mt-6">
             <QuestionFeed filter="recent" searchQuery={searchQuery} categoryFilter={categoryFilter} />
@@ -109,6 +101,7 @@ const Ask: React.FC<AskProps> = ({
         onSelect={() => {}} // Navigation handled by FooterNav directly
         onOpenCreate={onOpenCreate}
         onOpenStoryModal={() => setShowStoryModal(true)}
+        onOpenQuestionForm={() => setShowQuestionForm(true)}
       />
     </div>;
 };

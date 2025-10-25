@@ -8,6 +8,7 @@ interface FooterNavProps {
   onOpenCreate: () => void;
   onOpenGoLive?: () => void;
   onOpenStoryModal?: () => void;
+  onOpenQuestionForm?: () => void;
   videoMode?: boolean;
 }
 
@@ -27,13 +28,13 @@ const CREATE_OPTIONS = [
   { label: "Go live", icon: Radio },
 ];
 
-const FooterNav: React.FC<FooterNavProps> = ({ active, onSelect, onOpenCreate, onOpenGoLive, onOpenStoryModal, videoMode = false }) => {
+const FooterNav: React.FC<FooterNavProps> = ({ active, onSelect, onOpenCreate, onOpenGoLive, onOpenStoryModal, onOpenQuestionForm, videoMode = false }) => {
   const { navigateToTab, navigateToCreatePost, navigateToCreateVideo, navigateToCreateCircle, navigateToCreateShop } = useAppNav();
   const [showCreatePopup, setShowCreatePopup] = useState(false);
 
   const handleCreateClick = () => {
-    if (active === 'ask' && onOpenStoryModal) {
-      onOpenStoryModal();
+    if (active === 'ask' && onOpenQuestionForm) {
+      onOpenQuestionForm();
     } else {
       setShowCreatePopup(!showCreatePopup);
     }

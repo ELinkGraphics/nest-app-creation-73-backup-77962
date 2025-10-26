@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { UserProvider, useUser } from "@/contexts/UserContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { AppLoader } from "@/components/AppLoader";
 import Index from "./pages/Index";
 import Notifications from "./pages/Notifications";
 import Messages from "./pages/Messages";
@@ -74,22 +76,30 @@ const AppRoutes = () => (
   </Routes>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <UserProvider>
-      <CartProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <UpdateNotifier />
-          <InstallPrompt />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
-      </CartProvider>
-    </UserProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  if (isLoading) {
+    return <AppLoader onComplete={() => setIsLoading(false)} />;
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <UserProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <UpdateNotifier />
+            <InstallPrompt />
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </CartProvider>
+      </UserProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

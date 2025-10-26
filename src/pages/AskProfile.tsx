@@ -120,6 +120,18 @@ const AskProfile: React.FC = () => {
                   className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => navigate(`/ask/${question.id}`)}
                 >
+                  {question.is_anonymous && question.anonymous_name && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-6 w-6 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                        <span className="text-xs text-white font-medium">
+                          {question.anonymous_name.charAt(0)}
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {question.anonymous_name}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-semibold text-foreground line-clamp-2 flex-1">
                       {question.question}
@@ -161,6 +173,15 @@ const AskProfile: React.FC = () => {
                   className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => navigate(`/ask/${answer.questions.id}`)}
                 >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={profile?.avatar_url} />
+                      <AvatarFallback className="text-xs">{profile?.initials}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium text-foreground">
+                      {profile?.name}
+                    </span>
+                  </div>
                   <div className="mb-2">
                     <p className="text-sm text-muted-foreground mb-1">
                       Answered: {answer.questions.question}

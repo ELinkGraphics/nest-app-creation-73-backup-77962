@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Bell, Mail, Settings, User as UserIcon, Palette, LogOut, ShoppingBag } from 'lucide-react';
+import { Bell, Mail, Settings, User as UserIcon, Palette, LogOut, ShoppingBag, RotateCw } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUser } from '@/contexts/UserContext';
 import { useAppNav } from '@/hooks/useAppNav';
 import { useNavigate } from 'react-router-dom';
 import ProfileModal from './ProfileModal';
+import { cacheManager } from '@/utils/cacheManager';
 
 interface HeaderProps {
   onNotifications?: () => void;
@@ -202,6 +203,13 @@ const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages, onMenuOpen
             />
             <MenuItem icon={<Settings className="size-4" />} label="Settings" />
             <MenuItem icon={<Palette className="size-4" />} label="Appearance" />
+            <MenuItem 
+              icon={<RotateCw className="size-4" />} 
+              label="Clear cache & refresh" 
+              onClick={() => {
+                cacheManager.forceRefresh();
+              }}
+            />
             <div className="h-px bg-gray-200" />
             <MenuItem 
               icon={<LogOut className="size-4" />} 

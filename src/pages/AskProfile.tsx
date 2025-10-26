@@ -118,7 +118,7 @@ const AskProfile: React.FC = () => {
                 <Card
                   key={question.id}
                   className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => navigate(`/ask/${question.id}`)}
+                  onClick={() => navigate(`/ask/question/${question.id}`)}
                 >
                   {question.is_anonymous && question.anonymous_name && (
                     <div className="flex items-center gap-2 mb-2">
@@ -171,7 +171,7 @@ const AskProfile: React.FC = () => {
                 <Card
                   key={answer.id}
                   className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => navigate(`/ask/${answer.questions.id}`)}
+                  onClick={() => navigate(`/ask/question/${answer.questions.id}`)}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <Avatar className="h-6 w-6">
@@ -220,7 +220,7 @@ const AskProfile: React.FC = () => {
                 <Card
                   key={bookmark.id}
                   className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => navigate(`/ask/${bookmark.questions.id}`)}
+                  onClick={() => navigate(`/ask/question/${bookmark.questions.id}`)}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-semibold text-foreground line-clamp-2 flex-1">

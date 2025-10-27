@@ -1,7 +1,9 @@
 // Cache management utilities for force refresh and cache busting
 
 const APP_VERSION_KEY = 'app_version';
+const BUILD_ID_KEY = 'build_id';
 const CURRENT_VERSION = Date.now().toString();
+const BUILD_ID = import.meta.env.MODE + '_' + Date.now();
 
 export const cacheManager = {
   // Force refresh the page and clear all caches
@@ -76,18 +78,23 @@ export const cacheManager = {
   // Check if app version has changed
   checkVersion(): boolean {
     const storedVersion = localStorage.getItem(APP_VERSION_KEY);
+    const storedBuildId = localStorage.getItem(BUILD_ID_KEY);
     const hasVersionChanged = storedVersion && storedVersion !== CURRENT_VERSION;
+    const hasBuildChanged = storedBuildId && storedBuildId !== BUILD_ID;
     
-    if (!storedVersion) {
+    if (!storedVersion || !storedBuildId) {
       localStorage.setItem(APP_VERSION_KEY, CURRENT_VERSION);
+      localStorage.setItem(BUILD_ID_KEY, BUILD_ID);
     }
     
-    return hasVersionChanged;
+    // Force refresh if either version or build has changed
+    return hasVersionChanged || hasBuildChanged;
   },
 
   // Update version tracking
   updateVersion() {
     localStorage.setItem(APP_VERSION_KEY, CURRENT_VERSION);
+    localStorage.setItem(BUILD_ID_KEY, BUILD_ID);
   },
 
   // Clear React Query cache (requires queryClient instance)

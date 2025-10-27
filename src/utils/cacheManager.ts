@@ -1,5 +1,8 @@
 // Cache management utilities for force refresh and cache busting
 
+const APP_VERSION_KEY = 'app_version';
+const CURRENT_VERSION = Date.now().toString();
+
 export const cacheManager = {
   // Force refresh the page and clear all caches
   async forceRefresh() {
@@ -20,11 +23,11 @@ export const cacheManager = {
         );
       }
 
-      // Clear local storage (optional - preserving user data for now)
-      // localStorage.clear();
-      // sessionStorage.clear();
+      // Clear version tracking to force fresh load
+      localStorage.removeItem(APP_VERSION_KEY);
+      sessionStorage.clear();
 
-      // Force reload with cache bypass
+      // Force reload with cache bypass (hard reload)
       window.location.reload();
     } catch (error) {
       console.error('Error during force refresh:', error);
@@ -68,6 +71,31 @@ export const cacheManager = {
   bustCache(url: string): string {
     const separator = url.includes('?') ? '&' : '?';
     return `${url}${separator}_t=${Date.now()}`;
+  },
+
+  // Check if app version has changed
+  checkVersion(): boolean {
+    const storedVersion = localStorage.getItem(APP_VERSION_KEY);
+    const hasVersionChanged = storedVersion && storedVersion !== CURRENT_VERSION;
+    
+    if (!storedVersion) {
+      localStorage.setItem(APP_VERSION_KEY, CURRENT_VERSION);
+    }
+    
+    return hasVersionChanged;
+  },
+
+  // Update version tracking
+  updateVersion() {
+    localStorage.setItem(APP_VERSION_KEY, CURRENT_VERSION);
+  },
+
+  // Clear React Query cache (requires queryClient instance)
+  async clearQueryCache(queryClient?: any) {
+    if (queryClient) {
+      queryClient.clear();
+      console.log('React Query cache cleared');
+    }
   }
 };
 

@@ -61,6 +61,7 @@ export default defineConfig(({ mode }) => ({
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB
         skipWaiting: true,
         clientsClaim: true,
+        cleanupOutdatedCaches: true, // Clean old caches automatically
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
@@ -74,11 +75,30 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
-            urlPattern: /\.(?:js|css|html)$/,
+            // Critical: App JS/CSS should always fetch from network first
+            urlPattern: /\.(?:js|css)$/,
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'app-cache',
-              networkTimeoutSeconds: 3
+              cacheName: 'app-assets-v1',
+              networkTimeoutSeconds: 5, // Increased timeout
+              expiration: {
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days max
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // HTML pages should always be fresh
+            urlPattern: /\.html$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'html-cache-v1',
+              networkTimeoutSeconds: 2,
+              expiration: {
+                maxAgeSeconds: 60 * 60 * 24 // 1 day max
+              }
             }
           }
         ]

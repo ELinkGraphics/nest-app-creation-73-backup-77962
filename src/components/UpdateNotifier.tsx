@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, X } from 'lucide-react';
 import { cacheManager } from '@/utils/cacheManager';
 
 const UpdateNotifier: React.FC = () => {
+  const queryClient = useQueryClient();
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
 
@@ -37,6 +39,8 @@ const UpdateNotifier: React.FC = () => {
 
   const handleUpdate = async () => {
     try {
+      // Clear React Query cache first
+      await cacheManager.clearQueryCache(queryClient);
       await cacheManager.applyUpdate();
     } catch (error) {
       console.error('Update failed:', error);
@@ -46,6 +50,8 @@ const UpdateNotifier: React.FC = () => {
   };
 
   const handleForceRefresh = async () => {
+    // Clear React Query cache before force refresh
+    await cacheManager.clearQueryCache(queryClient);
     await cacheManager.forceRefresh();
   };
 

@@ -735,6 +735,36 @@ export type Database = {
           },
         ]
       }
+      emergency_contacts: {
+        Row: {
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          relationship: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_name: string
+          contact_phone: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          relationship?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          relationship?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       expert_profiles: {
         Row: {
           bio: string | null
@@ -820,6 +850,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      helper_profiles: {
+        Row: {
+          availability_status: string | null
+          average_rating: number | null
+          average_response_time_minutes: number | null
+          completion_count: number | null
+          created_at: string
+          current_streak_days: number | null
+          helper_badge: string | null
+          is_available: boolean | null
+          last_active_at: string | null
+          location_lat: number | null
+          location_lng: number | null
+          response_count: number | null
+          skills: string[] | null
+          total_stars: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability_status?: string | null
+          average_rating?: number | null
+          average_response_time_minutes?: number | null
+          completion_count?: number | null
+          created_at?: string
+          current_streak_days?: number | null
+          helper_badge?: string | null
+          is_available?: boolean | null
+          last_active_at?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          response_count?: number | null
+          skills?: string[] | null
+          total_stars?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability_status?: string | null
+          average_rating?: number | null
+          average_response_time_minutes?: number | null
+          completion_count?: number | null
+          created_at?: string
+          current_streak_days?: number | null
+          helper_badge?: string | null
+          is_available?: boolean | null
+          last_active_at?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          response_count?: number | null
+          skills?: string[] | null
+          total_stars?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       likes: {
         Row: {
@@ -1210,6 +1297,201 @@ export type Database = {
           },
         ]
       }
+      sos_alerts: {
+        Row: {
+          conscious_level: string | null
+          created_at: string
+          description: string
+          id: string
+          injury_type: string | null
+          last_seen: string | null
+          location_address: string | null
+          location_lat: number | null
+          location_lng: number | null
+          person_age: string | null
+          person_description: string | null
+          photo_urls: string[] | null
+          resolved_at: string | null
+          share_live_location: boolean | null
+          sos_type: string
+          status: string
+          sub_category: string | null
+          threat_active: boolean | null
+          updated_at: string
+          urgency: string
+          user_id: string
+        }
+        Insert: {
+          conscious_level?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          injury_type?: string | null
+          last_seen?: string | null
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          person_age?: string | null
+          person_description?: string | null
+          photo_urls?: string[] | null
+          resolved_at?: string | null
+          share_live_location?: boolean | null
+          sos_type: string
+          status?: string
+          sub_category?: string | null
+          threat_active?: boolean | null
+          updated_at?: string
+          urgency?: string
+          user_id: string
+        }
+        Update: {
+          conscious_level?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          injury_type?: string | null
+          last_seen?: string | null
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          person_age?: string | null
+          person_description?: string | null
+          photo_urls?: string[] | null
+          resolved_at?: string | null
+          share_live_location?: boolean | null
+          sos_type?: string
+          status?: string
+          sub_category?: string | null
+          threat_active?: boolean | null
+          updated_at?: string
+          urgency?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sos_helpers: {
+        Row: {
+          accepted_at: string
+          alert_id: string
+          arrived_at: string | null
+          completed_at: string | null
+          created_at: string
+          current_lat: number | null
+          current_lng: number | null
+          estimated_arrival_minutes: number | null
+          helper_user_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string
+          alert_id: string
+          arrived_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
+          estimated_arrival_minutes?: number | null
+          helper_user_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string
+          alert_id?: string
+          arrived_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
+          estimated_arrival_minutes?: number | null
+          helper_user_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sos_helpers_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "sos_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sos_messages: {
+        Row: {
+          alert_id: string
+          created_at: string
+          id: string
+          is_system_message: boolean | null
+          message_text: string
+          sender_id: string
+        }
+        Insert: {
+          alert_id: string
+          created_at?: string
+          id?: string
+          is_system_message?: boolean | null
+          message_text: string
+          sender_id: string
+        }
+        Update: {
+          alert_id?: string
+          created_at?: string
+          id?: string
+          is_system_message?: boolean | null
+          message_text?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sos_messages_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "sos_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sos_reviews: {
+        Row: {
+          alert_id: string
+          created_at: string
+          helper_user_id: string
+          id: string
+          rating: number
+          review_text: string | null
+          reviewer_user_id: string
+        }
+        Insert: {
+          alert_id: string
+          created_at?: string
+          helper_user_id: string
+          id?: string
+          rating: number
+          review_text?: string | null
+          reviewer_user_id: string
+        }
+        Update: {
+          alert_id?: string
+          created_at?: string
+          helper_user_id?: string
+          id?: string
+          rating?: number
+          review_text?: string | null
+          reviewer_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sos_reviews_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "sos_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stories: {
         Row: {
           created_at: string | null
@@ -1595,6 +1877,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_distance: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
       get_circle_feed: {
         Args: { _circle_id: string; page_num?: number; page_size?: number }
         Returns: {
@@ -1651,6 +1937,34 @@ export type Database = {
           user_has_liked: boolean
           user_id: string
           username: string
+        }[]
+      }
+      get_nearby_alerts: {
+        Args: { radius_miles?: number; user_lat: number; user_lng: number }
+        Returns: {
+          conscious_level: string
+          created_at: string
+          description: string
+          distance_miles: number
+          helper_count: number
+          id: string
+          injury_type: string
+          last_seen: string
+          location_address: string
+          location_lat: number
+          location_lng: number
+          person_age: string
+          person_description: string
+          photo_urls: string[]
+          resolved_at: string
+          share_live_location: boolean
+          sos_type: string
+          status: string
+          sub_category: string
+          threat_active: boolean
+          updated_at: string
+          urgency: string
+          user_id: string
         }[]
       }
       get_post_comments: {

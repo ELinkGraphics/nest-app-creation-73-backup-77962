@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { AlertTriangle, MapPin, Phone, Share2, Camera, Send, X, Heart, Shield, Search, Siren, Clock, Target, Users, User, Timer, AlertCircle, Baby, Bandage, Stethoscope, Home, Eye, UserX, Flame, Cloud, Car } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { useSOSAlerts } from '@/hooks/useSOSAlerts';
 
 interface SOSCreationModalProps {
   isOpen: boolean;
@@ -38,6 +40,8 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
   const [photos, setPhotos] = useState<File[]>([]);
   
   const { triggerHaptic } = useHapticFeedback();
+  const { latitude, longitude, refreshLocation } = useGeolocation();
+  const { createAlert } = useSOSAlerts();
 
   const urgencyLevels = [
     { 
@@ -209,13 +213,25 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
   const handleSubmit = async () => {
     if (!isFormValid()) return;
     
-    setIsSubmitting(true);
     triggerHaptic('success');
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await createAlert.mutateAsync({
+      sos_type: sosType,
+      sub_category: subCategory,
+      urgency,
+      description,
+      location_lat: latitude,
+      location_lng: longitude,
+      location_address: location,
+      share_live_location: shareLocation,
+      person_age: personAge,
+      person_description: personDescription,
+      last_seen: lastSeen,
+      injury_type: injuryType,
+      conscious_level: consciousLevel,
+      threat_active: threatActive,
+    });
     
-    setIsSubmitting(false);
     onClose();
     
     // Reset form
@@ -720,9 +736,9 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
             <Button
               onClick={handleSubmit}
               className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-              disabled={!isFormValid() || isSubmitting}
+              disabled={!isFormValid() || createAlert.isPending}
             >
-              {isSubmitting ? (
+              {createAlert.isPending ? (
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Sending...

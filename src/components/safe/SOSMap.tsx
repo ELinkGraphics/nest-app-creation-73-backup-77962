@@ -3,11 +3,22 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation, Users, Clock, Target, Zap, Plus, Minus, Heart, Shield, Flame, Car, Tornado, AlertTriangle } from 'lucide-react';
-import { mockEmergencies } from '@/data/emergencies';
+import { useSOSAlerts } from '@/hooks/useSOSAlerts';
+import { useSOSHelpers } from '@/hooks/useSOSHelpers';
+import { formatDistanceToNow } from 'date-fns';
 
-export const SOSMap: React.FC = () => {
+interface SOSMapProps {
+  userLat?: number | null;
+  userLng?: number | null;
+}
+
+export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
   const [selectedEmergency, setSelectedEmergency] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState(14);
+  const { alerts } = useSOSAlerts(userLat, userLng);
+  const { respondToAlert } = useSOSHelpers();
+  
+  const activeEmergencies = alerts.filter(e => e.status === 'active');
 
   const getUrgencyColor = (priority: string) => {
     const colors = {

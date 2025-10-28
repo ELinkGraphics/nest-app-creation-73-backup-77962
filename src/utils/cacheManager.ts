@@ -36,17 +36,16 @@ export const cacheManager = {
     }
   },
 
-  // Check for app updates
+  // Check for app updates (non-intrusive; no forced update call)
   async checkForUpdates() {
     if ('serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.getRegistration();
         if (registration) {
-          await registration.update();
           return registration.waiting !== null;
         }
       } catch (error) {
-        console.error('Error checking for updates:', error);
+        // Silently ignore check errors to avoid noisy logs
       }
     }
     return false;

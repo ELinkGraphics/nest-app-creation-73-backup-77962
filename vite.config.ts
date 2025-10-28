@@ -15,11 +15,11 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' &&
     componentTagger(),
     VitePWA({
-      registerType: 'prompt',
-      injectRegister: 'auto',
+      registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png'],
       devOptions: {
-        enabled: false // Disable in development
+        enabled: true,
+        type: 'module'
       },
       manifest: {
         name: 'MomsNest - Connect, Share, Support',
@@ -58,10 +58,10 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
-        cleanupOutdatedCaches: true,
-        skipWaiting: false,
-        clientsClaim: false,
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true, // Clean old caches automatically
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
@@ -70,27 +70,36 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'unsplash-images',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               }
             }
           },
           {
-            // App assets - always get fresh from network
+            // Critical: App JS/CSS should always fetch from network first
             urlPattern: /\.(?:js|css)$/,
             handler: 'NetworkFirst',
             options: {
-              cacheName: `app-assets-${Date.now()}`,
-              networkTimeoutSeconds: 3,
+              cacheName: 'app-assets-v1',
+              networkTimeoutSeconds: 5, // Increased timeout
               expiration: {
-                maxEntries: 30,
-                maxAgeSeconds: 60 * 5 // Only 5 minutes
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days max
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
               }
             }
           },
           {
-            // HTML - always fresh
+            // HTML pages should always be fresh
             urlPattern: /\.html$/,
-            handler: 'NetworkOnly'
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'html-cache-v1',
+              networkTimeoutSeconds: 2,
+              expiration: {
+                maxAgeSeconds: 60 * 60 * 24 // 1 day max
+              }
+            }
           }
         ]
       }

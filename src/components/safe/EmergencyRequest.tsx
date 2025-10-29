@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, MapPin, Phone, Clock, Camera } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useSOSAlerts } from '@/hooks/useSOSAlerts';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { toast } from 'sonner';
 
 const EMERGENCY_TYPES = [
   { id: 'medical', label: 'Medical Emergency', color: 'bg-red-100 text-red-800 border-red-200' },
@@ -18,23 +21,40 @@ const EMERGENCY_TYPES = [
 export const EmergencyRequest: React.FC = () => {
   const [selectedType, setSelectedType] = useState<string>('');
   const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [urgency, setUrgency] = useState<'low' | 'medium' | 'high' | 'critical'>('high');
+  
+  const { createAlert } = useSOSAlerts();
+  const { latitude, longitude } = useGeolocation();
 
   const handleSubmit = async () => {
-    if (!selectedType || !description) return;
-    
-    setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsSubmitting(false);
-    
-    // Reset form
-    setSelectedType('');
-    setDescription('');
-    setLocation('');
-    
-    alert('Emergency request sent! Help is on the way.');
+    if (!selectedType || !description) {
+      toast.error('Please select emergency type and provide description');
+      return;
+    }
+
+    if (!latitude || !longitude) {
+      toast.error('Location access required. Please enable location services.');
+      return;
+    }
+
+    try {
+      await createAlert.mutateAsync({
+        sos_type: selectedType,
+        description,
+        urgency,
+        location_lat: latitude,
+        location_lng: longitude,
+        share_live_location: true,
+      });
+
+      // Reset form
+      setSelectedType('');
+      setDescription('');
+      
+      toast.success('Emergency alert sent! Nearby helpers have been notified.');
+    } catch (error) {
+      console.error('Failed to create alert:', error);
+    }
   };
 
   return (
@@ -100,12 +120,22 @@ export const EmergencyRequest: React.FC = () => {
             </span>
           </div>
 
+          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg mb-3">
+            <MapPin className="h-4 w-4 text-blue-600" />
+            <span className="text-sm text-blue-800">
+              {latitude && longitude ? 
+                `Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}` : 
+                'Getting your location...'
+              }
+            </span>
+          </div>
+
           <Button 
             onClick={handleSubmit}
-            disabled={!selectedType || !description || isSubmitting}
+            disabled={!selectedType || !description || !latitude || !longitude || createAlert.isPending}
             className="w-full bg-red-600 hover:bg-red-700 text-white"
           >
-            {isSubmitting ? (
+            {createAlert.isPending ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 Sending Help Request...

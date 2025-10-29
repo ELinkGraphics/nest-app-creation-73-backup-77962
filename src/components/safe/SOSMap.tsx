@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation, Users, Clock, Target, Zap, Plus, Minus, Heart, Shield, Flame, Car, Tornado, AlertTriangle } from 'lucide-react';
 import { useSOSAlerts } from '@/hooks/useSOSAlerts';
 import { useSOSHelpers } from '@/hooks/useSOSHelpers';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 
 interface SOSMapProps {
@@ -17,6 +19,56 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
   const [zoomLevel, setZoomLevel] = useState(14);
   const { alerts } = useSOSAlerts(userLat, userLng);
   const { respondToAlert } = useSOSHelpers();
+
+  // Fetch all active helpers with their current locations
+  const { data: activeHelpers } = useQuery({
+    queryKey: ['active-helpers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('helper_profiles')
+        .select(`
+          user_id,
+          location_lat,
+          location_lng,
+          availability_status,
+          profiles:user_id (
+            full_name,
+            avatar_url,
+            initials,
+            avatar_color
+          )
+        `)
+        .eq('is_available', true)
+        .not('location_lat', 'is', null)
+        .not('location_lng', 'is', null);
+
+      if (error) throw error;
+      return data || [];
+    },
+    refetchInterval: 10000, // Refresh every 10 seconds
+  });
+
+  // Set up realtime subscription for helper locations
+  useEffect(() => {
+    const channel = supabase
+      .channel('helper_locations')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'helper_profiles',
+        },
+        () => {
+          // Refetch active helpers when any location updates
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
   
   const activeEmergencies = alerts.filter(e => e.status === 'active');
 
@@ -96,21 +148,30 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
             );
           })}
 
-          {/* Helper Markers */}
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={`helper-${i}`}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2"
-              style={{
-                left: `${20 + (i * 18)}%`,
-                top: `${60 + (i * 8)}%`
-              }}
-            >
-              <div className="h-4 w-4 bg-green-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
-                <Users className="h-2 w-2 text-white" />
+          {/* Helper Markers - Real Data */}
+          {activeHelpers?.map((helper: any, i) => {
+            const profile = helper.profiles;
+            return (
+              <div
+                key={helper.user_id}
+                className="absolute transform -translate-x-1/2 -translate-y-1/2 z-5"
+                style={{
+                  left: `${20 + (i * 18)}%`,
+                  top: `${25 + (i * 15)}%`
+                }}
+              >
+                <div className="relative">
+                  <div 
+                    className="h-8 w-8 rounded-full flex items-center justify-center text-white shadow-lg border-2 border-white text-xs font-semibold"
+                    style={{ backgroundColor: profile?.avatar_color || '#10b981' }}
+                  >
+                    {profile?.initials || 'H'}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-white"></div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* User Location */}
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">

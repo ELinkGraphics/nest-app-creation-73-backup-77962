@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { MapPin, Clock, MessageCircle, Phone, Star, Navigation } from 'lucide-react';
+import { useHelperProfile } from '@/hooks/useHelperProfile';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { supabase } from '@/integrations/supabase/client';
+import { formatDistanceToNow } from 'date-fns';
+import { SOSMessaging } from './SOSMessaging';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const HELPER_SKILLS = [
   'First Aid Certified',
@@ -18,16 +24,49 @@ const HELPER_SKILLS = [
 ];
 
 export const HelperResponse: React.FC = () => {
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [availability, setAvailability] = useState<'available' | 'busy' | 'offline'>('available');
+  const [userId, setUserId] = useState<string | null>(null);
   const [responseMessage, setResponseMessage] = useState('');
+  const [showMessaging, setShowMessaging] = useState(false);
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  
+  const { latitude, longitude } = useGeolocation();
+  const {
+    helperProfile,
+    activeResponses,
+    completedResponses,
+    updateAvailability,
+    updateLocation,
+    updateSkills,
+  } = useHelperProfile(userId || undefined);
+
+  // Get current user
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id || null);
+    });
+  }, []);
+
+  // Update location when it changes
+  useEffect(() => {
+    if (userId && latitude && longitude && helperProfile?.is_available) {
+      updateLocation.mutate({ lat: latitude, lng: longitude });
+    }
+  }, [latitude, longitude, userId, helperProfile?.is_available]);
 
   const toggleSkill = (skill: string) => {
-    setSelectedSkills(prev => 
-      prev.includes(skill) 
-        ? prev.filter(s => s !== skill)
-        : [...prev, skill]
-    );
+    const currentSkills = helperProfile?.skills || [];
+    const newSkills = currentSkills.includes(skill)
+      ? currentSkills.filter(s => s !== skill)
+      : [...currentSkills, skill];
+    
+    updateSkills.mutate(newSkills);
+  };
+
+  const handleAvailabilityChange = (status: 'available' | 'busy' | 'offline') => {
+    updateAvailability.mutate({
+      status,
+      isAvailable: status === 'available',
+    });
   };
 
   const getAvailabilityColor = (status: string) => {
@@ -45,8 +84,8 @@ export const HelperResponse: React.FC = () => {
       <Card className="p-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Helper Status</h2>
-          <Badge className={getAvailabilityColor(availability)}>
-            {availability}
+          <Badge className={getAvailabilityColor(helperProfile?.availability_status || 'offline')}>
+            {helperProfile?.availability_status || 'offline'}
           </Badge>
         </div>
 
@@ -59,9 +98,10 @@ export const HelperResponse: React.FC = () => {
               {['available', 'busy', 'offline'].map((status) => (
                 <button
                   key={status}
-                  onClick={() => setAvailability(status as any)}
+                  onClick={() => handleAvailabilityChange(status as any)}
+                  disabled={updateAvailability.isPending}
                   className={`p-2 rounded-lg border text-sm font-medium transition-colors ${
-                    availability === status 
+                    helperProfile?.availability_status === status 
                       ? getAvailabilityColor(status)
                       : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                   }`}
@@ -81,8 +121,9 @@ export const HelperResponse: React.FC = () => {
                 <button
                   key={skill}
                   onClick={() => toggleSkill(skill)}
+                  disabled={updateSkills.isPending}
                   className={`p-2 rounded-lg border text-xs font-medium transition-colors ${
-                    selectedSkills.includes(skill)
+                    helperProfile?.skills?.includes(skill)
                       ? 'bg-blue-100 text-blue-800 border-blue-200'
                       : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                   }`}
@@ -96,84 +137,127 @@ export const HelperResponse: React.FC = () => {
       </Card>
 
       {/* Active Response */}
-      <Card className="p-4 border-l-4 border-l-blue-500">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-gray-900">Currently Responding</h3>
-          <Badge className="bg-blue-100 text-blue-800">En Route</Badge>
-        </div>
+      {activeResponses.length > 0 ? (
+        activeResponses.map((response: any) => {
+          const alert = response.sos_alerts;
+          const requester = alert?.profiles;
+          
+          return (
+            <Card key={response.id} className="p-4 border-l-4 border-l-blue-500">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium text-gray-900">Currently Responding</h3>
+                <Badge className="bg-blue-100 text-blue-800">
+                  {response.status === 'arrived' ? 'Arrived' : 'En Route'}
+                </Badge>
+              </div>
 
-        <div className="space-y-3">
-          <div className="flex items-start gap-3">
-             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-white text-sm font-semibold">
-               JS
-             </div>
-            <div className="flex-1">
-              <p className="font-medium text-gray-900">John Smith</p>
-              <p className="text-sm text-gray-600">Medical Emergency - Chest pain</p>
-              <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  0.5 miles away
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={requester?.avatar_url} />
+                    <AvatarFallback 
+                      style={{ backgroundColor: requester?.avatar_color || '#3b82f6' }}
+                      className="text-white"
+                    >
+                      {requester?.initials || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">
+                      {requester?.full_name || 'Anonymous'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {alert?.sos_type} - {alert?.description?.substring(0, 50)}...
+                    </p>
+                    <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
+                      {alert?.location_address && (
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {alert.location_address}
+                        </div>
+                      )}
+                      {response.estimated_arrival_minutes && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          ETA: {response.estimated_arrival_minutes} min
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  ETA: 3 min
+
+                <div className="grid grid-cols-3 gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedAlertId(alert.id);
+                      setShowMessaging(true);
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-1" />
+                    Message
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.location.href = `tel:911`}
+                  >
+                    <Phone className="h-4 w-4 mr-1" />
+                    Call
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      if (alert?.location_lat && alert?.location_lng) {
+                        window.open(
+                          `https://www.google.com/maps/dir/?api=1&destination=${alert.location_lat},${alert.location_lng}`,
+                          '_blank'
+                        );
+                      }
+                    }}
+                  >
+                    <Navigation className="h-4 w-4 mr-1" />
+                    Navigate
+                  </Button>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <Button size="sm" variant="outline">
-              <MessageCircle className="h-4 w-4 mr-1" />
-              Message
-            </Button>
-            <Button size="sm" variant="outline">
-              <Phone className="h-4 w-4 mr-1" />
-              Call
-            </Button>
-            <Button size="sm" variant="outline">
-              <Navigation className="h-4 w-4 mr-1" />
-              Navigate
-            </Button>
-          </div>
-
-          <div>
-            <label htmlFor="response" className="text-sm font-medium text-gray-700 mb-2 block">
-              Update Status
-            </label>
-            <Textarea
-              id="response"
-              placeholder="Let them know your ETA or any updates..."
-              value={responseMessage}
-              onChange={(e) => setResponseMessage(e.target.value)}
-              rows={2}
-            />
-            <Button size="sm" className="mt-2 w-full">
-              Send Update
-            </Button>
-          </div>
-        </div>
-      </Card>
+            </Card>
+          );
+        })
+      ) : (
+        <Card className="p-4 bg-gray-50">
+          <p className="text-sm text-gray-600 text-center">
+            No active responses. Check nearby alerts to offer help.
+          </p>
+        </Card>
+      )}
 
       {/* Helper Stats */}
       <Card className="p-4">
         <h3 className="font-medium text-gray-900 mb-3">Your Helper Stats</h3>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <div className="text-2xl font-bold text-blue-600">47</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {helperProfile?.completion_count || 0}
+            </div>
             <div className="text-xs text-gray-600">Helped</div>
           </div>
           <div>
             <div className="flex items-center justify-center gap-1">
-              <span className="text-2xl font-bold text-yellow-600">4.9</span>
+              <span className="text-2xl font-bold text-yellow-600">
+                {helperProfile?.average_rating?.toFixed(1) || '0.0'}
+              </span>
               <Star className="h-4 w-4 text-yellow-500 fill-current" />
             </div>
             <div className="text-xs text-gray-600">Rating</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-green-600">2.3</div>
-            <div className="text-xs text-gray-600">Avg Response</div>
+            <div className="text-2xl font-bold text-green-600">
+              {helperProfile?.average_response_time_minutes || 0}
+            </div>
+            <div className="text-xs text-gray-600">Avg Response (min)</div>
           </div>
         </div>
       </Card>
@@ -181,30 +265,53 @@ export const HelperResponse: React.FC = () => {
       {/* Recent Responses */}
       <Card className="p-4">
         <h3 className="font-medium text-gray-900 mb-3">Recent Responses</h3>
-        <div className="space-y-3">
-          {[
-            { id: 1, type: 'Medical', status: 'Completed', time: '2 hours ago', rating: 5 },
-            { id: 2, type: 'Accident', status: 'Completed', time: '1 day ago', rating: 5 },
-            { id: 3, type: 'Safety', status: 'Completed', time: '3 days ago', rating: 4 },
-          ].map((response) => (
-            <div key={response.id} className="flex items-center justify-between py-2 border-b last:border-b-0">
-              <div>
-                <p className="text-sm font-medium text-gray-900">{response.type} Emergency</p>
-                <p className="text-xs text-gray-500">{response.time}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
-                  {response.status}
-                </Badge>
-                <div className="flex items-center gap-1">
-                  <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                  <span className="text-xs text-gray-600">{response.rating}</span>
+        {completedResponses.length > 0 ? (
+          <div className="space-y-3">
+            {completedResponses.map((response: any) => {
+              const alert = response.sos_alerts;
+              const review = response.sos_reviews?.[0];
+              
+              return (
+                <div key={response.id} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {alert?.sos_type || 'Emergency'}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {alert?.resolved_at ? formatDistanceToNow(new Date(alert.resolved_at), { addSuffix: true }) : 'Recently'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                      Completed
+                    </Badge>
+                    {review?.rating && (
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                        <span className="text-xs text-gray-600">{review.rating}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 text-center py-4">No completed responses yet</p>
+        )}
       </Card>
+
+      {/* Messaging Dialog */}
+      <Dialog open={showMessaging} onOpenChange={setShowMessaging}>
+        <DialogContent className="max-w-2xl">
+          {selectedAlertId && (
+            <SOSMessaging 
+              alertId={selectedAlertId} 
+              onClose={() => setShowMessaging(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

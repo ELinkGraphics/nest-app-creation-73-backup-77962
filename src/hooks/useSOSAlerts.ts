@@ -78,7 +78,7 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
       return data;
     },
     enabled: true,
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: 30000, // Refetch every 30 seconds as backup (realtime is primary)
   });
 
   const createAlert = useMutation({
@@ -125,6 +125,28 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
     },
   });
 
+  // Set up realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('sos_alerts_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sos_alerts',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['sos-alerts'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return {
     alerts: alerts || [],
     isLoading,
@@ -162,28 +184,3 @@ function toRad(degrees: number): number {
   return degrees * (Math.PI / 180);
 }
 
-// Subscribe to realtime updates
-export const useSOSRealtimeSubscription = () => {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const channel = supabase
-      .channel('sos_alerts_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'sos_alerts',
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['sos-alerts'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
-};

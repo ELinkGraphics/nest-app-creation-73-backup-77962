@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -108,6 +109,28 @@ export const useSOSHelpers = (alertId?: string) => {
       toast.success('Help marked as completed');
     },
   });
+
+  // Set up realtime subscription for helpers
+  useEffect(() => {
+    const channel = supabase
+      .channel('sos_helpers_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sos_helpers',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['sos-helpers'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   return {
     helpers: helpers || [],

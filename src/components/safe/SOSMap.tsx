@@ -41,7 +41,7 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
     return icons[type as keyof typeof icons] || AlertTriangle;
   };
 
-  const selectedEmergencyData = mockEmergencies.find(e => e.id === selectedEmergency);
+  const selectedEmergencyData = alerts.find(e => e.id === selectedEmergency);
 
   return (
     <div className="space-y-4">
@@ -68,8 +68,8 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
           </div>
 
           {/* Emergency Markers */}
-          {mockEmergencies.map((emergency, index) => {
-            const IconComponent = getTypeIcon(emergency.type);
+          {alerts.map((emergency, index) => {
+            const IconComponent = getTypeIcon(emergency.sos_type);
             return (
               <button
                 key={emergency.id}
@@ -85,10 +85,10 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
                 )}
               >
                 <div className={`relative`}>
-                  <div className={`h-10 w-10 ${getUrgencyColor(emergency.priority)} rounded-full flex items-center justify-center text-white shadow-xl border-2 border-white`}>
+                  <div className={`h-10 w-10 ${getUrgencyColor(emergency.urgency)} rounded-full flex items-center justify-center text-white shadow-xl border-2 border-white`}>
                     <IconComponent className="h-5 w-5" />
                   </div>
-                  {emergency.priority === 'high' && (
+                  {emergency.urgency === 'high' && (
                     <div className="absolute inset-0 rounded-full animate-ping bg-red-400 opacity-40" />
                   )}
                 </div>
@@ -190,7 +190,7 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
       <div className="grid grid-cols-3 gap-2">
         <Card className="p-3 text-center">
           <div className="text-lg font-bold text-red-600">
-            {mockEmergencies.filter(e => e.status === 'active').length}
+            {alerts.filter(e => e.status === 'active').length}
           </div>
           <div className="text-xs text-muted-foreground">Active</div>
         </Card>
@@ -222,12 +222,12 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
           <div className="space-y-3">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-medium">{selectedEmergencyData.requester.name}</h3>
-                <Badge className={`${getUrgencyColor(selectedEmergencyData.priority)} text-white text-xs`}>
-                  {selectedEmergencyData.priority} priority
+                <h3 className="font-medium">{selectedEmergencyData.profiles?.full_name || 'Anonymous'}</h3>
+                <Badge className={`${getUrgencyColor(selectedEmergencyData.urgency)} text-white text-xs`}>
+                  {selectedEmergencyData.urgency} priority
                 </Badge>
               </div>
-              <span className="text-xs text-muted-foreground">{selectedEmergencyData.timeAgo}</span>
+              <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(selectedEmergencyData.created_at), { addSuffix: true })}</span>
             </div>
             
             <p className="text-sm text-gray-700">{selectedEmergencyData.description}</p>
@@ -235,15 +235,11 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
-                {selectedEmergencyData.distance}
-              </div>
-              <div className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                {selectedEmergencyData.helpers} helping
+                {selectedEmergencyData.distance ? `${selectedEmergencyData.distance} km` : selectedEmergencyData.location_address}
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                ETA: {selectedEmergencyData.estimatedResponseTime}
+                {selectedEmergencyData.sos_type}
               </div>
             </div>
             

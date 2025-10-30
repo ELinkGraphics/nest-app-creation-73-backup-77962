@@ -3,19 +3,70 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Star, Trophy, Users, Clock, MapPin, Award, TrendingUp, Heart, Shield, Search, Car, Zap, Target, Medal, Crown, Gem } from 'lucide-react';
+import { useHelperProfile } from '@/hooks/useHelperProfile';
+import { useUser } from '@/contexts/UserContext';
 
 export const SOSProfile: React.FC = () => {
+  const { user } = useUser();
+  const { helperProfile, isLoading } = useHelperProfile(user?.id);
+
+  // Calculate badge and next badge based on completion count
+  const getBadgeInfo = (completionCount: number) => {
+    if (completionCount >= 100) {
+      return { 
+        name: 'Diamond Helper', 
+        color: 'from-blue-400 via-cyan-500 to-blue-600',
+        next: { name: 'Max Level', needed: 0 }
+      };
+    }
+    if (completionCount >= 50) {
+      return { 
+        name: 'Platinum Helper', 
+        color: 'from-slate-300 via-gray-400 to-slate-500',
+        next: { name: 'Diamond Helper', needed: 100 }
+      };
+    }
+    if (completionCount >= 25) {
+      return { 
+        name: 'Gold Helper', 
+        color: 'from-amber-400 via-yellow-500 to-orange-500',
+        next: { name: 'Platinum Helper', needed: 50 }
+      };
+    }
+    if (completionCount >= 10) {
+      return { 
+        name: 'Silver Helper', 
+        color: 'from-gray-300 via-gray-400 to-gray-500',
+        next: { name: 'Gold Helper', needed: 25 }
+      };
+    }
+    return { 
+      name: 'Bronze Helper', 
+      color: 'from-orange-300 via-orange-400 to-orange-500',
+      next: { name: 'Silver Helper', needed: 10 }
+    };
+  };
+
+  const badgeInfo = getBadgeInfo(helperProfile?.completion_count || 0);
+  const currentCount = helperProfile?.completion_count || 0;
+  const progressToNext = badgeInfo.next.needed > 0 
+    ? Math.min(100, Math.round((currentCount / badgeInfo.next.needed) * 100))
+    : 100;
+  
   const helperStats = {
-    badge: 'Gold Helper',
-    localRank: 23,
-    totalHelpers: 1247,
-    starsEarned: 42,
-    peopleHelped: 18,
-    responseTime: '4 min avg',
-    completionRate: 94,
-    weeklyStreak: 7,
-    nextBadge: 'Platinum Helper',
-    progressToNext: 68
+    badge: badgeInfo.name,
+    badgeColor: badgeInfo.color,
+    nextBadge: badgeInfo.next.name,
+    progressToNext,
+    totalStars: helperProfile?.total_stars || 0,
+    peopleHelped: helperProfile?.completion_count || 0,
+    responseTime: helperProfile?.average_response_time_minutes ? `${helperProfile.average_response_time_minutes} min` : 'N/A',
+    averageRating: helperProfile?.average_rating || 0,
+    weeklyStreak: helperProfile?.current_streak_days || 0,
+    responseCount: helperProfile?.response_count || 0,
+    completionRate: helperProfile?.completion_count > 0 
+      ? Math.round((helperProfile.completion_count / helperProfile.response_count) * 100)
+      : 0,
   };
 
   const recentActivity = [
@@ -76,23 +127,35 @@ export const SOSProfile: React.FC = () => {
     { name: 'Emergency Hero', icon: Gem, earned: false, color: 'text-indigo-600' }
   ];
 
+  if (isLoading) {
+    return (
+      <div className="px-4 space-y-4">
+        <Card className="p-6">
+          <div className="text-center text-muted-foreground">Loading profile...</div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 space-y-4">
-      {/* Helper Badge & Rank */}
+      {/* Helper Badge & Stats */}
       <Card className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center justify-center h-20 w-20 bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 rounded-2xl text-white shadow-xl">
+          <div className={`inline-flex items-center justify-center h-20 w-20 bg-gradient-to-br ${helperStats.badgeColor} rounded-2xl text-white shadow-xl`}>
             <Trophy className="h-10 w-10" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-amber-800">{helperStats.badge}</h2>
-            <p className="text-amber-600 text-sm">
-              Rank #{helperStats.localRank} of {helperStats.totalHelpers.toLocaleString()} helpers
-            </p>
+            <div className="flex items-center justify-center gap-1 mt-1">
+              <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+              <span className="text-amber-700 font-medium">{helperStats.averageRating.toFixed(1)}</span>
+              <span className="text-amber-600 text-sm">average rating</span>
+            </div>
           </div>
           <div className="flex justify-center gap-4 text-sm">
             <div className="text-center">
-              <div className="font-bold text-amber-800">{helperStats.starsEarned}</div>
+              <div className="font-bold text-amber-800">{helperStats.totalStars}</div>
               <div className="text-amber-600">Stars</div>
             </div>
             <div className="text-center">

@@ -220,7 +220,7 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
     
     triggerHaptic('success');
     
-    await createAlert.mutateAsync({
+    const newAlert = await createAlert.mutateAsync({
       sos_type: sosType,
       sub_category: subCategory,
       urgency,
@@ -237,6 +237,25 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
       threat_active: threatActive,
       photo_urls: photos.length > 0 ? photos : undefined,
     });
+    
+    // Notify emergency contacts
+    if (newAlert) {
+      try {
+        await supabase.functions.invoke('notify-emergency-contacts', {
+          body: {
+            alert_id: newAlert.id,
+            sos_type: sosType,
+            urgency,
+            description,
+            location_lat: latitude,
+            location_lng: longitude,
+            location_address: location,
+          }
+        });
+      } catch (error) {
+        console.error('Failed to notify emergency contacts:', error);
+      }
+    }
     
     onClose();
     

@@ -158,6 +158,21 @@ export const SOSNearbyView: React.FC = () => {
                     {emergency.description}
                   </p>
 
+                  {/* Photos */}
+                  {emergency.photo_urls && emergency.photo_urls.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto">
+                      {emergency.photo_urls.map((url, index) => (
+                        <img
+                          key={index}
+                          src={url}
+                          alt={`Emergency photo ${index + 1}`}
+                          className="h-20 w-20 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => window.open(url, '_blank')}
+                        />
+                      ))}
+                    </div>
+                  )}
+
                   {/* Stats */}
                   <div className="flex items-center gap-4 text-xs text-gray-500">
                     {emergency.distance && (

@@ -10,6 +10,9 @@ import { AlertTriangle, MapPin, Phone, Share2, Camera, Send, X, Heart, Shield, S
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useSOSAlerts } from '@/hooks/useSOSAlerts';
+import { supabase } from '@/integrations/supabase/client';
+import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
 
 interface SOSCreationModalProps {
   isOpen: boolean;
@@ -37,11 +40,13 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
   const [injuryType, setInjuryType] = useState('');
   const [consciousLevel, setConsciousLevel] = useState('');
   const [threatActive, setThreatActive] = useState(false);
-  const [photos, setPhotos] = useState<File[]>([]);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   
   const { triggerHaptic } = useHapticFeedback();
   const { latitude, longitude, refreshLocation } = useGeolocation();
   const { createAlert } = useSOSAlerts();
+  const { user } = useUser();
 
   const urgencyLevels = [
     { 
@@ -230,6 +235,7 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
       injury_type: injuryType,
       conscious_level: consciousLevel,
       threat_active: threatActive,
+      photo_urls: photos.length > 0 ? photos : undefined,
     });
     
     onClose();
@@ -251,12 +257,44 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
     window.open('tel:911', '_self');
   };
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    if (files.length > 0) {
-      setPhotos(prev => [...prev, ...files].slice(0, 3)); // Max 3 photos
-      triggerHaptic('light');
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || !user) return;
+
+    setIsUploading(true);
+    const uploadedUrls: string[] = [];
+    
+    for (const file of Array.from(files)) {
+      if (photos.length + uploadedUrls.length >= 3) break;
+      
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('sos-photos')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('sos-photos')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrl);
+        triggerHaptic('light');
+      } catch (error) {
+        console.error('Photo upload error:', error);
+        toast.error('Failed to upload photo');
+      }
     }
+
+    setPhotos([...photos, ...uploadedUrls]);
+    setIsUploading(false);
   };
 
   const removePhoto = (index: number) => {
@@ -345,7 +383,7 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
                     {photos.map((photo, index) => (
                       <div key={index} className="relative">
                         <img
-                          src={URL.createObjectURL(photo)}
+                          src={photo}
                           alt={`Photo ${index + 1}`}
                           className="w-12 h-12 object-cover rounded border"
                         />
@@ -359,6 +397,9 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
                       </div>
                     ))}
                   </div>
+                )}
+                {isUploading && (
+                  <div className="text-xs text-gray-500">Uploading photos...</div>
                 )}
               </div>
               
@@ -450,7 +491,7 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
                     {photos.map((photo, index) => (
                       <div key={index} className="relative">
                         <img
-                          src={URL.createObjectURL(photo)}
+                          src={photo}
                           alt={`Photo ${index + 1}`}
                           className="w-12 h-12 object-cover rounded border"
                         />
@@ -464,6 +505,9 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
                       </div>
                     ))}
                   </div>
+                )}
+                {isUploading && (
+                  <div className="text-xs text-gray-500">Uploading photos...</div>
                 )}
               </div>
               
@@ -545,7 +589,7 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
                     {photos.map((photo, index) => (
                       <div key={index} className="relative">
                         <img
-                          src={URL.createObjectURL(photo)}
+                          src={photo}
                           alt={`Photo ${index + 1}`}
                           className="w-12 h-12 object-cover rounded border"
                         />
@@ -559,6 +603,9 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
                       </div>
                     ))}
                   </div>
+                )}
+                {isUploading && (
+                  <div className="text-xs text-gray-500">Uploading photos...</div>
                 )}
               </div>
               
@@ -633,7 +680,7 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
                     {photos.map((photo, index) => (
                       <div key={index} className="relative">
                         <img
-                          src={URL.createObjectURL(photo)}
+                          src={photo}
                           alt={`Photo ${index + 1}`}
                           className="w-12 h-12 object-cover rounded border"
                         />
@@ -647,6 +694,9 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
                       </div>
                     ))}
                   </div>
+                )}
+                {isUploading && (
+                  <div className="text-xs text-gray-500">Uploading photos...</div>
                 )}
               </div>
               

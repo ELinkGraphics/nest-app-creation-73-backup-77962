@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation, Users, Clock, Target, Zap, Plus, Minus, Heart, Shield, Flame, Car, Tornado, AlertTriangle } from 'lucide-react';
+import { MapPin, Navigation, Users, Clock, Target, Zap, Plus, Minus, Heart, Shield, Flame, Car, Tornado, AlertTriangle, Share2 } from 'lucide-react';
 import { useSOSAlerts } from '@/hooks/useSOSAlerts';
 import { useSOSHelpers } from '@/hooks/useSOSHelpers';
+import { useGeolocation } from '@/hooks/useGeolocation';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 interface SOSMapProps {
   userLat?: number | null;
@@ -17,8 +19,15 @@ interface SOSMapProps {
 export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
   const [selectedEmergency, setSelectedEmergency] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState(14);
-  const { alerts } = useSOSAlerts(userLat, userLng);
+  const { latitude: userLat2, longitude: userLng2, refreshLocation } = useGeolocation();
+  const currentUserLat = userLat || userLat2;
+  const currentUserLng = userLng || userLng2;
+  const { alerts } = useSOSAlerts(currentUserLat, currentUserLng);
   const { respondToAlert } = useSOSHelpers();
+
+  useEffect(() => {
+    refreshLocation();
+  }, [refreshLocation]);
 
   // Fetch all active helpers with their current locations
   const { data: activeHelpers } = useQuery({
@@ -48,10 +57,21 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
     refetchInterval: 10000, // Refresh every 10 seconds
   });
 
-  // Set up realtime subscription for helper locations
+  // Real-time subscription for map updates
   useEffect(() => {
     const channel = supabase
-      .channel('helper_locations')
+      .channel('map-realtime-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sos_alerts',
+        },
+        () => {
+          // Refetch alerts when changes occur
+        }
+      )
       .on(
         'postgres_changes',
         {
@@ -60,7 +80,7 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
           table: 'helper_profiles',
         },
         () => {
-          // Refetch active helpers when any location updates
+          // Refetch helpers when location updates
         }
       )
       .subscribe();
@@ -94,6 +114,25 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
   };
 
   const selectedEmergencyData = alerts.find(e => e.id === selectedEmergency);
+
+  const handleShareLocation = () => {
+    if (currentUserLat && currentUserLng) {
+      const locationUrl = `https://www.google.com/maps?q=${currentUserLat},${currentUserLng}`;
+      navigator.clipboard.writeText(locationUrl);
+      toast.success('Location copied to clipboard');
+    } else {
+      toast.error('Location not available');
+    }
+  };
+
+  const handleNavigate = () => {
+    if (selectedEmergencyData?.location_lat && selectedEmergencyData?.location_lng) {
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&destination=${selectedEmergencyData.location_lat},${selectedEmergencyData.location_lng}`,
+        '_blank'
+      );
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -207,10 +246,10 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
           <Button
             size="sm"
             className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-            onClick={() => alert('Finding your location...')}
+            onClick={() => refreshLocation()}
           >
             <Target className="h-4 w-4 mr-1" />
-            Find Me
+            {currentUserLat && currentUserLng ? 'Refresh Location' : 'Find Me'}
           </Button>
         </div>
       </Card>
@@ -256,24 +295,32 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
           <div className="text-xs text-muted-foreground">Active</div>
         </Card>
         <Card className="p-3 text-center">
-          <div className="text-lg font-bold text-green-600">12</div>
+          <div className="text-lg font-bold text-green-600">{activeHelpers?.length || 0}</div>
           <div className="text-xs text-muted-foreground">Helpers</div>
         </Card>
         <Card className="p-3 text-center">
-          <div className="text-lg font-bold text-blue-600">3.2m</div>
+          <div className="text-lg font-bold text-blue-600">
+            {activeHelpers && activeHelpers.length > 0 ? '~5m' : 'N/A'}
+          </div>
           <div className="text-xs text-muted-foreground">Avg Response</div>
         </Card>
       </div>
 
       {/* Quick Actions */}
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" className="flex-1">
-          <Navigation className="h-4 w-4 mr-1" />
+        <Button variant="outline" size="sm" className="flex-1" onClick={handleShareLocation}>
+          <Share2 className="h-4 w-4 mr-1" />
           Share Location
         </Button>
-        <Button variant="outline" size="sm" className="flex-1">
-          <Zap className="h-4 w-4 mr-1" />
-          Quick Response
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex-1"
+          onClick={handleNavigate}
+          disabled={!selectedEmergencyData}
+        >
+          <Navigation className="h-4 w-4 mr-1" />
+          Navigate
         </Button>
       </div>
 

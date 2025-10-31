@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -125,10 +125,10 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
     },
   });
 
-  // Set up realtime subscription
+  // Real-time subscription for alerts with in-app notifications
   useEffect(() => {
     const channel = supabase
-      .channel('sos_alerts_changes')
+      .channel('sos-alerts-changes')
       .on(
         'postgres_changes',
         {
@@ -136,8 +136,27 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
           schema: 'public',
           table: 'sos_alerts',
         },
-        () => {
+        (payload) => {
+          console.log('SOS Alert change:', payload);
           queryClient.invalidateQueries({ queryKey: ['sos-alerts'] });
+          
+          // Show in-app notification for new alerts
+          if (payload.eventType === 'INSERT' && payload.new) {
+            const alert = payload.new as any;
+            toast.info(`New ${alert.sos_type} alert nearby`, {
+              description: alert.description?.substring(0, 50) + '...'
+            });
+          }
+          
+          // Show notification for status changes
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            const alert = payload.new as any;
+            if (alert.status === 'responding') {
+              toast.success('Helper is responding to alert');
+            } else if (alert.status === 'resolved') {
+              toast.success('Alert has been resolved');
+            }
+          }
         }
       )
       .subscribe();
@@ -147,12 +166,55 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
     };
   }, [queryClient]);
 
+  // Real-time subscription for helper responses
+  useEffect(() => {
+    const channel = supabase
+      .channel('sos-helpers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'sos_helpers',
+        },
+        (payload) => {
+          console.log('New helper response:', payload);
+          queryClient.invalidateQueries({ queryKey: ['sos-alerts'] });
+          queryClient.invalidateQueries({ queryKey: ['sos-helpers'] });
+          
+          toast.success('A helper is responding to your alert!');
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  // Location tracking for live location sharing
+  const updateAlertLocation = useCallback(async (alertId: string, lat: number, lng: number) => {
+    const { error } = await supabase
+      .from('sos_alerts')
+      .update({
+        location_lat: lat,
+        location_lng: lng,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', alertId);
+
+    if (error) {
+      console.error('Error updating alert location:', error);
+    }
+  }, []);
+
   return {
     alerts: alerts || [],
     isLoading,
     error,
     createAlert,
     updateAlertStatus,
+    updateAlertLocation,
   };
 };
 

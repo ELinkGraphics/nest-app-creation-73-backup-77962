@@ -27,7 +27,7 @@ export const EmergencyRequest: React.FC = () => {
   const [photos, setPhotos] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   
-  const { createAlert } = useSOSAlerts();
+  const { createAlert, updateAlertLocation } = useSOSAlerts();
   const { latitude, longitude } = useGeolocation();
   const { user } = useUser();
 
@@ -43,7 +43,7 @@ export const EmergencyRequest: React.FC = () => {
     }
 
     try {
-      await createAlert.mutateAsync({
+      const newAlert = await createAlert.mutateAsync({
         sos_type: selectedType,
         description,
         urgency,
@@ -52,6 +52,27 @@ export const EmergencyRequest: React.FC = () => {
         share_live_location: true,
         photo_urls: photos.length > 0 ? photos : undefined,
       });
+
+      // Start live location tracking if enabled
+      if (newAlert?.id && latitude && longitude) {
+        const locationInterval = setInterval(() => {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                updateAlertLocation(
+                  newAlert.id,
+                  position.coords.latitude,
+                  position.coords.longitude
+                );
+              },
+              (error) => console.error('Location update error:', error)
+            );
+          }
+        }, 30000); // Update every 30 seconds
+
+        // Store interval ID for cleanup
+        (window as any).sosLocationInterval = locationInterval;
+      }
 
       // Reset form
       setSelectedType('');

@@ -27,7 +27,7 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
 
   useEffect(() => {
     refreshLocation();
-  }, [refreshLocation]);
+  }, []);
 
   // Fetch all active helpers with their current locations
   const { data: activeHelpers } = useQuery({
@@ -40,7 +40,7 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
           location_lat,
           location_lng,
           availability_status,
-          profiles:user_id (
+          profiles!user_id (
             full_name,
             avatar_url,
             initials,

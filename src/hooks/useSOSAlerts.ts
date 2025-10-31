@@ -52,7 +52,7 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
         .from('sos_alerts')
         .select(`
           *,
-          profiles:user_id (full_name, avatar_url)
+          profiles!user_id (full_name, avatar_url)
         `)
         .in('status', ['active', 'responding'])
         .order('created_at', { ascending: false });

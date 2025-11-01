@@ -238,7 +238,22 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
       photo_urls: photos.length > 0 ? photos : undefined,
     });
     
-    // Emergency contact notifications disabled to avoid errors
+    // Send notifications to all users
+    try {
+      await supabase.functions.invoke('notify-all-users', {
+        body: {
+          alertId: newAlert.id,
+          alertType: sosType,
+          urgency,
+          description,
+          location: location || 'Location shared'
+        }
+      });
+      toast.success('Alert broadcasted to all nearby users');
+    } catch (error) {
+      console.error('Failed to send notifications:', error);
+      // Don't fail the alert creation if notifications fail
+    }
     
     onClose();
     

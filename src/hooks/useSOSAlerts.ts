@@ -50,32 +50,39 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sos_alerts')
-        .select(`
-          *,
-          profiles!user_id (full_name, avatar_url)
-        `)
+        .select('*')
         .in('status', ['active', 'responding'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Calculate distances if user location is available
-      if (userLat && userLng) {
-        return data.map((alert: any) => {
-          if (alert.location_lat && alert.location_lng) {
+      // Fetch profiles for each alert
+      const alertsWithProfiles = await Promise.all(
+        data.map(async (alert: any) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', alert.user_id)
+            .single();
+          
+          let alertWithProfile = { ...alert, profiles: profile };
+          
+          // Calculate distance if user location is available
+          if (userLat && userLng && alert.location_lat && alert.location_lng) {
             const distance = calculateDistance(
               userLat,
               userLng,
               alert.location_lat,
               alert.location_lng
             );
-            return { ...alert, distance };
+            alertWithProfile = { ...alertWithProfile, distance };
           }
-          return alert;
-        });
-      }
+          
+          return alertWithProfile;
+        })
+      );
 
-      return data;
+      return alertsWithProfiles;
     },
     enabled: true,
     refetchInterval: 30000, // Refetch every 30 seconds as backup (realtime is primary)

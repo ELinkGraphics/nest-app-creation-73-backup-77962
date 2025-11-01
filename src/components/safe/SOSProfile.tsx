@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Star, Trophy, Users, Clock, MapPin, Award, TrendingUp, Heart, Shield, Search, Car, Zap, Target, Medal, Crown, Gem } from 'lucide-react';
+import { Star, Trophy, Users, Clock, MapPin, Award, TrendingUp, Heart, Shield, Search, Car, Zap, Target, Medal, Crown, Gem, UserPlus } from 'lucide-react';
 import { useHelperProfile } from '@/hooks/useHelperProfile';
 import { useUser } from '@/contexts/UserContext';
+import { HelperOnboarding } from './HelperOnboarding';
 
 export const SOSProfile: React.FC = () => {
   const { user } = useUser();
   const { helperProfile, isLoading } = useHelperProfile(user?.id);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Calculate badge and next badge based on completion count
   const getBadgeInfo = (completionCount: number) => {
@@ -133,6 +136,76 @@ export const SOSProfile: React.FC = () => {
         <Card className="p-6">
           <div className="text-center text-muted-foreground">Loading profile...</div>
         </Card>
+      </div>
+    );
+  }
+
+  // Show onboarding CTA if user is not a helper yet
+  if (!helperProfile) {
+    return (
+      <div className="px-4 space-y-4">
+        <Card className="p-8 text-center bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+          <div className="inline-flex items-center justify-center h-20 w-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl text-white shadow-xl mb-4">
+            <Shield className="h-10 w-10" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Become a Helper</h2>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            Join our community of heroes and make a real difference in emergency situations. 
+            Help people when they need it most.
+          </p>
+          <Button 
+            size="lg" 
+            onClick={() => setShowOnboarding(true)}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+          >
+            <UserPlus className="h-5 w-5 mr-2" />
+            Get Started
+          </Button>
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="font-medium mb-4 flex items-center gap-2">
+            <Heart className="h-5 w-5 text-red-500" />
+            Why Become a Helper?
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="h-8 w-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Users className="h-4 w-4 text-green-600" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Make a Real Impact</p>
+                <p className="text-xs text-muted-foreground">Help people in genuine emergencies</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Trophy className="h-4 w-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Earn Recognition</p>
+                <p className="text-xs text-muted-foreground">Build your reputation and unlock badges</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Shield className="h-4 w-4 text-purple-600" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Safe & Secure</p>
+                <p className="text-xs text-muted-foreground">Verified community with safety guidelines</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <HelperOnboarding 
+          open={showOnboarding} 
+          onOpenChange={setShowOnboarding}
+          onComplete={() => {
+            // Profile will automatically refresh via react-query
+          }}
+        />
       </div>
     );
   }

@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin, Clock, MessageCircle, Phone, Star, Navigation } from 'lucide-react';
+import { MapPin, Clock, MessageCircle, Phone, Star, Navigation, UserPlus } from 'lucide-react';
 import { useHelperProfile } from '@/hooks/useHelperProfile';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { SOSMessaging } from './SOSMessaging';
+import { HelperOnboarding } from './HelperOnboarding';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const HELPER_SKILLS = [
@@ -27,6 +28,7 @@ export const HelperResponse: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [responseMessage, setResponseMessage] = useState('');
   const [showMessaging, setShowMessaging] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   
   const { latitude, longitude } = useGeolocation();
@@ -77,6 +79,28 @@ export const HelperResponse: React.FC = () => {
     };
     return colors[status as keyof typeof colors];
   };
+
+  // Show onboarding if not a helper yet
+  if (!helperProfile) {
+    return (
+      <div className="px-4 space-y-4">
+        <Card className="p-8 text-center">
+          <h3 className="text-lg font-medium mb-2">Become a Helper First</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Register as a helper to respond to emergencies and manage your responses
+          </p>
+          <Button onClick={() => setShowOnboarding(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Register as Helper
+          </Button>
+        </Card>
+        <HelperOnboarding 
+          open={showOnboarding} 
+          onOpenChange={setShowOnboarding}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 space-y-6">

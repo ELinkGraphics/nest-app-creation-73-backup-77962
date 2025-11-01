@@ -3,19 +3,33 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MapPin, Clock, Users, MessageCircle, Navigation, Radio, Map, Heart, Shield, Flame, Car, Tornado, Zap } from 'lucide-react';
+import { MapPin, Clock, Users, MessageCircle, Navigation, Radio, Map, Heart, Shield, Flame, Car, Tornado, Zap, CheckCircle, XCircle } from 'lucide-react';
 import { SOSMap } from './SOSMap';
+import { SOSMessaging } from './SOSMessaging';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useSOSAlerts } from '@/hooks/useSOSAlerts';
 import { useSOSHelpers } from '@/hooks/useSOSHelpers';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
 
 export const SOSNearbyView: React.FC = () => {
   const [showMap, setShowMap] = useState(false);
+  const [showMessaging, setShowMessaging] = useState(false);
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  
   const { latitude, longitude, loading: locationLoading } = useGeolocation();
-  const { alerts, isLoading: alertsLoading } = useSOSAlerts(latitude, longitude);
+  const { alerts, isLoading: alertsLoading, updateAlertStatus } = useSOSAlerts(latitude, longitude);
   const { respondToAlert } = useSOSHelpers();
+
+  // Get current user
+  React.useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id || null);
+    });
+  }, []);
 
   const getUrgencyColor = (priority: string) => {
     const colors = {
@@ -74,6 +88,25 @@ export const SOSNearbyView: React.FC = () => {
       current_lat: latitude,
       current_lng: longitude,
     });
+  };
+
+  const handleResolveAlert = async (alertId: string) => {
+    updateAlertStatus.mutate({ alertId, status: 'resolved' });
+  };
+
+  const handleCancelAlert = async (alertId: string) => {
+    updateAlertStatus.mutate({ alertId, status: 'cancelled' });
+  };
+
+  const handleNavigate = (lat: number, lng: number) => {
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+      '_blank'
+    );
+  };
+
+  const isAlertCreator = (emergency: any) => {
+    return userId && emergency.user_id === userId;
   };
 
   const activeEmergencies = alerts.filter(e => e.status === 'active');
@@ -190,30 +223,78 @@ export const SOSNearbyView: React.FC = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                      onClick={() => handleRespond(emergency.id)}
-                      disabled={respondToAlert.isPending || !latitude || !longitude}
-                    >
-                      <Users className="h-4 w-4 mr-1" />
-                      I can help
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1">
-                      <Navigation className="h-4 w-4 mr-1" />
-                      Navigate
-                    </Button>
-                    <Button size="sm" variant="outline">
-                      <MessageCircle className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  {isAlertCreator(emergency) ? (
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => handleResolveAlert(emergency.id)}
+                        disabled={updateAlertStatus.isPending}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Mark Resolved
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="flex-1 text-red-600 hover:text-red-700"
+                        onClick={() => handleCancelAlert(emergency.id)}
+                        disabled={updateAlertStatus.isPending}
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => handleRespond(emergency.id)}
+                        disabled={respondToAlert.isPending || !latitude || !longitude}
+                      >
+                        <Users className="h-4 w-4 mr-1" />
+                        I can help
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => handleNavigate(emergency.location_lat, emergency.location_lng)}
+                      >
+                        <Navigation className="h-4 w-4 mr-1" />
+                        Navigate
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedAlertId(emergency.id);
+                          setShowMessaging(true);
+                        }}
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </Card>
             ))
           )}
         </div>
       )}
+
+      {/* Messaging Dialog */}
+      <Dialog open={showMessaging} onOpenChange={setShowMessaging}>
+        <DialogContent className="max-w-2xl">
+          {selectedAlertId && (
+            <SOSMessaging 
+              alertId={selectedAlertId} 
+              onClose={() => setShowMessaging(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

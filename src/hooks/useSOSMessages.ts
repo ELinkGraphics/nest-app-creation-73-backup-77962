@@ -17,20 +17,26 @@ export const useSOSMessages = (alertId?: string) => {
 
       const { data, error } = await supabase
         .from('sos_messages')
-        .select(`
-          *,
-          profiles:sender_id (
-            full_name,
-            avatar_url,
-            initials,
-            avatar_color
-          )
-        `)
+        .select('*')
         .eq('alert_id', alertId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data;
+
+      // Fetch profiles separately for each message
+      const messagesWithProfiles = await Promise.all(
+        data.map(async (message: any) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url, avatar_color, initials')
+            .eq('id', message.sender_id)
+            .single();
+          
+          return { ...message, profiles: profile };
+        })
+      );
+
+      return messagesWithProfiles;
     },
     enabled: !!alertId,
   });
@@ -55,15 +61,7 @@ export const useSOSMessages = (alertId?: string) => {
           message_text: messageText,
           is_system_message: false,
         })
-        .select(`
-          *,
-          profiles:sender_id (
-            full_name,
-            avatar_url,
-            initials,
-            avatar_color
-          )
-        `)
+        .select()
         .single();
 
       if (error) throw error;

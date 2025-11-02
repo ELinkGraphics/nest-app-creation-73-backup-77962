@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { MapPin, Clock, Users, MessageCircle, Navigation, Radio, Map, Heart, Shield, Flame, Car, Tornado, Zap, CheckCircle, XCircle } from 'lucide-react';
-import { SOSMap } from './SOSMap';
+import { SOSMapInteractive } from './SOSMapInteractive';
 import { SOSMessaging } from './SOSMessaging';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useSOSAlerts } from '@/hooks/useSOSAlerts';
@@ -137,7 +137,7 @@ export const SOSNearbyView: React.FC = () => {
 
       {showMap ? (
         <div className="px-4">
-          <SOSMap userLat={latitude} userLng={longitude} />
+          <SOSMapInteractive userLat={latitude} userLng={longitude} />
         </div>
       ) : (
         <div className="px-4 space-y-3">

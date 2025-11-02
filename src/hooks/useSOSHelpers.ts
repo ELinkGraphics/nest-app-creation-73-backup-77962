@@ -33,11 +33,29 @@ export const useSOSHelpers = (alertId?: string) => {
     enabled: !!alertId,
   });
 
+  // Check if current user has already responded to an alert
+  const checkExistingResponse = async (alertId: string, userId: string) => {
+    const { data } = await supabase
+      .from('sos_helpers')
+      .select('id')
+      .eq('alert_id', alertId)
+      .eq('helper_user_id', userId)
+      .single();
+    
+    return !!data;
+  };
+
   const respondToAlert = useMutation({
     mutationFn: async (data: HelperResponse) => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) throw new Error('Not authenticated');
+
+      // Check if user has already responded
+      const hasResponded = await checkExistingResponse(data.alert_id, user.id);
+      if (hasResponded) {
+        throw new Error('You have already responded to this alert');
+      }
 
       const { data: helper, error } = await supabase
         .from('sos_helpers')

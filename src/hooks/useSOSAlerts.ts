@@ -19,7 +19,7 @@ export interface SOSAlert {
   created_at: string;
   distance?: number;
   profiles?: {
-    full_name: string;
+    name: string;
     avatar_url: string | null;
   };
 }
@@ -61,7 +61,7 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
         data.map(async (alert: any) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('full_name, avatar_url')
+            .select('name, avatar_url')
             .eq('id', alert.user_id)
             .single();
           
@@ -147,12 +147,22 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
           console.log('SOS Alert change:', payload);
           queryClient.invalidateQueries({ queryKey: ['sos-alerts'] });
           
-          // Show in-app notification for new alerts
+          // Show in-app and browser notification for new alerts
           if (payload.eventType === 'INSERT' && payload.new) {
             const alert = payload.new as any;
             toast.info(`New ${alert.sos_type} alert nearby`, {
               description: alert.description?.substring(0, 50) + '...'
             });
+            
+            // Show browser notification if permission granted
+            if (Notification.permission === 'granted') {
+              new Notification(`🚨 New ${alert.sos_type} Alert`, {
+                body: alert.description?.substring(0, 100) || 'Emergency assistance needed',
+                icon: '/icon-192.png',
+                tag: alert.id,
+                requireInteraction: true,
+              });
+            }
           }
           
           // Show notification for status changes
@@ -160,8 +170,20 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
             const alert = payload.new as any;
             if (alert.status === 'responding') {
               toast.success('Helper is responding to alert');
+              if (Notification.permission === 'granted') {
+                new Notification('Helper Responding', {
+                  body: 'A helper is on the way to your emergency',
+                  icon: '/icon-192.png',
+                });
+              }
             } else if (alert.status === 'resolved') {
               toast.success('Alert has been resolved');
+              if (Notification.permission === 'granted') {
+                new Notification('Emergency Resolved', {
+                  body: 'Your emergency alert has been resolved',
+                  icon: '/icon-192.png',
+                });
+              }
             }
           }
         }
@@ -190,6 +212,22 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
           queryClient.invalidateQueries({ queryKey: ['sos-helpers'] });
           
           toast.success('A helper is responding to your alert!');
+          
+          // Send push notification to alert creator
+          if (payload.new) {
+            const helperResponse = payload.new as any;
+            supabase.functions.invoke('send-push-notification', {
+              body: {
+                userId: helperResponse.alert_id, // Will be mapped to alert creator
+                title: '🆘 Helper Responding',
+                body: 'A helper is on the way to assist you',
+                notificationType: 'helper_response',
+                data: {
+                  alertId: helperResponse.alert_id,
+                },
+              },
+            });
+          }
         }
       )
       .subscribe();

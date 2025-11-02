@@ -8,6 +8,7 @@ import { UserProvider, useUser } from "@/contexts/UserContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { AppLoader } from "@/components/AppLoader";
+import { NotificationPermissionPrompt } from "@/components/NotificationPermissionPrompt";
 import Index from "./pages/Index";
 import Notifications from "./pages/Notifications";
 import Messages from "./pages/Messages";
@@ -102,6 +103,7 @@ const App = () => {
             <Sonner />
             <UpdateNotifier />
             <InstallPrompt />
+            <NotificationPermissionPrompt />
             <BrowserRouter>
               <AppRoutes />
             </BrowserRouter>

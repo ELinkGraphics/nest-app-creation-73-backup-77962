@@ -153,7 +153,7 @@ export const useHelperProfile = (userId?: string) => {
           *,
           sos_alerts (
             *,
-            profiles:user_id (full_name, avatar_url, initials, avatar_color)
+            profiles:user_id (name, avatar_url, initials, avatar_color)
           )
         `)
         .eq('helper_user_id', userId)

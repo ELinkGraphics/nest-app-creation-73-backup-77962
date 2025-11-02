@@ -22,7 +22,7 @@ serve(async (req) => {
     // Get all user profiles to send notifications
     const { data: profiles, error: profilesError } = await supabaseClient
       .from('profiles')
-      .select('id, full_name, fcm_token')
+      .select('id, name, fcm_token')
       .not('fcm_token', 'is', null);
 
     if (profilesError) throw profilesError;
@@ -56,8 +56,9 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400 

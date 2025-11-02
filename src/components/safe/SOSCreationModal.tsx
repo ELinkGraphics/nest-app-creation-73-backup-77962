@@ -238,16 +238,19 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
       photo_urls: photos.length > 0 ? photos : undefined,
     });
     
-    // Send notifications to all users
+    // Send push notifications to all users
     try {
-      await supabase.functions.invoke('notify-all-users', {
+      await supabase.functions.invoke('send-push-notification', {
         body: {
-          alertId: newAlert.id,
-          alertType: sosType,
-          urgency,
-          description,
-          location: location || 'Location shared'
-        }
+          title: `🚨 New ${sosType} Alert`,
+          body: description || 'Emergency assistance needed',
+          notificationType: 'new_alert',
+          data: {
+            alertId: newAlert.id,
+            alertType: sosType,
+            urgency,
+          },
+        },
       });
       toast.success('Alert broadcasted to all nearby users');
     } catch (error) {

@@ -1106,6 +1106,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string | null
           email: string
+          fcm_token: string | null
           id: string
           initials: string
           is_online: boolean | null
@@ -1125,6 +1126,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string | null
           email: string
+          fcm_token?: string | null
           id: string
           initials: string
           is_online?: boolean | null
@@ -1144,6 +1146,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string | null
           email?: string
+          fcm_token?: string | null
           id?: string
           initials?: string
           is_online?: boolean | null
@@ -1155,6 +1158,42 @@ export type Database = {
           updated_at?: string | null
           username?: string
           website?: string | null
+        }
+        Relationships: []
+      }
+      push_notifications: {
+        Row: {
+          body: string
+          created_at: string | null
+          data: Json | null
+          id: string
+          notification_type: string
+          read_at: string | null
+          sent_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          notification_type: string
+          read_at?: string | null
+          sent_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          notification_type?: string
+          read_at?: string | null
+          sent_at?: string | null
+          title?: string
+          user_id?: string
         }
         Relationships: []
       }

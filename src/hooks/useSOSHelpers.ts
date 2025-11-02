@@ -22,7 +22,7 @@ export const useSOSHelpers = (alertId?: string) => {
         .from('sos_helpers')
         .select(`
           *,
-          profiles:helper_user_id (full_name, avatar_url)
+          profiles:helper_user_id (name, avatar_url)
         `)
         .eq('alert_id', alertId)
         .order('accepted_at', { ascending: true });

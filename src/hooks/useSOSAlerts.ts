@@ -56,7 +56,7 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
 
       if (error) throw error;
 
-      // Fetch profiles for each alert
+      // Fetch profiles and helper count for each alert
       const alertsWithProfiles = await Promise.all(
         data.map(async (alert: any) => {
           const { data: profile } = await supabase
@@ -65,7 +65,18 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
             .eq('id', alert.user_id)
             .single();
           
-          let alertWithProfile = { ...alert, profiles: profile };
+          // Get helper count for this alert
+          const { count: helperCount } = await supabase
+            .from('sos_helpers')
+            .select('*', { count: 'exact', head: true })
+            .eq('alert_id', alert.id)
+            .in('status', ['responding', 'arrived']);
+          
+          let alertWithProfile = { 
+            ...alert, 
+            profiles: profile,
+            helper_count: helperCount || 0
+          };
           
           // Calculate distance if user location is available
           if (userLat && userLng && alert.location_lat && alert.location_lng) {

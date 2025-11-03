@@ -19,10 +19,11 @@ export const SOSNearbyView: React.FC = () => {
   const [showMessaging, setShowMessaging] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userResponses, setUserResponses] = useState<Set<string>>(new Set());
   
   const { latitude, longitude, loading: locationLoading } = useGeolocation();
   const { alerts, isLoading: alertsLoading, updateAlertStatus } = useSOSAlerts(latitude, longitude);
-  const { respondToAlert } = useSOSHelpers();
+  const { respondToAlert, checkExistingResponse } = useSOSHelpers();
 
   // Get current user
   React.useEffect(() => {
@@ -30,6 +31,24 @@ export const SOSNearbyView: React.FC = () => {
       setUserId(data.user?.id || null);
     });
   }, []);
+
+  // Check which alerts the current user has already responded to
+  React.useEffect(() => {
+    const checkUserResponses = async () => {
+      if (!userId || !alerts) return;
+
+      const responses = new Set<string>();
+      for (const alert of alerts) {
+        const hasResponded = await checkExistingResponse(alert.id, userId);
+        if (hasResponded) {
+          responses.add(alert.id);
+        }
+      }
+      setUserResponses(responses);
+    };
+
+    checkUserResponses();
+  }, [alerts, userId, checkExistingResponse]);
 
   const getUrgencyColor = (priority: string) => {
     const colors = {
@@ -220,6 +239,12 @@ export const SOSNearbyView: React.FC = () => {
                         {emergency.location_address}
                       </div>
                     )}
+                    {emergency.helper_count > 0 && (
+                      <div className="flex items-center gap-1 text-green-600 font-medium">
+                        <Users className="h-3 w-3" />
+                        {emergency.helper_count} responding
+                      </div>
+                    )}
                   </div>
 
                   {/* Action Buttons */}
@@ -247,15 +272,25 @@ export const SOSNearbyView: React.FC = () => {
                     </div>
                   ) : (
                     <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => handleRespond(emergency.id)}
-                        disabled={respondToAlert.isPending || !latitude || !longitude}
-                      >
-                        <Users className="h-4 w-4 mr-1" />
-                        I can help
-                      </Button>
+                      {userResponses.has(emergency.id) ? (
+                        <Button 
+                          size="sm" 
+                          className="flex-1 bg-green-100 text-green-700 border-green-300 cursor-not-allowed"
+                          disabled
+                        >
+                          ✓ Responding
+                        </Button>
+                      ) : (
+                        <Button 
+                          size="sm" 
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => handleRespond(emergency.id)}
+                          disabled={respondToAlert.isPending || !latitude || !longitude}
+                        >
+                          <Users className="h-4 w-4 mr-1" />
+                          I can help
+                        </Button>
+                      )}
                       <Button 
                         size="sm" 
                         variant="outline" 

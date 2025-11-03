@@ -22,15 +22,35 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
   const [selectedEmergency, setSelectedEmergency] = useState<string | null>(null);
   const [showMessaging, setShowMessaging] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(14);
+  const [userResponses, setUserResponses] = useState<Set<string>>(new Set());
   const { latitude: userLat2, longitude: userLng2, refreshLocation } = useGeolocation();
   const currentUserLat = userLat || userLat2;
   const currentUserLng = userLng || userLng2;
   const { alerts } = useSOSAlerts(currentUserLat, currentUserLng);
-  const { respondToAlert } = useSOSHelpers();
+  const { respondToAlert, checkExistingResponse } = useSOSHelpers();
 
   useEffect(() => {
     refreshLocation();
   }, []);
+
+  // Check which alerts the current user has already responded to
+  useEffect(() => {
+    const checkUserResponses = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !alerts) return;
+
+      const responses = new Set<string>();
+      for (const alert of alerts) {
+        const hasResponded = await checkExistingResponse(alert.id, user.id);
+        if (hasResponded) {
+          responses.add(alert.id);
+        }
+      }
+      setUserResponses(responses);
+    };
+
+    checkUserResponses();
+  }, [alerts, checkExistingResponse]);
 
   // Fetch all active helpers with their current locations
   const { data: activeHelpers, refetch: refetchHelpers } = useQuery({
@@ -44,7 +64,7 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
           location_lng,
           availability_status,
           profiles!user_id (
-            full_name,
+            name,
             avatar_url,
             initials,
             avatar_color
@@ -180,6 +200,7 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
           {/* Emergency Markers - Interactive */}
           {activeEmergencies.map((emergency, index) => {
             const IconComponent = getTypeIcon(emergency.sos_type);
+            const helperCount = emergency.helper_count || 0;
             return (
               <button
                 key={emergency.id}
@@ -200,6 +221,11 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
                   </div>
                   {emergency.urgency === 'high' && (
                     <div className="absolute inset-0 rounded-full animate-ping bg-red-400 opacity-40" />
+                  )}
+                  {helperCount > 0 && (
+                    <div className="absolute -top-1 -right-1 h-5 w-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                      <span className="text-xs font-bold text-white">{helperCount}</span>
+                    </div>
                   )}
                 </div>
               </button>
@@ -289,7 +315,7 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
                 <div className="flex items-start justify-between pr-6">
                   <div>
                     <h3 className="font-semibold text-gray-900">
-                      {selectedEmergencyData.profiles?.full_name || 'Anonymous'}
+                      {selectedEmergencyData.profiles?.name || 'Anonymous'}
                     </h3>
                     <Badge className={`${getUrgencyColor(selectedEmergencyData.urgency)} text-white text-xs mt-1`}>
                       {selectedEmergencyData.urgency} priority
@@ -313,18 +339,34 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
                     <Clock className="h-3 w-3" />
                     {selectedEmergencyData.sos_type}
                   </div>
+                  {selectedEmergencyData.helper_count > 0 && (
+                    <div className="flex items-center gap-1 text-green-600">
+                      <Users className="h-3 w-3" />
+                      {selectedEmergencyData.helper_count} responding
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => handleRespond(selectedEmergencyData.id)}
-                    disabled={respondToAlert.isPending}
-                  >
-                    <Users className="h-4 w-4 mr-1" />
-                    I can help
-                  </Button>
+                  {userResponses.has(selectedEmergencyData.id) ? (
+                    <Button 
+                      size="sm" 
+                      className="flex-1 bg-green-100 text-green-700 border-green-300 cursor-not-allowed"
+                      disabled
+                    >
+                      ✓ Responding
+                    </Button>
+                  ) : (
+                    <Button 
+                      size="sm" 
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => handleRespond(selectedEmergencyData.id)}
+                      disabled={respondToAlert.isPending}
+                    >
+                      <Users className="h-4 w-4 mr-1" />
+                      I can help
+                    </Button>
+                  )}
                   <Button 
                     size="sm" 
                     variant="outline" 

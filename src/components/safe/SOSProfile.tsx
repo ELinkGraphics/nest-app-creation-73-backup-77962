@@ -3,14 +3,17 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Star, Trophy, Users, Clock, MapPin, Award, TrendingUp, Heart, Shield, Search, Car, Zap, Target, Medal, Crown, Gem, UserPlus } from 'lucide-react';
+import { Star, Trophy, Users, Clock, MapPin, Award, TrendingUp, Heart, Shield, Search, Car, Zap, Target, Medal, Crown, Gem, UserPlus, Flame, Tornado, AlertTriangle } from 'lucide-react';
 import { useHelperProfile } from '@/hooks/useHelperProfile';
 import { useUser } from '@/contexts/UserContext';
 import { HelperOnboarding } from './HelperOnboarding';
+import { useRecentHelperActivity } from '@/hooks/useRecentHelperActivity';
+import { formatDistanceToNow } from 'date-fns';
 
 export const SOSProfile: React.FC = () => {
   const { user } = useUser();
   const { helperProfile, isLoading } = useHelperProfile(user?.id);
+  const { data: recentActivity = [], isLoading: activityLoading } = useRecentHelperActivity(user?.id);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Calculate badge and next badge based on completion count
@@ -70,55 +73,6 @@ export const SOSProfile: React.FC = () => {
     completionRate: helperProfile?.completion_count > 0 
       ? Math.round((helperProfile.completion_count / helperProfile.response_count) * 100)
       : 0,
-  };
-
-  const recentActivity = [
-    {
-      id: 1,
-      action: 'Helped with medical emergency',
-      time: '2 hours ago',
-      stars: 3,
-      location: 'Downtown Plaza',
-      type: 'medical',
-      icon: Heart
-    },
-    {
-      id: 2,
-      action: 'Responded to safety alert',
-      time: '1 day ago',
-      stars: 2,
-      location: 'Park Avenue',
-      type: 'safety',
-      icon: Shield
-    },
-    {
-      id: 3,
-      action: 'Assisted lost person',
-      time: '3 days ago',
-      stars: 2,
-      location: 'Shopping Center',
-      type: 'lost',
-      icon: Search
-    },
-    {
-      id: 4,
-      action: 'Provided traffic accident help',
-      time: '1 week ago',
-      stars: 3,
-      location: 'Main Street',
-      type: 'accident',
-      icon: Car
-    }
-  ];
-
-  const getActivityIcon = (type: string) => {
-    const icons = {
-      medical: '🏥',
-      safety: '🛡️',
-      lost: '🔍',
-      accident: '🚗'
-    };
-    return icons[type as keyof typeof icons] || '🚨';
   };
 
   const achievements = [
@@ -316,32 +270,52 @@ export const SOSProfile: React.FC = () => {
           <Clock className="h-4 w-4 text-gray-500" />
           Recent Activity
         </h3>
-        <div className="space-y-3">
-          {recentActivity.map((activity) => {
-            const IconComponent = activity.icon;
-            return (
-              <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="p-2 bg-white rounded-lg shadow-sm border">
-                  <IconComponent className="h-5 w-5 text-gray-600" />
-                </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-gray-500">{activity.time}</span>
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3 text-gray-400" />
-                    <span className="text-xs text-gray-500">{activity.location}</span>
+        {activityLoading ? (
+          <div className="text-sm text-muted-foreground text-center py-4">Loading activity...</div>
+        ) : recentActivity.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-8">
+            No activity yet. Start helping to see your history here!
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recentActivity.map((activity: any) => {
+              const getIcon = (type: string) => {
+                const icons = {
+                  medical: Heart,
+                  safety: Shield,
+                  fire: Flame,
+                  accident: Car,
+                  natural: Tornado,
+                };
+                return icons[type as keyof typeof icons] || AlertTriangle;
+              };
+              const IconComponent = getIcon(activity.type);
+              
+              return (
+                <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="p-2 bg-white rounded-lg shadow-sm border">
+                    <IconComponent className="h-5 w-5 text-gray-600" />
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{activity.action}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-gray-500">
+                        {formatDistanceToNow(new Date(activity.time), { addSuffix: true })}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-gray-400" />
+                        <span className="text-xs text-gray-500">{activity.location}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Badge className="bg-green-100 text-green-700 border-green-200">
+                    Completed
+                  </Badge>
                 </div>
-              </div>
-                <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-200">
-                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                  <span className="text-sm font-medium text-yellow-700">+{activity.stars}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </Card>
 
       {/* Weekly Challenge */}

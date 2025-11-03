@@ -156,5 +156,6 @@ export const useSOSHelpers = (alertId?: string) => {
     respondToAlert,
     updateHelperLocation,
     completeHelp,
+    checkExistingResponse,
   };
 };

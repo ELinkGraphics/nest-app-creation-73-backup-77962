@@ -11,7 +11,7 @@ import { useSOSAlerts } from '@/hooks/useSOSAlerts';
 import { useSOSHelpers } from '@/hooks/useSOSHelpers';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 
 export const SOSNearbyView: React.FC = () => {
@@ -287,8 +287,11 @@ export const SOSNearbyView: React.FC = () => {
       {/* Messaging Dialog */}
       <Dialog open={showMessaging} onOpenChange={setShowMessaging}>
         <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Emergency Messages</DialogTitle>
+          </DialogHeader>
           {selectedAlertId && (
-            <SOSMessaging 
+            <SOSMessaging
               alertId={selectedAlertId} 
               onClose={() => setShowMessaging(false)}
             />

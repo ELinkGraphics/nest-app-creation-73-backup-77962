@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SOSMessaging } from './SOSMessaging';
 
 interface SOSMapInteractiveProps {
@@ -423,8 +423,11 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
       {/* Messaging Dialog */}
       <Dialog open={showMessaging} onOpenChange={setShowMessaging}>
         <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Emergency Messages</DialogTitle>
+          </DialogHeader>
           {selectedEmergency && (
-            <SOSMessaging 
+            <SOSMessaging
               alertId={selectedEmergency} 
               onClose={() => setShowMessaging(false)}
             />

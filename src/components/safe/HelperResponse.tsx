@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { SOSMessaging } from './SOSMessaging';
 import { HelperOnboarding } from './HelperOnboarding';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const HELPER_SKILLS = [
   'First Aid Certified',
@@ -328,8 +328,11 @@ export const HelperResponse: React.FC = () => {
       {/* Messaging Dialog */}
       <Dialog open={showMessaging} onOpenChange={setShowMessaging}>
         <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Emergency Messages</DialogTitle>
+          </DialogHeader>
           {selectedAlertId && (
-            <SOSMessaging 
+            <SOSMessaging
               alertId={selectedAlertId} 
               onClose={() => setShowMessaging(false)}
             />

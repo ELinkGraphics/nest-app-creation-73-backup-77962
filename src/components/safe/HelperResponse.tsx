@@ -7,11 +7,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { MapPin, Clock, MessageCircle, Phone, Star, Navigation, UserPlus } from 'lucide-react';
 import { useHelperProfile } from '@/hooks/useHelperProfile';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { useSOSHelpers } from '@/hooks/useSOSHelpers';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { SOSMessaging } from './SOSMessaging';
 import { HelperOnboarding } from './HelperOnboarding';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CheckCircle } from 'lucide-react';
 
 const HELPER_SKILLS = [
   'First Aid Certified',
@@ -40,6 +42,9 @@ export const HelperResponse: React.FC = () => {
     updateLocation,
     updateSkills,
   } = useHelperProfile(userId || undefined);
+  
+  const activeResponse = activeResponses[0];
+  const { markAsArrived, completeHelp } = useSOSHelpers(activeResponse?.alert_id || '');
 
   // Get current user
   useEffect(() => {
@@ -210,7 +215,7 @@ export const HelperResponse: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Button 
                     size="sm" 
                     variant="outline"
@@ -221,14 +226,6 @@ export const HelperResponse: React.FC = () => {
                   >
                     <MessageCircle className="h-4 w-4 mr-1" />
                     Message
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => window.location.href = `tel:911`}
-                  >
-                    <Phone className="h-4 w-4 mr-1" />
-                    Call
                   </Button>
                   <Button 
                     size="sm" 
@@ -245,6 +242,35 @@ export const HelperResponse: React.FC = () => {
                     <Navigation className="h-4 w-4 mr-1" />
                     Navigate
                   </Button>
+                </div>
+
+                {/* Status Action Buttons */}
+                <div className="flex gap-2 mt-2">
+                  {response.status === 'responding' && (
+                    <Button 
+                      size="sm" 
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      onClick={() => markAsArrived.mutate({ helperId: response.id })}
+                      disabled={markAsArrived.isPending}
+                    >
+                      <MapPin className="h-4 w-4 mr-1" />
+                      Mark as Arrived
+                    </Button>
+                  )}
+                  {response.status === 'arrived' && (
+                    <Button 
+                      size="sm" 
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      onClick={() => completeHelp.mutate({ 
+                        alertId: response.alert_id, 
+                        helperId: response.id 
+                      })}
+                      disabled={completeHelp.isPending}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Complete Help
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>

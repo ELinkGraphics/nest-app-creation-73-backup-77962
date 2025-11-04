@@ -317,9 +317,23 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
                     <h3 className="font-semibold text-gray-900">
                       {selectedEmergencyData.profiles?.name || 'Anonymous'}
                     </h3>
-                    <Badge className={`${getUrgencyColor(selectedEmergencyData.urgency)} text-white text-xs mt-1`}>
-                      {selectedEmergencyData.urgency} priority
-                    </Badge>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge className={`${getUrgencyColor(selectedEmergencyData.urgency)} text-white text-xs`}>
+                        {selectedEmergencyData.urgency} priority
+                      </Badge>
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs ${
+                          selectedEmergencyData.status === 'active' 
+                            ? 'bg-red-50 text-red-700 border-red-200' 
+                            : selectedEmergencyData.status === 'responding'
+                            ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                            : 'bg-green-50 text-green-700 border-green-200'
+                        }`}
+                      >
+                        {selectedEmergencyData.status}
+                      </Badge>
+                    </div>
                   </div>
                   <span className="text-xs text-gray-500">
                     {formatDistanceToNow(new Date(selectedEmergencyData.created_at), { addSuffix: true })}

@@ -108,23 +108,67 @@ export const useSOSHelpers = (alertId?: string) => {
   });
 
   const completeHelp = useMutation({
-    mutationFn: async (helperId: string) => {
-      const { data, error } = await supabase
+    mutationFn: async ({ alertId, helperId }: { alertId: string; helperId: string }) => {
+      const { error } = await supabase
         .from('sos_helpers')
-        .update({
-          status: 'completed',
+        .update({ 
           completed_at: new Date().toISOString(),
+          status: 'completed'
         })
-        .eq('id', helperId)
-        .select()
-        .single();
+        .eq('id', helperId);
 
       if (error) throw error;
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sos-helpers'] });
+      queryClient.invalidateQueries({ queryKey: ['sos-alerts'] });
       toast.success('Help marked as completed');
+    },
+    onError: (error) => {
+      console.error('Error completing help:', error);
+      toast.error('Failed to mark help as completed');
+    },
+  });
+
+  const markAsArrived = useMutation({
+    mutationFn: async ({ helperId }: { helperId: string }) => {
+      const { error } = await supabase
+        .from('sos_helpers')
+        .update({ 
+          arrived_at: new Date().toISOString(),
+          status: 'arrived'
+        })
+        .eq('id', helperId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sos-helpers'] });
+      queryClient.invalidateQueries({ queryKey: ['sos-alerts'] });
+      toast.success('Marked as arrived at scene');
+    },
+    onError: (error) => {
+      console.error('Error marking as arrived:', error);
+      toast.error('Failed to update status');
+    },
+  });
+
+  const updateHelperStatus = useMutation({
+    mutationFn: async ({ helperId, status }: { helperId: string; status: string }) => {
+      const { error } = await supabase
+        .from('sos_helpers')
+        .update({ status })
+        .eq('id', helperId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sos-helpers'] });
+      queryClient.invalidateQueries({ queryKey: ['sos-alerts'] });
+    },
+    onError: (error) => {
+      console.error('Error updating helper status:', error);
+      toast.error('Failed to update status');
     },
   });
 
@@ -156,6 +200,8 @@ export const useSOSHelpers = (alertId?: string) => {
     respondToAlert,
     updateHelperLocation,
     completeHelp,
+    markAsArrived,
+    updateHelperStatus,
     checkExistingResponse,
   };
 };

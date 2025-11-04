@@ -150,8 +150,12 @@ export const SOSEmergencyView: React.FC = () => {
   };
 
   const handleSOSPress = (type: string) => {
-    triggerHaptic('heavy');
-    navigate(`/sos/${type}`);
+    const sosType = sosTypes.find(t => t.id === type);
+    if (sosType) {
+      triggerHaptic('heavy');
+      setSelectedSOSType(type);
+      setShowCreateModal(true);
+    }
   };
 
 

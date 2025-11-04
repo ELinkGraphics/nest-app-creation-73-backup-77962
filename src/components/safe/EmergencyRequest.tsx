@@ -31,6 +31,32 @@ export const EmergencyRequest: React.FC = () => {
   const { latitude, longitude } = useGeolocation();
   const { user } = useUser();
 
+  // Update location every 10 seconds if live tracking is enabled
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const { data: alerts } = await supabase
+          .from('sos_alerts')
+          .select('id, share_live_location')
+          .eq('user_id', session.user.id)
+          .eq('status', 'active')
+          .single();
+
+        if (alerts?.share_live_location && latitude && longitude) {
+          const intervalId = setInterval(() => {
+            updateAlertLocation(alerts.id, latitude, longitude);
+          }, 10000);
+
+          return () => clearInterval(intervalId);
+        }
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, [latitude, longitude, updateAlertLocation]);
+
   const handleSubmit = async () => {
     if (!selectedType || !description) {
       toast.error('Please select emergency type and provide description');
@@ -43,7 +69,7 @@ export const EmergencyRequest: React.FC = () => {
     }
 
     try {
-      const newAlert = await createAlert.mutateAsync({
+      await createAlert.mutateAsync({
         sos_type: selectedType,
         description,
         urgency,
@@ -52,27 +78,6 @@ export const EmergencyRequest: React.FC = () => {
         share_live_location: true,
         photo_urls: photos.length > 0 ? photos : undefined,
       });
-
-      // Start live location tracking if enabled
-      if (newAlert?.id && latitude && longitude) {
-        const locationInterval = setInterval(() => {
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                updateAlertLocation(
-                  newAlert.id,
-                  position.coords.latitude,
-                  position.coords.longitude
-                );
-              },
-              (error) => console.error('Location update error:', error)
-            );
-          }
-        }, 30000); // Update every 30 seconds
-
-        // Store interval ID for cleanup
-        (window as any).sosLocationInterval = locationInterval;
-      }
 
       // Reset form
       setSelectedType('');

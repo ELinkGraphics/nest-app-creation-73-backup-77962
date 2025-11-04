@@ -187,7 +187,7 @@ export const SOSNearbyView: React.FC = () => {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">
-                          {emergency.profiles?.full_name || 'Anonymous'}
+                          {emergency.profiles?.name || 'Anonymous'}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge className={getUrgencyColor(emergency.urgency)}>
@@ -195,6 +195,18 @@ export const SOSNearbyView: React.FC = () => {
                           </Badge>
                           <Badge variant="outline" className="text-xs capitalize">
                             {emergency.sos_type}
+                          </Badge>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${
+                              emergency.status === 'active' 
+                                ? 'bg-red-50 text-red-700 border-red-200' 
+                                : emergency.status === 'responding'
+                                ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                : 'bg-green-50 text-green-700 border-green-200'
+                            }`}
+                          >
+                            {emergency.status}
                           </Badge>
                         </div>
                       </div>

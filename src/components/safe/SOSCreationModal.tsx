@@ -6,13 +6,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { AlertTriangle, MapPin, Phone, Share2, Camera, Send, X, Heart, Shield, Search, Siren, Clock, Target, Users, User, Timer, AlertCircle, Baby, Bandage, Stethoscope, Home, Eye, UserX, Flame, Cloud, Car } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { AlertTriangle, MapPin, Phone, Share2, Camera, Send, X, Heart, Shield, Search, Siren, Clock, Target, Users, User, Timer, AlertCircle, Baby, Bandage, Stethoscope, Home, Eye, UserX, Flame, Cloud, Car, Info } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useSOSAlerts } from '@/hooks/useSOSAlerts';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
+import { compressImage, formatFileSize, getCompressionRatio } from '@/utils/imageCompression';
+import { LocationPrivacyModal } from './LocationPrivacyModal';
 
 interface SOSCreationModalProps {
   isOpen: boolean;
@@ -42,6 +45,9 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
   const [threatActive, setThreatActive] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [alertRadius, setAlertRadius] = useState(5); // km
   
   const { triggerHaptic } = useHapticFeedback();
   const { latitude, longitude, refreshLocation } = useGeolocation();
@@ -282,19 +288,31 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
     if (!files || !user) return;
 
     setIsUploading(true);
+    setUploadProgress(0);
     const uploadedUrls: string[] = [];
+    const totalFiles = Math.min(files.length, 3 - photos.length);
     
-    for (const file of Array.from(files)) {
-      if (photos.length + uploadedUrls.length >= 3) break;
+    for (let i = 0; i < totalFiles; i++) {
+      const file = files[i];
       
       try {
+        // Compress image
+        toast.info(`Compressing image ${i + 1}/${totalFiles}...`);
+        const { blob, originalSize, compressedSize } = await compressImage(file, 1200, 0.8);
+        
+        const compressionRatio = getCompressionRatio(originalSize, compressedSize);
+        toast.success(
+          `Compressed ${compressionRatio}%: ${formatFileSize(originalSize)} → ${formatFileSize(compressedSize)}`
+        );
+        
+        // Upload compressed image
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('sos-photos')
-          .upload(filePath, file, {
+          .upload(filePath, blob, {
             cacheControl: '3600',
             upsert: false
           });
@@ -306,15 +324,17 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
           .getPublicUrl(filePath);
 
         uploadedUrls.push(publicUrl);
+        setUploadProgress(((i + 1) / totalFiles) * 100);
         triggerHaptic('light');
       } catch (error) {
         console.error('Photo upload error:', error);
-        toast.error('Failed to upload photo');
+        toast.error(`Failed to upload photo ${i + 1}`);
       }
     }
 
     setPhotos([...photos, ...uploadedUrls]);
     setIsUploading(false);
+    setUploadProgress(0);
   };
 
   const removePhoto = (index: number) => {
@@ -339,11 +359,18 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
           <div className="bg-red-50 border border-red-200 rounded-lg p-3">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />
-              <div className="text-sm text-red-800">
+              <div className="text-sm text-red-800 flex-1">
                 <p className="font-medium">Emergency Alert</p>
                 <p className="text-xs">This will notify nearby helpers immediately.</p>
               </div>
             </div>
+            <button
+              onClick={() => setShowPrivacyModal(true)}
+              className="mt-2 text-xs text-blue-600 hover:text-blue-700 underline flex items-center gap-1"
+            >
+              <Info className="h-3 w-3" />
+              Who can see my location?
+            </button>
           </div>
 
           {/* Category-specific forms */}
@@ -419,7 +446,13 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
                   </div>
                 )}
                 {isUploading && (
-                  <div className="text-xs text-gray-500">Uploading photos...</div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600">Compressing and uploading...</span>
+                      <span className="text-gray-600">{Math.round(uploadProgress)}%</span>
+                    </div>
+                    <Progress value={uploadProgress} className="h-2" />
+                  </div>
                 )}
               </div>
               
@@ -823,6 +856,14 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
           </div>
         </div>
       </DialogContent>
+
+      {/* Location Privacy Modal */}
+      <LocationPrivacyModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        onSave={(radius) => setAlertRadius(radius)}
+        currentRadius={alertRadius}
+      />
     </Dialog>
   );
 };

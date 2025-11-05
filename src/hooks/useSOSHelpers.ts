@@ -75,10 +75,11 @@ export const useSOSHelpers = (alertId?: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sos-helpers'] });
       queryClient.invalidateQueries({ queryKey: ['sos-alerts'] });
-      toast.success('Response sent successfully');
+      queryClient.invalidateQueries({ queryKey: ['helper-profile'] });
     },
     onError: (error: Error) => {
-      toast.error(`Failed to respond: ${error.message}`);
+      // Errors are handled by caller with custom toasts
+      console.error('Failed to respond:', error);
     },
   });
 
@@ -172,22 +173,24 @@ export const useSOSHelpers = (alertId?: string) => {
     },
   });
 
-  // Set up realtime subscription for helpers
+  // Centralized realtime subscription  
   useEffect(() => {
-    const channel = supabase
-      .channel('sos_helpers_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'sos_helpers',
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['sos-helpers'] });
-        }
-      )
-      .subscribe();
+    const channel = supabase.channel('sos-helpers-realtime');
+
+    channel.on(
+      'postgres_changes' as any,
+      {
+        event: '*',
+        schema: 'public',
+        table: 'sos_helpers',
+      },
+      () => {
+        queryClient.invalidateQueries({ queryKey: ['sos-helpers'] });
+        queryClient.invalidateQueries({ queryKey: ['helper-profile'] });
+      }
+    );
+
+    channel.subscribe();
 
     return () => {
       supabase.removeChannel(channel);

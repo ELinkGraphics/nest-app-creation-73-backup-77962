@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin, Clock, MessageCircle, Phone, Star, Navigation, UserPlus } from 'lucide-react';
+import { MapPin, Clock, MessageCircle, Phone, Star, Navigation, UserPlus, CheckCircle } from 'lucide-react';
 import { useHelperProfile } from '@/hooks/useHelperProfile';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useSOSHelpers } from '@/hooks/useSOSHelpers';
@@ -13,7 +13,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { SOSMessaging } from './SOSMessaging';
 import { HelperOnboarding } from './HelperOnboarding';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const HELPER_SKILLS = [
   'First Aid Certified',
@@ -244,30 +244,78 @@ export const HelperResponse: React.FC = () => {
                   </Button>
                 </div>
 
+                {/* Status Progression Timeline */}
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className={`flex flex-col items-center gap-1 ${response.status === 'responding' || response.status === 'arrived' || response.status === 'completed' ? 'text-green-600' : 'text-gray-400'}`}>
+                      <div className={`h-8 w-8 rounded-full border-2 flex items-center justify-center ${response.status === 'responding' || response.status === 'arrived' || response.status === 'completed' ? 'border-green-600 bg-green-100' : 'border-gray-300'}`}>
+                        ✓
+                      </div>
+                      <span className="font-medium">Responded</span>
+                    </div>
+                    <div className={`flex-1 h-0.5 mx-2 ${response.status === 'arrived' || response.status === 'completed' ? 'bg-green-600' : 'bg-gray-300'}`} />
+                    <div className={`flex flex-col items-center gap-1 ${response.status === 'arrived' || response.status === 'completed' ? 'text-green-600' : 'text-gray-400'}`}>
+                      <div className={`h-8 w-8 rounded-full border-2 flex items-center justify-center ${response.status === 'arrived' || response.status === 'completed' ? 'border-green-600 bg-green-100' : 'border-gray-300'}`}>
+                        {response.status === 'arrived' || response.status === 'completed' ? '✓' : '2'}
+                      </div>
+                      <span className="font-medium">Arrived</span>
+                    </div>
+                    <div className={`flex-1 h-0.5 mx-2 ${response.status === 'completed' ? 'bg-green-600' : 'bg-gray-300'}`} />
+                    <div className={`flex flex-col items-center gap-1 ${response.status === 'completed' ? 'text-green-600' : 'text-gray-400'}`}>
+                      <div className={`h-8 w-8 rounded-full border-2 flex items-center justify-center ${response.status === 'completed' ? 'border-green-600 bg-green-100' : 'border-gray-300'}`}>
+                        {response.status === 'completed' ? '✓' : '3'}
+                      </div>
+                      <span className="font-medium">Completed</span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Status Action Buttons */}
                 <div className="flex gap-2 mt-2">
                   {response.status === 'responding' && (
                     <Button 
                       size="sm" 
-                      className="flex-1 bg-blue-600 hover:bg-blue-700"
-                      onClick={() => markAsArrived.mutate({ helperId: response.id })}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                      onClick={() => markAsArrived.mutate(
+                        { helperId: response.id },
+                        {
+                          onSuccess: () => {
+                            toast.success('Marked as arrived', { icon: '✓' });
+                          },
+                        }
+                      )}
                       disabled={markAsArrived.isPending}
                     >
-                      <MapPin className="h-4 w-4 mr-1" />
+                      {markAsArrived.isPending ? (
+                        <div className="h-4 w-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <MapPin className="h-4 w-4 mr-1" />
+                      )}
                       Mark as Arrived
                     </Button>
                   )}
                   {response.status === 'arrived' && (
                     <Button 
                       size="sm" 
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                      onClick={() => completeHelp.mutate({ 
-                        alertId: response.alert_id, 
-                        helperId: response.id 
-                      })}
+                      className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                      onClick={() => completeHelp.mutate(
+                        { 
+                          alertId: response.alert_id, 
+                          helperId: response.id 
+                        },
+                        {
+                          onSuccess: () => {
+                            toast.success('Help completed successfully', { icon: '✓' });
+                          },
+                        }
+                      )}
                       disabled={completeHelp.isPending}
                     >
-                      <CheckCircle className="h-4 w-4 mr-1" />
+                      {completeHelp.isPending ? (
+                        <div className="h-4 w-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                      )}
                       Complete Help
                     </Button>
                   )}

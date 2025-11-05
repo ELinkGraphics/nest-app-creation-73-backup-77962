@@ -373,11 +373,15 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
                   ) : (
                     <Button 
                       size="sm" 
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                       onClick={() => handleRespond(selectedEmergencyData.id)}
                       disabled={respondToAlert.isPending}
                     >
-                      <Users className="h-4 w-4 mr-1" />
+                      {respondToAlert.isPending ? (
+                        <div className="h-4 w-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Users className="h-4 w-4 mr-1" />
+                      )}
                       I can help
                     </Button>
                   )}

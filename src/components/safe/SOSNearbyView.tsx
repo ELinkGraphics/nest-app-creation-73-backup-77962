@@ -102,19 +102,48 @@ export const SOSNearbyView: React.FC = () => {
       return;
     }
     
-    respondToAlert.mutate({
-      alert_id: alertId,
-      current_lat: latitude,
-      current_lng: longitude,
-    });
+    respondToAlert.mutate(
+      {
+        alert_id: alertId,
+        current_lat: latitude,
+        current_lng: longitude,
+      },
+      {
+        onSuccess: () => {
+          toast.success('Response sent! Stay safe.', {
+            icon: '✓',
+            duration: 3000,
+          });
+          // Add to user responses immediately for better UX
+          setUserResponses(prev => new Set(prev).add(alertId));
+        },
+        onError: () => {
+          toast.error('Failed to send response. Please try again.');
+        },
+      }
+    );
   };
 
   const handleResolveAlert = async (alertId: string) => {
-    updateAlertStatus.mutate({ alertId, status: 'resolved' });
+    updateAlertStatus.mutate(
+      { alertId, status: 'resolved' },
+      {
+        onSuccess: () => {
+          toast.success('Emergency resolved successfully', { icon: '✓' });
+        },
+      }
+    );
   };
 
   const handleCancelAlert = async (alertId: string) => {
-    updateAlertStatus.mutate({ alertId, status: 'cancelled' });
+    updateAlertStatus.mutate(
+      { alertId, status: 'cancelled' },
+      {
+        onSuccess: () => {
+          toast.success('Alert cancelled', { icon: '✓' });
+        },
+      }
+    );
   };
 
   const handleNavigate = (lat: number, lng: number) => {
@@ -176,14 +205,14 @@ export const SOSNearbyView: React.FC = () => {
             activeEmergencies.map((emergency) => (
               <Card key={emergency.id} className="p-4 border-l-4 border-l-red-500">
                 <div className="space-y-3">
-                  {/* Header */}
+                   {/* Header */}
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className="relative">
                         <div className={`h-12 w-12 rounded-xl ${getTypeColor(emergency.sos_type)} shadow-lg flex items-center justify-center text-white backdrop-blur-sm`}>
                           {React.createElement(getTypeIcon(emergency.sos_type), { className: "h-6 w-6" })}
                         </div>
-                        <div className={`absolute -top-1 -right-1 h-4 w-4 ${getUrgencyDot(emergency.urgency)} rounded-full border-2 border-white shadow-sm`} />
+                        <div className={`absolute -top-1 -right-1 h-4 w-4 ${getUrgencyDot(emergency.urgency)} rounded-full border-2 border-white shadow-sm ${emergency.urgency === 'high' ? 'animate-pulse' : ''}`} />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">
@@ -211,9 +240,14 @@ export const SOSNearbyView: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                      <Clock className="h-3 w-3" />
-                      {formatDistanceToNow(new Date(emergency.created_at), { addSuffix: true })}
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Clock className="h-3 w-3" />
+                        {formatDistanceToNow(new Date(emergency.created_at), { addSuffix: true })}
+                      </div>
+                      {(Date.now() - new Date(emergency.created_at).getTime()) < 5 * 60 * 1000 && (
+                        <Badge className="bg-red-500 text-white text-xs animate-pulse">NEW</Badge>
+                      )}
                     </div>
                   </div>
 
@@ -264,11 +298,15 @@ export const SOSNearbyView: React.FC = () => {
                     <div className="flex gap-2">
                       <Button 
                         size="sm" 
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                         onClick={() => handleResolveAlert(emergency.id)}
                         disabled={updateAlertStatus.isPending}
                       >
-                        <CheckCircle className="h-4 w-4 mr-1" />
+                        {updateAlertStatus.isPending ? (
+                          <div className="h-4 w-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                        )}
                         Mark Resolved
                       </Button>
                       <Button 
@@ -295,11 +333,15 @@ export const SOSNearbyView: React.FC = () => {
                       ) : (
                         <Button 
                           size="sm" 
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                           onClick={() => handleRespond(emergency.id)}
                           disabled={respondToAlert.isPending || !latitude || !longitude}
                         >
-                          <Users className="h-4 w-4 mr-1" />
+                          {respondToAlert.isPending ? (
+                            <div className="h-4 w-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Users className="h-4 w-4 mr-1" />
+                          )}
                           I can help
                         </Button>
                       )}

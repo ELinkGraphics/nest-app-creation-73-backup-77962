@@ -41,10 +41,16 @@ const Safe: React.FC<SafeProps> = ({
         </div>
 
         <Tabs value={activeView} onValueChange={value => setActiveView(value as any)} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mx-auto max-w-sm mt-4">
-            <TabsTrigger value="sos" className="text-xs">SOS</TabsTrigger>
-            <TabsTrigger value="nearby" className="text-xs">Nearby</TabsTrigger>
-            <TabsTrigger value="profile" className="text-xs">Profile</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mx-auto max-w-sm mt-4 sticky top-0 z-10 bg-background">
+            <TabsTrigger value="sos" className="text-xs data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
+              SOS
+            </TabsTrigger>
+            <TabsTrigger value="nearby" className="text-xs data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
+              Nearby
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="text-xs data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
+              Profile
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="sos" className="mt-4">

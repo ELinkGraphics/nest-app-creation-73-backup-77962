@@ -1,8 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useRecentHelperActivity = (userId?: string) => {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ['helper-recent-activity', userId],
     queryFn: async () => {
       if (!userId) return [];
@@ -39,4 +42,31 @@ export const useRecentHelperActivity = (userId?: string) => {
     },
     enabled: !!userId,
   });
+
+  // Set up realtime subscription for sos_helpers updates
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel('helper_activity_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sos_helpers',
+          filter: `helper_user_id=eq.${userId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['helper-recent-activity', userId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, queryClient]);
+
+  return query;
 };

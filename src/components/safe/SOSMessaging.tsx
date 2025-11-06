@@ -168,10 +168,11 @@ export const SOSMessaging: React.FC<SOSMessagingProps> = ({ alertId, onClose }) 
               );
             }
 
-            const isRequester = message.sender_user_id === alertData?.user_id;
+            const isRequester = message.sender_id === alertData?.user_id;
+            const isCurrentUser = message.sender_id === currentUserId;
             
             return (
-              <div key={message.id} className="flex gap-3">
+              <div key={message.id} className={`flex gap-3 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
                 <Avatar className="h-8 w-8 flex-shrink-0">
                   <AvatarImage src={profile?.avatar_url} />
                   <AvatarFallback 
@@ -183,10 +184,10 @@ export const SOSMessaging: React.FC<SOSMessagingProps> = ({ alertId, onClose }) 
                     {profile?.initials || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <div className="flex-1 min-w-0 max-w-[70%]">
+                  <div className={`flex items-center gap-2 mb-1 flex-wrap ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
                     <span className="text-sm font-medium text-gray-900">
-                      {profile?.name || 'User'}
+                      {isCurrentUser ? 'You' : (profile?.name || 'User')}
                     </span>
                     {isRequester && (
                       <Badge className="bg-red-100 text-red-700 text-xs h-5">Requester</Badge>
@@ -200,7 +201,11 @@ export const SOSMessaging: React.FC<SOSMessagingProps> = ({ alertId, onClose }) 
                       })}
                     </span>
                   </div>
-                  <div className="bg-gray-100 text-gray-900 text-sm px-3 py-2 rounded-lg">
+                  <div className={`text-sm px-3 py-2 rounded-lg ${
+                    isCurrentUser 
+                      ? 'bg-blue-600 text-white rounded-tr-sm' 
+                      : 'bg-gray-100 text-gray-900 rounded-tl-sm'
+                  }`}>
                     {message.message_text}
                   </div>
                 </div>

@@ -224,6 +224,7 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
   const handleSubmit = async () => {
     if (!isFormValid()) return;
     
+    setIsSubmitting(true);
     triggerHaptic('success');
     
     const newAlert = await createAlert.mutateAsync({
@@ -276,6 +277,7 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
     setConsciousLevel('');
     setUrgency('high');
     setPhotos([]);
+    setIsSubmitting(false);
   };
 
   const handleEmergencyCall = () => {
@@ -344,15 +346,19 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md mx-auto">
+      <DialogContent className="max-w-md mx-auto" aria-describedby="sos-modal-description">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-lg">
             <div className={`p-2 rounded-lg ${currentType.color} bg-opacity-10`}>
-              <currentType.icon className={`h-6 w-6 ${currentType.color}`} />
+              <currentType.icon className={`h-6 w-6 ${currentType.color}`} aria-hidden="true" />
             </div>
             {currentType.label}
           </DialogTitle>
         </DialogHeader>
+
+        <p id="sos-modal-description" className="sr-only">
+          Create a new SOS alert for {sosType} emergency. Fill out the form below to send an alert to nearby helpers.
+        </p>
 
         <div className="space-y-4">
           {/* Warning Alert */}

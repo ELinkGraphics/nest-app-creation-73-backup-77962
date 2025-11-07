@@ -62,7 +62,10 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
         sellerType: 'personal'
       });
       toast.success('Personal seller account created!');
-      onClose();
+      // Wait a bit for the query to invalidate and refetch
+      setTimeout(() => {
+        onClose();
+      }, 500);
     } catch (error) {
       toast.error('Failed to create seller account');
     }
@@ -87,7 +90,10 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
         businessLicenseUrl: businessLicense || undefined
       });
       toast.success('Shop account created! Pending verification.');
-      onClose();
+      // Wait a bit for the query to invalidate and refetch
+      setTimeout(() => {
+        onClose();
+      }, 500);
     } catch (error) {
       toast.error('Failed to create shop account');
     }

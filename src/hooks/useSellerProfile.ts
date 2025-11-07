@@ -49,7 +49,7 @@ export const useSellerProfile = (userId?: string) => {
         .from('seller_profiles')
         .select('user_id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       const updateData: any = {
         business_name: data.businessName,
@@ -93,6 +93,7 @@ export const useSellerProfile = (userId?: string) => {
       }
     },
     onSuccess: () => {
+      // Invalidate both without userId and with userId
       queryClient.invalidateQueries({ queryKey: ['seller-profile'] });
       toast.success('Seller profile updated!');
     },

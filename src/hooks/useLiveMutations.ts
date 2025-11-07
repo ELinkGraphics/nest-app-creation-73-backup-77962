@@ -99,6 +99,13 @@ export const useLiveMutations = () => {
 
       if (error) throw error;
 
+      // Delete the live story silently
+      await (supabase as any)
+        .from('stories')
+        .delete()
+        .eq('live_stream_id', streamId)
+        .eq('user_id', user.id);
+
       toast.success('Live stream ended');
       queryClient.invalidateQueries({ queryKey: ['live-streams'] });
     } catch (error: any) {

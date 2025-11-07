@@ -21,16 +21,16 @@ const categories = [
 
 export const ShopCategories: React.FC<ShopCategoriesProps> = ({ selected, onSelect }) => {
   return (
-    <ScrollArea className="w-full whitespace-nowrap">
-      <div className="flex gap-2 pb-2">
+    <ScrollArea className="w-full whitespace-nowrap scrollbar-hide">
+      <div className="flex gap-2.5 pb-2">
         {categories.map((category) => (
           <Badge
             key={category.id}
             variant={selected === category.id ? "default" : "secondary"}
-            className="cursor-pointer hover:bg-primary/90 transition-colors shrink-0 px-3 py-1.5"
+            className="cursor-pointer touch-target active:scale-95 transition-all shrink-0 px-4 py-2 text-sm font-medium"
             onClick={() => onSelect(category.id)}
           >
-            <span className="mr-1">{category.icon}</span>
+            <span className="mr-1.5 text-base">{category.icon}</span>
             {category.label}
           </Badge>
         ))}

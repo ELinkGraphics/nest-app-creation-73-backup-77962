@@ -28,17 +28,17 @@ const Shop: React.FC<ShopProps> = ({ activeTab, onTabSelect, onOpenCreate }) => 
   const { openCart, getCartCount } = useCart();
 
   return (
-    <div className="min-h-[100dvh] mx-auto bg-white text-foreground selection:bg-secondary/40 max-w-[480px] relative border-l border-r border-gray-200 font-sans" data-testid="shop-page">
+    <div className="min-h-[100dvh] mx-auto bg-background text-foreground selection:bg-secondary/40 max-w-[480px] relative border-l border-r border-border/20 font-sans safe-area-bottom" data-testid="shop-page">
       <InstallPrompt />
-      <div className="relative">
+      <div className="relative safe-area-top">
         <Header 
           onNotifications={() => alert("Notifications")}
           onMessages={() => alert("Messages")}
         />
       </div>
       
-      <main className="pb-24">
-        <div className="p-4 space-y-4">
+      <main className="pb-28 safe-area-bottom">
+        <div className="mobile-px mobile-py space-y-4">
           <ShopSearch 
             value={searchQuery}
             onChange={setSearchQuery}
@@ -50,7 +50,9 @@ const Shop: React.FC<ShopProps> = ({ activeTab, onTabSelect, onOpenCreate }) => 
           />
         </div>
         
-        <TrendingItemsCarousel />
+        <div className="mobile-px">
+          <TrendingItemsCarousel />
+        </div>
         
         <ShopFeed 
           searchQuery={searchQuery}
@@ -58,15 +60,15 @@ const Shop: React.FC<ShopProps> = ({ activeTab, onTabSelect, onOpenCreate }) => 
         />
       </main>
 
-      {/* Floating Cart Button */}
+      {/* Floating Cart Button - Touch-optimized */}
       <Button
         onClick={openCart}
-        className="fixed bottom-20 right-4 z-50 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 bg-primary hover:bg-primary/90"
+        className="fixed bottom-24 right-4 z-50 touch-target-large rounded-full shadow-elegant hover:shadow-glow transition-all duration-200 bg-primary hover:bg-primary/90 active:scale-95"
         size="icon"
       >
         <ShoppingCart className="h-6 w-6" />
         {getCartCount() > 0 && (
-          <Badge className="absolute -top-2 -right-2 min-w-[1.25rem] h-5 text-xs bg-red-500 text-white border-2 border-white">
+          <Badge className="absolute -top-1 -right-1 min-w-[1.5rem] h-6 flex items-center justify-center text-xs font-semibold bg-destructive text-destructive-foreground border-2 border-background">
             {getCartCount()}
           </Badge>
         )}

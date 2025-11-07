@@ -90,9 +90,9 @@ export const TrendingItemsCarousel: React.FC = () => {
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="h-4 w-4 text-primary" />
-        <h2 className="text-base font-semibold">Trending Today</h2>
-        <Badge variant="secondary" className="text-xs">Hot</Badge>
+        <TrendingUp className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-semibold">Trending Today</h2>
+        <Badge variant="secondary" className="text-xs font-medium px-2 py-0.5">Hot</Badge>
       </div>
       
       <Carousel
@@ -102,56 +102,59 @@ export const TrendingItemsCarousel: React.FC = () => {
         }}
         className="w-full"
       >
-        <CarouselContent className="-ml-2 md:-ml-4">
+        <CarouselContent className="-ml-2">
           {trendingItems.map((item) => (
-            <CarouselItem key={item.id} className="pl-2 md:pl-4 basis-[140px] md:basis-[160px]">
+            <CarouselItem key={item.id} className="pl-2 basis-[160px]">
               <Card 
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 bg-card/50 backdrop-blur-sm"
+                className="cursor-pointer active:shadow-lg transition-all duration-200 border border-border/40 bg-card"
                 onClick={() => handleItemClick(item.id)}
               >
-                <CardContent className="p-2">
-                  <div className="relative mb-2">
-                    <img
-                      src={item.images[0]}
-                      alt={item.title}
-                      className="w-full h-40 object-cover rounded-lg"
-                    />
+                <CardContent className="p-2.5">
+                  <div className="relative mb-2.5">
+                    <div className="aspect-square rounded-lg overflow-hidden">
+                      <img
+                        src={item.images[0]}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
                     {item.flashSale && (
-                      <Badge className="absolute top-2 left-2 bg-red-500 text-white text-xs">
+                      <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-xs font-semibold px-2 py-1">
                         Flash Sale
                       </Badge>
                     )}
-                    <div className="absolute bottom-2 right-2 flex gap-1">
+                    <div className="absolute bottom-2 right-2 flex gap-1.5">
                       <Button
                         size="sm"
-                        variant="ghost"
-                        className="h-5 w-5 p-0 bg-white hover:bg-white/90 text-primary"
+                        variant="secondary"
+                        className="h-8 w-8 p-0 rounded-full bg-background/90 hover:bg-background shadow-md backdrop-blur-sm touch-target active:scale-90 transition-transform"
                         onClick={(e) => handleLike(item.id, e)}
                       >
-                        <Heart className={`h-3 w-3 ${likedItems.has(item.id) ? 'fill-current text-red-500' : ''}`} />
+                        <Heart className={`h-4 w-4 ${likedItems.has(item.id) ? 'fill-current text-red-500' : 'text-foreground'}`} />
                       </Button>
                       <Button
                         size="sm"
-                        variant="ghost"
-                        className="h-5 w-5 p-0 rounded-full bg-white hover:bg-white/90 text-primary"
+                        variant="secondary"
+                        className="h-8 w-8 p-0 rounded-full bg-background/90 hover:bg-background shadow-md backdrop-blur-sm touch-target active:scale-90 transition-transform"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAddToCart(item);
                         }}
                       >
-                        <ShoppingCart className="h-3 w-3" />
+                        <ShoppingCart className="h-4 w-4 text-foreground" />
                       </Button>
                     </div>
                   </div>
                   
-                  <div className="space-y-1">
-                    <h3 className="font-medium text-xs line-clamp-1 leading-tight">
+                  <div className="space-y-1.5">
+                    <h3 className="font-medium text-sm line-clamp-2 leading-tight min-h-[2.5rem]">
                       {item.title}
                     </h3>
                     
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <span className="font-bold text-sm text-primary">
+                    <div className="flex items-baseline justify-between">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="font-bold text-base text-primary">
                           ${item.price}
                         </span>
                         {item.originalPrice && (
@@ -161,8 +164,8 @@ export const TrendingItemsCarousel: React.FC = () => {
                         )}
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Heart className={`h-2 w-2 ${likedItems.has(item.id) ? 'fill-current text-red-500' : 'fill-current'}`} />
-                        <span className="text-xs">{item.likes + (likedItems.has(item.id) ? 1 : 0)}</span>
+                        <Heart className={`h-3 w-3 ${likedItems.has(item.id) ? 'fill-current text-red-500' : 'fill-current'}`} />
+                        <span className="font-medium">{item.likes + (likedItems.has(item.id) ? 1 : 0)}</span>
                       </div>
                     </div>
                   </div>

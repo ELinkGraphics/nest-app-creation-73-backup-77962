@@ -64,19 +64,19 @@ export const ShopPostCard: React.FC<ShopPostCardProps> = ({
 
   return (
     <Card 
-      className="overflow-hidden border border-border/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      className="overflow-hidden border border-border/50 shadow-soft active:shadow-md transition-all cursor-pointer bg-card"
       onClick={handleCardClick}
     >
       {/* Seller Header */}
-      <div className="p-4 pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center text-white text-sm font-semibold">
+      <div className="mobile-px py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="h-11 w-11 shrink-0 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center text-primary-foreground text-sm font-semibold">
               {item.seller.name[0]}
             </div>
-            <div>
-              <p className="font-medium text-username">{item.seller.name}</p>
-              <p className="text-timestamp text-muted-foreground">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-sm truncate">{item.seller.name}</p>
+              <p className="text-xs text-muted-foreground">
                 {item.seller.rating}★ • {item.seller.followers} followers
               </p>
             </div>
@@ -88,7 +88,7 @@ export const ShopPostCard: React.FC<ShopPostCardProps> = ({
               e.stopPropagation();
               onFollowSeller(item.seller.id);
             }}
-            className="h-8 px-3"
+            className="touch-target shrink-0 px-4"
           >
             {item.seller.following ? 'Following' : 'Follow'}
           </Button>
@@ -96,19 +96,20 @@ export const ShopPostCard: React.FC<ShopPostCardProps> = ({
       </div>
 
       {/* Product Image */}
-      <div className="relative">
+      <div className="relative aspect-square">
         <img 
           src={item.images[0]} 
           alt={item.title}
-          className="w-full h-64 object-cover"
+          className="w-full h-full object-cover"
+          loading="lazy"
         />
         
         {/* Flash Sale Timer */}
         {item.flashSale && timeLeft !== null && timeLeft > 0 && (
           <div className="absolute top-3 left-3">
-            <Badge className="bg-red-500 text-white gap-1">
-              <Clock className="h-3 w-3" />
-              {formatTime(timeLeft)}
+            <Badge className="bg-destructive text-destructive-foreground gap-1.5 px-2.5 py-1">
+              <Clock className="h-3.5 w-3.5" />
+              <span className="font-semibold">{formatTime(timeLeft)}</span>
             </Badge>
           </div>
         )}
@@ -116,142 +117,130 @@ export const ShopPostCard: React.FC<ShopPostCardProps> = ({
         {/* Discount Badge */}
         {discountPercentage > 0 && (
           <div className="absolute top-3 right-3">
-            <Badge className="bg-green-500 text-white">
+            <Badge className="bg-success text-success-foreground font-semibold px-2.5 py-1">
               -{discountPercentage}%
             </Badge>
           </div>
         )}
-        
-        {/* Quick Buy Overlay */}
-        <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
-          <Button
-            onClick={() => onQuickBuy(item.id)}
-            className="bg-white text-black hover:bg-gray-100"
-            size="sm"
-          >
-            <Zap className="h-4 w-4 mr-2" />
-            Quick Buy
-          </Button>
-        </div>
       </div>
 
       {/* Product Details */}
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-post-title leading-tight">{item.title}</h3>
-          <div className="text-right">
-            <p className="font-bold text-post-content text-primary">${item.price}</p>
+      <div className="mobile-px mobile-py space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-semibold text-base leading-snug flex-1">{item.title}</h3>
+          <div className="text-right shrink-0">
+            <p className="font-bold text-lg text-primary">${item.price}</p>
             {item.originalPrice && (
-              <p className="text-timestamp text-muted-foreground line-through">
+              <p className="text-xs text-muted-foreground line-through">
                 ${item.originalPrice}
               </p>
             )}
           </div>
         </div>
         
-        <p className="text-muted-foreground text-post-content mb-3 line-clamp-2">
+        <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
           {item.description}
         </p>
 
         {/* Category and Stock */}
-        <div className="flex items-center gap-2 mb-3">
-          <Badge variant="secondary" className="text-badge">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="secondary" className="text-xs px-2.5 py-1">
             {item.category}
           </Badge>
           {item.stock <= 5 && (
-            <Badge variant="destructive" className="text-badge">
+            <Badge variant="destructive" className="text-xs px-2.5 py-1 font-medium">
               Only {item.stock} left!
             </Badge>
           )}
         </div>
 
-        {/* Social Actions */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
+        {/* Social Actions - Touch optimized */}
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-5">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onLike(item.id);
               }}
               className={cn(
-                "flex items-center gap-1 text-action-label transition-colors",
-                item.liked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
+                "flex items-center gap-1.5 text-sm transition-colors touch-target",
+                item.liked ? "text-red-500" : "text-muted-foreground active:text-red-500"
               )}
             >
-              <Heart className={cn("h-4 w-4", item.liked && "fill-current")} />
-              {item.likes}
+              <Heart className={cn("h-5 w-5", item.liked && "fill-current")} />
+              <span className="font-medium">{item.likes}</span>
             </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onShare(item.id);
               }}
-              className="flex items-center gap-1 text-action-label text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground active:text-foreground transition-colors touch-target"
             >
-              <Share2 className="h-4 w-4" />
-              {item.shares}
+              <Share2 className="h-5 w-5" />
+              <span className="font-medium">{item.shares}</span>
             </button>
             <button
               onClick={handleCardClick}
-              className="flex items-center gap-1 text-action-label text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground active:text-foreground transition-colors cursor-pointer touch-target"
             >
-              <MessageCircle className="h-4 w-4" />
-              {item.comments}
+              <MessageCircle className="h-5 w-5" />
+              <span className="font-medium">{item.comments}</span>
             </button>
           </div>
           
           {item.groupBuy && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Users className="h-3 w-3" />
-              {item.groupBuy.currentParticipants}/{item.groupBuy.minParticipants}
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Users className="h-4 w-4" />
+              <span className="font-medium">{item.groupBuy.currentParticipants}/{item.groupBuy.minParticipants}</span>
             </div>
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2">
+        {/* Action Buttons - Touch optimized */}
+        <div className="flex gap-2.5 pt-1">
           <Button
             onClick={(e) => {
               e.stopPropagation();
               onAddToCart(item.id);
             }}
             variant="outline"
-            className="flex-1"
-            size="sm"
+            className="flex-1 touch-target active:scale-95 transition-transform"
+            size="default"
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
-            Add to Cart
+            <span className="font-medium">Add to Cart</span>
           </Button>
           <Button
             onClick={(e) => {
               e.stopPropagation();
               onQuickBuy(item.id);
             }}
-            className="flex-1"
-            size="sm"
+            className="flex-1 touch-target active:scale-95 transition-transform"
+            size="default"
           >
             <Zap className="h-4 w-4 mr-2" />
-            Buy Now
+            <span className="font-medium">Buy Now</span>
           </Button>
         </div>
 
         {/* Group Buy Progress */}
         {item.groupBuy && (
-          <div className="mt-3 p-3 bg-muted rounded-lg">
-            <div className="flex justify-between text-xs mb-1">
-              <span>Group Buy Progress</span>
-              <span>{item.groupBuy.currentParticipants}/{item.groupBuy.minParticipants}</span>
+          <div className="p-3 bg-accent/30 rounded-xl border border-accent">
+            <div className="flex justify-between text-xs mb-2">
+              <span className="font-medium">Group Buy Progress</span>
+              <span className="font-semibold text-primary">{item.groupBuy.currentParticipants}/{item.groupBuy.minParticipants}</span>
             </div>
-            <div className="w-full bg-background rounded-full h-2">
+            <div className="w-full bg-background rounded-full h-2.5 overflow-hidden">
               <div 
-                className="bg-primary h-2 rounded-full transition-all"
+                className="bg-primary h-full rounded-full transition-all duration-500"
                 style={{ 
                   width: `${(item.groupBuy.currentParticipants / item.groupBuy.minParticipants) * 100}%` 
                 }}
               />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {item.groupBuy.minParticipants - item.groupBuy.currentParticipants} more needed for group discount!
+            <p className="text-xs text-muted-foreground mt-2">
+              <span className="font-medium text-foreground">{item.groupBuy.minParticipants - item.groupBuy.currentParticipants}</span> more needed for group discount!
             </p>
           </div>
         )}

@@ -10,18 +10,22 @@ interface ShopSearchProps {
 
 export const ShopSearch: React.FC<ShopSearchProps> = ({ value, onChange }) => {
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2.5">
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
         <Input
-          placeholder="Search products, sellers, or categories..."
+          placeholder="Search products..."
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="pl-10 pr-4"
+          className="pl-11 pr-4 h-11 text-base bg-muted/30 border-border/50 focus:bg-background transition-colors"
         />
       </div>
-      <Button variant="outline" size="icon">
-        <Filter className="h-4 w-4" />
+      <Button 
+        variant="outline" 
+        size="icon"
+        className="touch-target shrink-0 border-border/50"
+      >
+        <Filter className="h-5 w-5" />
       </Button>
     </div>
   );

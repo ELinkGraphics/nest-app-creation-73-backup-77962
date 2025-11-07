@@ -79,22 +79,23 @@ export const ShopFeed: React.FC<ShopFeedProps> = ({ searchQuery, category }) => 
   }
 
   return (
-    <div className="divide-y divide-border">
+    <div className="divide-y divide-border/50">
       {items.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <p>No items found</p>
+        <div className="text-center py-12 mobile-px">
+          <p className="text-muted-foreground text-base">No items found</p>
         </div>
       ) : (
         items.map((item) => (
-          <ShopPostCard
-            key={item.id}
-            item={item}
-            onLike={handleLike}
-            onShare={handleShare}
-            onQuickBuy={handleQuickBuy}
-            onAddToCart={handleAddToCart}
-            onFollowSeller={handleFollowSeller}
-          />
+          <div key={item.id} className="py-4">
+            <ShopPostCard
+              item={item}
+              onLike={handleLike}
+              onShare={handleShare}
+              onQuickBuy={handleQuickBuy}
+              onAddToCart={handleAddToCart}
+              onFollowSeller={handleFollowSeller}
+            />
+          </div>
         ))
       )}
     </div>

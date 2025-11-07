@@ -167,19 +167,19 @@ export const SOSEmergencyView: React.FC = () => {
   return (
     <div className={`px-2 sm:px-4 space-y-4 sm:space-y-6 ${highContrast ? 'bg-black text-white' : ''}`}>
       {/* Quick SOS Buttons */}
-      <Card className={`p-3 sm:p-6 ${highContrast ? 'bg-gray-900 border-white' : ''}`}>
-        <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
+      <Card className={`p-6 ${highContrast ? 'bg-gray-900 border-white' : ''}`}>
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-red-500" />
           Quick SOS Alert
         </h2>
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {sosTypes.map((type) => {
             const IconComponent = type.icon;
             return (
               <Button
                 key={type.id}
                 onClick={() => handleSOSPress(type.id)}
-                className={`${type.color} ${type.id === 'medical' ? 'text-gray-800' : 'text-white'} min-h-[88px] sm:h-20 flex flex-col items-center justify-center gap-1 sm:gap-2 font-semibold shadow-2xl transition-all transform active:scale-95 border-0 hover:shadow-[0_0_30px_rgba(239,68,68,0.6)] hover:scale-105 relative overflow-hidden heart-pulse touch-target`}
+                className={`${type.color} ${type.id === 'medical' ? 'text-gray-800' : 'text-white'} h-20 flex flex-col items-center justify-center gap-2 font-semibold shadow-2xl transition-all transform active:scale-95 border-0 hover:shadow-[0_0_30px_rgba(239,68,68,0.6)] hover:scale-105 relative overflow-hidden heart-pulse`}
                 style={{
                   boxShadow: type.id === 'emergency' 
                     ? '0 0 25px rgba(239, 68, 68, 0.5), 0 8px 32px rgba(0, 0, 0, 0.3)' 
@@ -191,10 +191,10 @@ export const SOSEmergencyView: React.FC = () => {
                 }}
                 aria-label={`Send ${type.label} SOS alert`}
               >
-                <div className={`p-1.5 sm:p-2 rounded-full backdrop-blur-sm shadow-lg ${type.id === 'medical' ? 'bg-red-500' : 'bg-white/30'}`}>
-                  <IconComponent className={`h-5 w-5 sm:h-6 sm:w-6 ${type.id === 'medical' ? 'text-white stroke-[3]' : ''}`} />
+                <div className={`p-2 rounded-full backdrop-blur-sm shadow-lg ${type.id === 'medical' ? 'bg-red-500' : 'bg-white/30'}`}>
+                  <IconComponent className={`h-6 w-6 ${type.id === 'medical' ? 'text-white stroke-[3]' : ''}`} />
                 </div>
-                <span className="text-[11px] sm:text-xs font-bold leading-tight">{type.label}</span>
+                <span className="text-xs font-bold">{type.label}</span>
               </Button>
             );
           })}

@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useShopItems } from '@/hooks/useShopItems';
+import { useShopItemMutations } from '@/hooks/useShopItemMutations';
 import { ShopPostCard } from './ShopPostCard';
-import { mockShopItems } from '../../data/shop';
-import { ShopItem } from '../../types/shop';
 import { useCart } from '../../contexts/CartContext';
-import { useToast } from '../../hooks/use-toast';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 
 interface ShopFeedProps {
   searchQuery: string;
@@ -11,31 +13,17 @@ interface ShopFeedProps {
 }
 
 export const ShopFeed: React.FC<ShopFeedProps> = ({ searchQuery, category }) => {
-  const [items, setItems] = useState<ShopItem[]>(mockShopItems);
-  const { addToCart, openCart, openCheckout } = useCart();
-  const { toast } = useToast();
-
-  // Filter items based on search and category
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = category === 'all' || item.category === category;
-    return matchesSearch && matchesCategory;
-  });
+  const { data: items = [], isLoading } = useShopItems({ searchQuery, category });
+  const { toggleLike } = useShopItemMutations();
+  const { addToCart, openCheckout } = useCart();
+  const navigate = useNavigate();
 
   const handleLike = (itemId: string) => {
-    setItems(prev => prev.map(item => 
-      item.id === itemId 
-        ? { ...item, liked: !item.liked, likes: item.liked ? item.likes - 1 : item.likes + 1 }
-        : item
-    ));
-    
     const item = items.find(i => i.id === itemId);
-    if (item) {
-      toast({
-        description: item.liked ? "Removed from favorites" : "Added to favorites ❤️",
-      });
-    }
+    if (!item) return;
+
+    toggleLike.mutate({ itemId, isLiked: item.liked });
+    toast.success(item.liked ? 'Removed from favorites' : 'Added to favorites');
   };
 
   const handleShare = async (itemId: string) => {
@@ -44,29 +32,20 @@ export const ShopFeed: React.FC<ShopFeedProps> = ({ searchQuery, category }) => 
 
     const shareData = {
       title: item.title,
-      text: `Check out this amazing ${item.title} for $${item.price}!`,
+      text: `Check out ${item.title} for $${item.price}!`,
       url: `${window.location.origin}/shop/product/${item.id}`
     };
 
     try {
       if (navigator.share) {
         await navigator.share(shareData);
-        toast({
-          description: "Shared successfully!",
-        });
+        toast.success('Shared successfully!');
       } else {
-        // Fallback: copy to clipboard
         await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-        toast({
-          description: "Link copied to clipboard!",
-        });
+        toast.success('Link copied to clipboard!');
       }
     } catch (error) {
       console.error('Error sharing:', error);
-      toast({
-        description: "Failed to share",
-        variant: "destructive"
-      });
     }
   };
 
@@ -75,10 +54,7 @@ export const ShopFeed: React.FC<ShopFeedProps> = ({ searchQuery, category }) => 
     if (item) {
       addToCart(item);
       openCheckout();
-      toast({
-        title: "Item added to cart",
-        description: `${item.title} has been added and checkout opened`,
-      });
+      toast.success(`${item.title} added to cart`);
     }
   };
 
@@ -86,39 +62,40 @@ export const ShopFeed: React.FC<ShopFeedProps> = ({ searchQuery, category }) => 
     const item = items.find(i => i.id === itemId);
     if (item) {
       addToCart(item);
-      toast({
-        title: "Added to cart",
-        description: `${item.title} has been added to your cart`,
-      });
+      toast.success(`${item.title} added to cart`);
     }
   };
 
   const handleFollowSeller = (sellerId: string) => {
-    setItems(prev => prev.map(item => 
-      item.seller.id === sellerId 
-        ? { ...item, seller: { ...item.seller, following: !item.seller.following } }
-        : item
-    ));
+    toast.info('Follow seller feature coming soon!');
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4">
-      {filteredItems.map((item) => (
-        <ShopPostCard
-          key={item.id}
-          item={item}
-          onLike={handleLike}
-          onShare={handleShare}
-          onQuickBuy={handleQuickBuy}
-          onAddToCart={handleAddToCart}
-          onFollowSeller={handleFollowSeller}
-        />
-      ))}
-      
-      {filteredItems.length === 0 && (
+    <div className="divide-y divide-border">
+      {items.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <p>No items found matching your criteria</p>
+          <p>No items found</p>
         </div>
+      ) : (
+        items.map((item) => (
+          <ShopPostCard
+            key={item.id}
+            item={item}
+            onLike={handleLike}
+            onShare={handleShare}
+            onQuickBuy={handleQuickBuy}
+            onAddToCart={handleAddToCart}
+            onFollowSeller={handleFollowSeller}
+          />
+        ))
       )}
     </div>
   );

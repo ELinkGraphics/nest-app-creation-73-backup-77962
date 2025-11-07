@@ -3252,6 +3252,10 @@ export type Database = {
         Args: { _circle_id: string; _user_id: string }
         Returns: boolean
       }
+      update_item_stock: {
+        Args: { item_id: string; quantity_sold: number }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

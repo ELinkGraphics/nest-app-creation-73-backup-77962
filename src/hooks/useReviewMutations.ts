@@ -35,6 +35,7 @@ export const useReviewMutations = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['product-reviews', variables.itemId] });
+      queryClient.invalidateQueries({ queryKey: ['shop-items'] });
       toast({
         title: "Review submitted!",
         description: "Thank you for your feedback.",

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Badge } from '../ui/badge';
-import { ScrollArea } from '../ui/scroll-area';
 
 interface ShopCategoriesProps {
   selected: string;
@@ -21,7 +20,7 @@ const categories = [
 
 export const ShopCategories: React.FC<ShopCategoriesProps> = ({ selected, onSelect }) => {
   return (
-    <ScrollArea className="w-full whitespace-nowrap scrollbar-hide">
+    <div className="w-full overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
       <div className="flex gap-2.5 pb-2">
         {categories.map((category) => (
           <Badge
@@ -35,6 +34,6 @@ export const ShopCategories: React.FC<ShopCategoriesProps> = ({ selected, onSele
           </Badge>
         ))}
       </div>
-    </ScrollArea>
+    </div>
   );
 };

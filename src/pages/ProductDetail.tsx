@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, Share2, Star, MessageCircle, MapPin, Shield, Truck, RotateCcw, Flag, Plus, Minus, Send } from 'lucide-react';
+import { ArrowLeft, Heart, Share2, Star, MessageCircle, MapPin, Shield, Truck, RotateCcw, Flag, Plus, Minus, Send, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,66 +13,15 @@ import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { useShopItems } from '@/hooks/useShopItems';
+import { useProductReviews } from '@/hooks/useProductReviews';
+import { useReviewMutations } from '@/hooks/useReviewMutations';
 import { Loader2 } from 'lucide-react';
-
-interface Review {
-  id: string;
-  user: {
-    name: string;
-    avatar: string;
-    verified: boolean;
-  };
-  rating: number;
-  comment: string;
-  timestamp: string;
-  helpful: number;
-  images?: string[];
-}
+import { supabase } from '@/integrations/supabase/client';
 
 const reviewSchema = z.object({
   rating: z.number().min(1, { message: "Please select a rating" }).max(5),
   comment: z.string().trim().min(10, { message: "Comment must be at least 10 characters" }).max(1000, { message: "Comment must be less than 1000 characters" })
 });
-
-const mockReviews: Review[] = [
-  {
-    id: '1',
-    user: {
-      name: 'Sarah Johnson',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-      verified: true
-    },
-    rating: 5,
-    comment: 'Excellent quality! Exactly as described. Fast shipping and great communication from the seller.',
-    timestamp: '2 days ago',
-    helpful: 12,
-    images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop']
-  },
-  {
-    id: '2',
-    user: {
-      name: 'Mike Chen',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-      verified: true
-    },
-    rating: 4,
-    comment: 'Good condition as stated. Minor wear but nothing major. Would buy from this seller again.',
-    timestamp: '1 week ago',
-    helpful: 8
-  },
-  {
-    id: '3',
-    user: {
-      name: 'Emma Wilson',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
-      verified: false
-    },
-    rating: 5,
-    comment: 'Amazing product! Better than expected. Highly recommend!',
-    timestamp: '2 weeks ago',
-    helpful: 15
-  }
-];
 
 import { type TabKey } from '@/hooks/useAppNav';
 
@@ -86,12 +35,16 @@ const ProductDetail: React.FC = () => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
+  const [reviewImages, setReviewImages] = useState<File[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [reviewErrors, setReviewErrors] = useState<{ rating?: string; comment?: string }>({});
   const [showReviewInput, setShowReviewInput] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
 
-  // Fetch shop items from database
+  // Fetch shop items and reviews from database
   const { data: items, isLoading } = useShopItems({});
+  const { data: reviews = [], isLoading: reviewsLoading } = useProductReviews(id || '');
+  const { createReview } = useReviewMutations();
 
   if (isLoading) {
     return (
@@ -116,9 +69,11 @@ const ProductDetail: React.FC = () => {
   }
 
   // Calculate average rating
-  const averageRating = mockReviews.reduce((acc, review) => acc + review.rating, 0) / mockReviews.length;
+  const averageRating = reviews.length > 0 
+    ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length 
+    : 0;
   const ratingCounts = [5, 4, 3, 2, 1].map(rating => 
-    mockReviews.filter(review => review.rating === rating).length
+    reviews.filter(review => review.rating === rating).length
   );
 
   // Get similar products
@@ -140,31 +95,53 @@ const ProductDetail: React.FC = () => {
     navigate('/cart');
   };
 
-  const handleSubmitReview = () => {
+  const handleSubmitReview = async () => {
     try {
-      // Reset errors
       setReviewErrors({});
       
-      // Validate the review data
       const validatedData = reviewSchema.parse({
         rating: reviewRating,
         comment: reviewComment
       });
       
-      // Here you would typically submit to your backend
-      console.log('Submitting review:', validatedData);
+      // Upload images if any
+      let imageUrls: string[] = [];
+      if (reviewImages.length > 0) {
+        setUploadingImages(true);
+        
+        for (const file of reviewImages) {
+          const fileName = `${Date.now()}-${file.name}`;
+          const { data, error } = await supabase.storage
+            .from('review-images')
+            .upload(fileName, file);
+          
+          if (error) throw error;
+          
+          const { data: { publicUrl } } = supabase.storage
+            .from('review-images')
+            .getPublicUrl(fileName);
+          
+          imageUrls.push(publicUrl);
+        }
+        setUploadingImages(false);
+      }
       
-      toast({
-        title: "Review submitted",
-        description: "Thank you for your feedback!",
+      // Submit review
+      await createReview.mutateAsync({
+        itemId: id!,
+        rating: validatedData.rating,
+        comment: validatedData.comment,
+        images: imageUrls
       });
       
       // Reset form
       setReviewRating(0);
       setReviewComment('');
+      setReviewImages([]);
       setShowReviewInput(false);
       
     } catch (error) {
+      setUploadingImages(false);
       if (error instanceof z.ZodError) {
         const errors: { rating?: string; comment?: string } = {};
         error.errors.forEach((err) => {
@@ -284,7 +261,7 @@ const ProductDetail: React.FC = () => {
             <div className="flex items-center gap-1">
               {renderStars(averageRating)}
               <span className="text-sm text-muted-foreground ml-1">
-                ({mockReviews.length} reviews)
+                ({reviews.length} reviews)
               </span>
             </div>
           </div>
@@ -407,7 +384,7 @@ const ProductDetail: React.FC = () => {
                       {renderStars(Math.round(averageRating))}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {mockReviews.length} reviews
+                      {reviews.length} reviews
                     </div>
                   </div>
                   
@@ -420,7 +397,7 @@ const ProductDetail: React.FC = () => {
                           <div
                             className="bg-yellow-400 h-2 rounded-full"
                             style={{
-                              width: `${(ratingCounts[index] / mockReviews.length) * 100}%`
+                              width: `${reviews.length > 0 ? (ratingCounts[index] / reviews.length) * 100 : 0}%`
                             }}
                           />
                         </div>
@@ -436,7 +413,18 @@ const ProductDetail: React.FC = () => {
             
             {/* Individual Reviews */}
             <div className="space-y-4">
-              {mockReviews.map((review) => (
+              {reviewsLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : reviews.length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                reviews.map((review) => (
                 <Card key={review.id}>
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
@@ -485,9 +473,10 @@ const ProductDetail: React.FC = () => {
                        </div>
                      </div>
                    </CardContent>
-                 </Card>
-               ))}
-             </div>
+                  </Card>
+                ))
+              )}
+            </div>
              
              {/* Add Review Section */}
              {showReviewInput && (
@@ -549,18 +538,71 @@ const ProductDetail: React.FC = () => {
                          <p className="text-red-500 text-xs">{reviewErrors.comment}</p>
                        )}
                      </div>
-                   </div>
-                   
-                   {/* Submit Button */}
-                   <Button 
-                     onClick={handleSubmitReview}
-                     className="w-full"
-                     size="sm"
-                     disabled={!reviewRating || !reviewComment.trim()}
-                   >
-                     <Send className="w-4 h-4 mr-2" />
-                     Submit Review
-                   </Button>
+                    </div>
+                    
+                    {/* Image Upload */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-2">
+                        Photos (Optional)
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {reviewImages.map((file, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={`Preview ${index + 1}`}
+                              className="w-20 h-20 object-cover rounded-lg"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setReviewImages(prev => prev.filter((_, i) => i !== index))}
+                              className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                        
+                        {reviewImages.length < 5 && (
+                          <label className="w-20 h-20 border-2 border-dashed border-border rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              className="hidden"
+                              onChange={(e) => {
+                                const files = Array.from(e.target.files || []);
+                                setReviewImages(prev => [...prev, ...files].slice(0, 5));
+                              }}
+                            />
+                            <Upload className="w-6 h-6 text-muted-foreground" />
+                          </label>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Add up to 5 photos to help others
+                      </p>
+                    </div>
+                    
+                    {/* Submit Button */}
+                    <Button 
+                      onClick={handleSubmitReview}
+                      className="w-full"
+                      size="sm"
+                      disabled={!reviewRating || !reviewComment.trim() || uploadingImages}
+                    >
+                      {uploadingImages ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          Submit Review
+                        </>
+                      )}
+                    </Button>
                  </CardContent>
                </Card>
              )}

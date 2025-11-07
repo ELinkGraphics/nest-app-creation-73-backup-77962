@@ -18,6 +18,7 @@ import QuestionDetail from "./pages/QuestionDetail";
 import AskProfile from "./pages/AskProfile";
 import ProductDetail from "./pages/ProductDetail";
 import SellerProfile from "./pages/SellerProfile";
+import Cart from "./pages/Cart";
 import { SOSSubCategories } from "./pages/SOSSubCategories";
 import CircleDetailWrapper from "./components/CircleDetailWrapper";
 import CirclePostDetail from "./pages/CirclePostDetail";
@@ -70,6 +71,7 @@ const AppRoutes = () => (
     <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
     <Route path="/shop" element={<ProtectedRoute><Shop activeTab="shop" onTabSelect={() => {}} onOpenCreate={() => {}} /></ProtectedRoute>} />
     <Route path="/shop/product/:id" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
+    <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
     <Route path="/seller/:sellerId" element={<ProtectedRoute><SellerProfile /></ProtectedRoute>} />
     <Route path="/ask" element={<ProtectedRoute><Ask activeTab="ask" onTabSelect={() => {}} onOpenCreate={() => {}} /></ProtectedRoute>} />
     <Route path="/ask/profile" element={<ProtectedRoute><AskProfile /></ProtectedRoute>} />

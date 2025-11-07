@@ -308,8 +308,18 @@ export const SOSProfile: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <Badge className="bg-green-100 text-green-700 border-green-200">
-                    Completed
+                  <Badge className={
+                    activity.status === 'completed'
+                      ? 'bg-green-100 text-green-700 border-green-200'
+                      : activity.status === 'responding'
+                      ? 'bg-blue-100 text-blue-700 border-blue-200'
+                      : activity.status === 'arrived'
+                      ? 'bg-amber-100 text-amber-700 border-amber-200'
+                      : 'bg-gray-100 text-gray-700 border-gray-200'
+                  }>
+                    {activity.status === 'completed' ? 'Completed' : 
+                     activity.status === 'responding' ? 'In Progress' :
+                     activity.status === 'arrived' ? 'On Scene' : activity.status}
                   </Badge>
                 </div>
               );

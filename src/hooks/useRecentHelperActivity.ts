@@ -16,6 +16,7 @@ export const useRecentHelperActivity = (userId?: string) => {
           id,
           status,
           completed_at,
+          accepted_at,
           alert_id,
           sos_alerts:alert_id (
             sos_type,
@@ -25,19 +26,21 @@ export const useRecentHelperActivity = (userId?: string) => {
           )
         `)
         .eq('helper_user_id', userId)
-        .eq('status', 'completed')
-        .order('completed_at', { ascending: false })
-        .limit(5);
+        .order('accepted_at', { ascending: false })
+        .limit(10);
 
       if (error) throw error;
 
       return data.map((activity: any) => ({
         id: activity.id,
-        action: `Helped with ${activity.sos_alerts?.sos_type || 'emergency'}`,
-        time: activity.completed_at,
+        action: activity.status === 'completed' 
+          ? `Helped with ${activity.sos_alerts?.sos_type || 'emergency'}`
+          : `Responding to ${activity.sos_alerts?.sos_type || 'emergency'}`,
+        time: activity.completed_at || activity.accepted_at,
         location: activity.sos_alerts?.location_address || 'Location unavailable',
         type: activity.sos_alerts?.sos_type || 'other',
         urgency: activity.sos_alerts?.urgency || 'medium',
+        status: activity.status,
       }));
     },
     enabled: !!userId,

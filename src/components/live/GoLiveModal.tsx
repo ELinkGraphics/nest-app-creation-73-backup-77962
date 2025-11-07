@@ -90,6 +90,27 @@ const GoLiveModal: React.FC<GoLiveModalProps> = ({ isOpen, onClose }) => {
 
   const showBackButton = currentStep !== 'selection';
 
+  // Full-screen views for settings and live
+  if (currentStep === 'settings') {
+    return (
+      <PreLiveSettings
+        config={liveConfig}
+        onComplete={handleSettingsComplete}
+        onBack={handleBack}
+      />
+    );
+  }
+
+  if (currentStep === 'live') {
+    return (
+      <LiveSimulation 
+        config={liveConfig} 
+        onEndLive={handleEndLive} 
+      />
+    );
+  }
+
+  // Modal view for type selection
   return (
     <div
       aria-modal="true"
@@ -103,18 +124,7 @@ const GoLiveModal: React.FC<GoLiveModalProps> = ({ isOpen, onClose }) => {
         <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-[90vh] overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              {showBackButton && (
-                <button
-                  onClick={handleBack}
-                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                  aria-label="Go back"
-                >
-                  <ArrowLeft className="w-5 h-5 text-gray-600" />
-                </button>
-              )}
-              <h2 className="text-lg font-semibold text-primary">{getTitle()}</h2>
-            </div>
+            <h2 className="text-lg font-semibold text-primary">{getTitle()}</h2>
             <button
               onClick={onClose}
               className="p-1 hover:bg-gray-100 rounded-full transition-colors"
@@ -126,24 +136,7 @@ const GoLiveModal: React.FC<GoLiveModalProps> = ({ isOpen, onClose }) => {
 
           {/* Content */}
           <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
-            {currentStep === 'selection' && (
-              <LiveTypeSelection onTypeSelect={handleTypeSelect} />
-            )}
-            
-        {currentStep === 'settings' && (
-          <PreLiveSettings
-            config={liveConfig}
-            onComplete={handleSettingsComplete}
-            onBack={handleBack}
-          />
-        )}
-            
-            {currentStep === 'live' && (
-              <LiveSimulation 
-                config={liveConfig} 
-                onEndLive={handleEndLive} 
-              />
-            )}
+            <LiveTypeSelection onTypeSelect={handleTypeSelect} />
           </div>
         </div>
       </div>

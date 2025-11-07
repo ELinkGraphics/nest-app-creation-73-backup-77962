@@ -52,7 +52,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
         .from('live_streams')
         .select('*')
         .eq('id', streamId)
-        .single();
+        .maybeSingle();
       return data;
     },
     enabled: !!streamId,
@@ -110,7 +110,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
             .from('profiles')
             .select('username, name')
             .eq('id', (payload.new as any).user_id)
-            .single();
+            .maybeSingle();
 
           const newMessage: LiveMessage = {
             ...payload.new as any,
@@ -118,6 +118,31 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
           };
           
           setMessages(prev => [...prev, newMessage].slice(-20));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [streamId]);
+
+  // Real-time viewer updates
+  useEffect(() => {
+    if (!streamId) return;
+
+    const channel = supabase
+      .channel(`live-viewers-${streamId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'live_viewers',
+          filter: `stream_id=eq.${streamId}`
+        },
+        () => {
+          // Viewer joined or left, no action needed - counter updates via query refetch
         }
       )
       .subscribe();

@@ -912,6 +912,7 @@ export type Database = {
           helper_badge: string | null
           is_available: boolean | null
           last_active_at: string | null
+          last_response_date: string | null
           location_lat: number | null
           location_lng: number | null
           response_count: number | null
@@ -930,6 +931,7 @@ export type Database = {
           helper_badge?: string | null
           is_available?: boolean | null
           last_active_at?: string | null
+          last_response_date?: string | null
           location_lat?: number | null
           location_lng?: number | null
           response_count?: number | null
@@ -948,6 +950,7 @@ export type Database = {
           helper_badge?: string | null
           is_available?: boolean | null
           last_active_at?: string | null
+          last_response_date?: string | null
           location_lat?: number | null
           location_lng?: number | null
           response_count?: number | null

@@ -12,6 +12,7 @@ import { useSellerProfile } from '@/hooks/useSellerProfile';
 import { useShopItems } from '@/hooks/useShopItems';
 import { useUser } from '@/contexts/UserContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SellerOnboardingModal } from '@/components/shop/SellerOnboardingModal';
 
 // Mock seller data that matches the shop items
 const mockSellers = {
@@ -136,6 +137,7 @@ const SellerProfile: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState('listings');
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const { profile, isLoading } = useSellerProfile(sellerId);
   const shopItemsQuery = useShopItems({ sellerId });
@@ -181,15 +183,21 @@ const SellerProfile: React.FC = () => {
   if (!profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="text-center">
+        <div className="text-center max-w-md">
           <h2 className="text-xl font-semibold mb-2">Seller Profile Not Found</h2>
           <p className="text-muted-foreground mb-4">
-            {isOwnProfile ? "You haven't set up your seller profile yet." : "This seller profile doesn't exist."}
+            {isOwnProfile ? "You haven't set up your seller profile yet. Set up your profile to start selling on the platform." : "This seller profile doesn't exist."}
           </p>
           {isOwnProfile && (
-            <Button onClick={() => navigate('/create-shop')}>
-              Set Up Seller Profile
-            </Button>
+            <>
+              <Button onClick={() => setShowOnboarding(true)}>
+                Set Up Seller Profile
+              </Button>
+              <SellerOnboardingModal 
+                isOpen={showOnboarding} 
+                onClose={() => setShowOnboarding(false)} 
+              />
+            </>
           )}
           {!isOwnProfile && (
             <Button onClick={() => navigate('/shop')}>Back to Shop</Button>
@@ -263,7 +271,7 @@ const SellerProfile: React.FC = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/create-shop')}
+              onClick={() => setShowOnboarding(true)}
               className="p-2"
             >
               <Settings className="w-5 h-5" />
@@ -272,6 +280,14 @@ const SellerProfile: React.FC = () => {
           {!isOwnProfile && <div className="w-10" />}
         </div>
       </div>
+
+      {/* Seller Onboarding Modal for editing */}
+      {isOwnProfile && profile && (
+        <SellerOnboardingModal 
+          isOpen={showOnboarding} 
+          onClose={() => setShowOnboarding(false)}
+        />
+      )}
 
       {/* Seller Header */}
       <div className="p-4 space-y-4">

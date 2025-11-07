@@ -6,6 +6,7 @@ import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { useCart } from '../../contexts/CartContext';
+import { useOrderMutations } from '../../hooks/useOrderMutations';
 import { ShippingAddress, PaymentMethod } from '../../types/cart';
 import { CreditCard, Truck, DollarSign, ArrowLeft } from 'lucide-react';
 import { toast } from '../ui/use-toast';
@@ -18,10 +19,12 @@ export const CheckoutModal: React.FC = () => {
     isCheckoutOpen,
     closeCheckout,
     getCartTotal,
-    createOrder,
+    createOrder: createLocalOrder,
     setCurrentOrder,
     clearCart,
   } = useCart();
+
+  const { createOrder } = useOrderMutations();
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('shipping');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -81,20 +84,29 @@ export const CheckoutModal: React.FC = () => {
   const handlePlaceOrder = async () => {
     setIsProcessing(true);
     
-    // Simulate order processing
-    setTimeout(() => {
-      const order = createOrder(shippingAddress, { ...paymentMethod, type: selectedPaymentType });
-      setCurrentOrder(order);
+    try {
+      // Process order
+      const order = await createOrder.mutateAsync({
+        items,
+        shippingAddress,
+        paymentMethod: { ...paymentMethod, type: selectedPaymentType },
+        subtotal,
+        shipping,
+        tax,
+        total
+      });
+
+      // Create local order record
+      const localOrder = createLocalOrder(shippingAddress, { ...paymentMethod, type: selectedPaymentType });
+      setCurrentOrder(localOrder);
       clearCart();
       closeCheckout();
       setCurrentStep('shipping');
+    } catch (error) {
+      console.error('Order processing error:', error);
+    } finally {
       setIsProcessing(false);
-      
-      toast({
-        title: "Order placed successfully!",
-        description: `Order #${order.id} has been confirmed`,
-      });
-    }, 2000);
+    }
   };
 
   const renderShippingStep = () => (

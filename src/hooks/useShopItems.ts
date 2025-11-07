@@ -69,6 +69,7 @@ export const useShopItems = ({ category, searchQuery, sellerId, limit }: UseShop
           )
         `)
         .eq('status', 'active')
+        .gt('stock', 0)
         .order('created_at', { ascending: false });
 
       if (category && category !== 'all') {

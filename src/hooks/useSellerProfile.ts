@@ -40,7 +40,19 @@ export const useSellerProfile = (userId?: string) => {
         .eq('seller_id', targetUserId)
         .maybeSingle();
 
-      return { ...profileRow, stats: statsRow || null } as any;
+      // Fetch all items (including sold ones) for profile view
+      const { data: items } = await supabase
+        .from('shop_items')
+        .select('*')
+        .eq('seller_id', targetUserId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      return { 
+        ...profileRow, 
+        stats: statsRow || null,
+        items: items || []
+      } as any;
     },
     enabled: true,
   });

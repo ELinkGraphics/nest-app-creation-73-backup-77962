@@ -140,8 +140,6 @@ const SellerProfile: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const { profile, isLoading } = useSellerProfile(sellerId);
-  const shopItemsQuery = useShopItems({ sellerId });
-  const sellerItems = shopItemsQuery.data || [];
 
   const isOwnProfile = user?.id === sellerId;
 
@@ -212,6 +210,7 @@ const SellerProfile: React.FC = () => {
   const rating = (profile as any)?.stats?.rating || 0;
   const totalReviews = (profile as any)?.stats?.reviews_count || 0;
   const createdAt = (profile as any)?.joined_date || Date.now();
+  const sellerItems = (profile as any)?.items || [];
 
   const renderStars = (rating: number, size: 'sm' | 'md' = 'md') => {
     const sizeClass = size === 'sm' ? 'w-3 h-3' : 'w-4 h-4';
@@ -422,12 +421,20 @@ const SellerProfile: React.FC = () => {
                     onClick={() => navigate(`/shop/product/${item.id}`)}
                   >
                     <CardContent className="p-2">
-                      <div className="aspect-square bg-muted rounded-lg mb-2 overflow-hidden">
+                      <div className="aspect-square bg-muted rounded-lg mb-2 overflow-hidden relative">
                         <img 
                           src={item.images?.[0] || '/placeholder.svg'} 
                           alt={item.title}
                           className="w-full h-full object-cover"
                         />
+                        {item.stock === 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="absolute top-2 right-2 text-[10px] font-bold"
+                          >
+                            SOLD
+                          </Badge>
+                        )}
                       </div>
                       <h4 className="font-medium text-xs line-clamp-2 mb-1 leading-tight">
                         {item.title}

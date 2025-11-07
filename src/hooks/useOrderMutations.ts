@@ -57,7 +57,7 @@ export const useOrderMutations = () => {
 
       if (itemsError) throw itemsError;
 
-      // Update stock for each item
+      // Update stock for each item and seller stats
       for (const item of data.items) {
         const { error: stockError } = await supabase.rpc('update_item_stock', {
           item_id: item.shopItemId,
@@ -67,6 +67,20 @@ export const useOrderMutations = () => {
         if (stockError) {
           console.error('Failed to update stock:', stockError);
         }
+
+        // Update seller total_sales
+        const { data: sellerProfile } = await supabase
+          .from('seller_profiles')
+          .select('total_sales')
+          .eq('user_id', item.seller.id)
+          .maybeSingle();
+
+        if (sellerProfile) {
+          await supabase
+            .from('seller_profiles')
+            .update({ total_sales: (sellerProfile.total_sales || 0) + item.quantity })
+            .eq('user_id', item.seller.id);
+        }
       }
 
       return order;
@@ -74,6 +88,7 @@ export const useOrderMutations = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['shop-items'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-profile'] });
       toast.success('Order placed successfully!');
     },
     onError: (error: Error) => {

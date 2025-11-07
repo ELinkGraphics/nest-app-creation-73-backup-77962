@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Mic, MicOff, Camera, RotateCcw, Sparkles, MapPin, Users, Heart, Eye, MoreVertical, PhoneOff, Send } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Mic, MicOff, Camera, CameraOff, RotateCcw, Sparkles, MapPin, Users, Eye, MoreVertical, PhoneOff, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLiveMutations } from '@/hooks/useLiveMutations';
+import { useAgoraLive } from '@/hooks/useAgoraLive';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -40,8 +41,23 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [messageText, setMessageText] = useState('');
   const [messages, setMessages] = useState<LiveMessage[]>([]);
+  const videoRef = useRef<HTMLDivElement>(null);
   
   const { startLive, endLive, sendMessage } = useLiveMutations();
+  
+  // Initialize Agora for real video streaming
+  const {
+    localVideoTrack,
+    isJoined,
+    isMicMuted,
+    isCameraOff,
+    toggleMic,
+    toggleCamera,
+    switchCamera,
+  } = useAgoraLive({
+    channelName: streamId || 'temp-channel',
+    role: 'host',
+  });
 
   console.log('LiveSimulation rendered with config:', config);
 
@@ -85,6 +101,13 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
 
     initLive();
   }, []);
+
+  // Play local video track
+  useEffect(() => {
+    if (localVideoTrack && videoRef.current) {
+      localVideoTrack.play(videoRef.current);
+    }
+  }, [localVideoTrack]);
 
   // Duration counter
   useEffect(() => {
@@ -190,8 +213,24 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
 
   return (
     <div className="fixed inset-0 z-[100] bg-black overflow-hidden">
-      {/* Video Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-purple-600/30" />
+      {/* Real Video Stream */}
+      <div 
+        ref={videoRef} 
+        className="absolute inset-0 w-full h-full"
+        style={{ 
+          transform: config.cameraFlipped ? 'scaleX(-1)' : 'none',
+        }}
+      />
+      
+      {/* Loading overlay while connecting */}
+      {!isJoined && (
+        <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+          <div className="text-white text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4" />
+            <p className="text-lg">Starting live stream...</p>
+          </div>
+        </div>
+      )}
       
       {/* Live Indicator */}
       <div className="absolute top-4 left-4 flex items-center gap-2">
@@ -273,24 +312,37 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
           <div className="flex items-center gap-2">
             {/* Mic Control */}
             <button
+              onClick={toggleMic}
               className={`p-2 rounded-full transition-colors ${
-                config.micEnabled ? 'bg-white/20' : 'bg-red-500'
+                isMicMuted ? 'bg-red-500' : 'bg-white/20'
               }`}
             >
-              {config.micEnabled ? (
-                <Mic className="w-5 h-5 text-white" />
-              ) : (
+              {isMicMuted ? (
                 <MicOff className="w-5 h-5 text-white" />
+              ) : (
+                <Mic className="w-5 h-5 text-white" />
               )}
             </button>
 
             {/* Camera Control */}
-            <button className="p-2 rounded-full bg-white/20">
-              <Camera className="w-5 h-5 text-white" />
+            <button
+              onClick={toggleCamera}
+              className={`p-2 rounded-full transition-colors ${
+                isCameraOff ? 'bg-red-500' : 'bg-white/20'
+              }`}
+            >
+              {isCameraOff ? (
+                <CameraOff className="w-5 h-5 text-white" />
+              ) : (
+                <Camera className="w-5 h-5 text-white" />
+              )}
             </button>
 
             {/* Camera Flip */}
-            <button className="p-2 rounded-full bg-white/20">
+            <button 
+              onClick={switchCamera}
+              className="p-2 rounded-full bg-white/20"
+            >
               <RotateCcw className="w-5 h-5 text-white" />
             </button>
 

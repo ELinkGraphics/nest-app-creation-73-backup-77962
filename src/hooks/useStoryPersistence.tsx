@@ -22,11 +22,17 @@ export const useStoryPersistence = () => {
           media_type,
           created_at,
           user_id,
+          live_stream_id,
           profiles:user_id (
             name,
             initials,
             avatar_color,
             avatar_url
+          ),
+          live_streams:live_stream_id (
+            id,
+            status,
+            title
           )
         `)
         .gt('expires_at', new Date().toISOString())
@@ -46,6 +52,8 @@ export const useStoryPersistence = () => {
         },
         image: story.media_url,
         isOwn: story.user_id === user?.id,
+        isLive: story.live_streams?.status === 'live',
+        liveStreamId: story.live_stream_id,
       })) || [];
 
       // Group stories by user

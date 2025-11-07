@@ -15,6 +15,12 @@ const StoriesBar: React.FC = () => {
   const [stories, refreshStories, isLoading] = useStoryPersistence();
 
   const handleStoryClick = (story: Story, index: number) => {
+    // If it's a live story, navigate to the live stream instead
+    if ((story as any).isLive && (story as any).liveStreamId) {
+      window.location.href = `/?live=${(story as any).liveStreamId}`;
+      return;
+    }
+    
     if (story.isOwn && (!story.allStories || story.allStories.length === 0)) {
       // If it's user's own story and they have no stories yet, open create modal
       setIsCreateStoryOpen(true);
@@ -50,7 +56,9 @@ const StoriesBar: React.FC = () => {
               <div className="relative">
                 <div 
                   className={`size-18 rounded-full grid place-items-center transition-opacity ${
-                    story.isOwn && (!story.allStories || story.allStories.length === 0)
+                    (story as any).isLive
+                      ? 'p-[3px] bg-gradient-to-br from-red-500 via-red-400 to-red-600 animate-pulse'
+                      : story.isOwn && (!story.allStories || story.allStories.length === 0)
                       ? 'p-[3px] bg-gray-300 rounded-full' 
                       : 'p-[3px] bg-gradient-to-br from-primary via-secondary to-tertiary rounded-full'
                   }`}
@@ -95,7 +103,12 @@ const StoriesBar: React.FC = () => {
                     )}
                   </div>
                 </div>
-                {story.isOwn && (
+                {(story as any).isLive && (
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                    LIVE
+                  </div>
+                )}
+                {story.isOwn && !(story as any).isLive && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

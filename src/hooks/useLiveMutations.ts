@@ -48,6 +48,16 @@ export const useLiveMutations = () => {
           is_active: true
         });
 
+      // Create a live story automatically
+      await (supabase as any)
+        .from('stories')
+        .insert({
+          user_id: user.id,
+          media_url: 'https://placeholder.svg', // Placeholder for live
+          media_type: 'image',
+          live_stream_id: stream.id
+        });
+
       // Send notification via edge function (non-blocking)
       supabase.functions.invoke('notify-live-start', {
         body: {

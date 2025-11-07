@@ -1769,6 +1769,7 @@ export type Database = {
           created_at: string | null
           expires_at: string
           id: string
+          live_stream_id: string | null
           media_type: string | null
           media_url: string
           user_id: string
@@ -1777,6 +1778,7 @@ export type Database = {
           created_at?: string | null
           expires_at?: string
           id?: string
+          live_stream_id?: string | null
           media_type?: string | null
           media_url: string
           user_id: string
@@ -1785,11 +1787,19 @@ export type Database = {
           created_at?: string | null
           expires_at?: string
           id?: string
+          live_stream_id?: string | null
           media_type?: string | null
           media_url?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "stories_live_stream_id_fkey"
+            columns: ["live_stream_id"]
+            isOneToOne: false
+            referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stories_user_id_fkey"
             columns: ["user_id"]

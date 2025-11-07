@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, MessageCircle, Shield, MapPin, Calendar, TrendingUp, Package, DollarSign, Users, Phone, Mail, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -207,27 +207,11 @@ const SellerProfile: React.FC = () => {
     );
   }
 
-  const stats: {
-    total_sales: number;
-    revenue: number;
-    active_listings: number;
-    followers_count: number;
-    response_rate: number;
-    avg_response_time: number;
-  } = (Array.isArray(profile.stats) && profile.stats.length > 0) 
-    ? profile.stats[0] as any
-    : {
-        total_sales: 0,
-        revenue: 0,
-        active_listings: 0,
-        followers_count: 0,
-        response_rate: 0,
-        avg_response_time: 0
-      };
+  const stats = (profile as any)?.stats || null;
 
-  const rating = 0; // Will be calculated from reviews in the future
-  const totalReviews = 0; // Will be calculated from reviews in the future
-  const createdAt = (profile as any).created_at || Date.now();
+  const rating = (profile as any)?.stats?.rating || 0;
+  const totalReviews = (profile as any)?.stats?.reviews_count || 0;
+  const createdAt = (profile as any)?.joined_date || Date.now();
 
   const renderStars = (rating: number, size: 'sm' | 'md' = 'md') => {
     const sizeClass = size === 'sm' ? 'w-3 h-3' : 'w-4 h-4';
@@ -293,7 +277,6 @@ const SellerProfile: React.FC = () => {
       <div className="p-4 space-y-4">
         <div className="flex items-start gap-4">
           <Avatar className="w-20 h-20">
-            <AvatarImage src={profile.business_name?.[0]} />
             <AvatarFallback>{profile.business_name?.[0] || 'S'}</AvatarFallback>
           </Avatar>
           
@@ -316,7 +299,7 @@ const SellerProfile: React.FC = () => {
             <div className="flex items-center gap-2 mb-2">
               {renderStars(rating, 'sm')}
               <span className="text-sm text-muted-foreground">
-                {rating.toFixed(1)} ({formatNumber(stats.followers_count)} followers)
+                {rating.toFixed(1)} ({formatNumber((stats as any)?.followers_count || 0)} followers)
               </span>
             </div>
             
@@ -379,7 +362,7 @@ const SellerProfile: React.FC = () => {
           <Card>
             <CardContent className="p-3 text-center">
               <DollarSign className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="text-lg font-bold">${formatNumber(stats.revenue || 0)}</div>
+              <div className="text-lg font-bold">${formatNumber((profile as any)?.total_revenue || 0)}</div>
               <div className="text-xs text-muted-foreground">Total Revenue</div>
             </CardContent>
           </Card>
@@ -387,7 +370,7 @@ const SellerProfile: React.FC = () => {
           <Card>
             <CardContent className="p-3 text-center">
               <Package className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="text-lg font-bold">{formatNumber(stats.total_sales || 0)}</div>
+              <div className="text-lg font-bold">{formatNumber((profile as any)?.total_sales || 0)}</div>
               <div className="text-xs text-muted-foreground">Items Sold</div>
             </CardContent>
           </Card>
@@ -395,7 +378,7 @@ const SellerProfile: React.FC = () => {
           <Card>
             <CardContent className="p-3 text-center">
               <TrendingUp className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="text-lg font-bold">{stats.active_listings || 0}</div>
+              <div className="text-lg font-bold">{(stats as any)?.active_listings || 0}</div>
               <div className="text-xs text-muted-foreground">Active Listings</div>
             </CardContent>
           </Card>
@@ -403,7 +386,7 @@ const SellerProfile: React.FC = () => {
           <Card>
             <CardContent className="p-3 text-center">
               <Users className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="text-lg font-bold">{formatNumber(stats.followers_count || 0)}</div>
+              <div className="text-lg font-bold">{formatNumber((stats as any)?.followers_count || 0)}</div>
               <div className="text-xs text-muted-foreground">Followers</div>
             </CardContent>
           </Card>
@@ -517,19 +500,19 @@ const SellerProfile: React.FC = () => {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Response Rate:</span>
-                      <span className="font-medium">{stats.response_rate || 0}%</span>
+                      <span className="font-medium">{(profile as any)?.response_rate || 0}%</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Avg Response Time:</span>
-                      <span className="font-medium">{stats.avg_response_time ? `${stats.avg_response_time} hrs` : 'N/A'}</span>
+                      <span className="font-medium">{(profile as any)?.avg_response_time ? `${(profile as any).avg_response_time}` : 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Total Sales:</span>
-                      <span className="font-medium">{formatNumber(stats.total_sales || 0)}</span>
+                      <span className="font-medium">{formatNumber((profile as any)?.total_sales || 0)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Active Listings:</span>
-                      <span className="font-medium">{stats.active_listings || 0}</span>
+                      <span className="font-medium">{(stats as any)?.active_listings || 0}</span>
                     </div>
                   </div>
                 </div>

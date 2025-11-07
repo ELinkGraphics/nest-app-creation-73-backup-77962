@@ -22,22 +22,27 @@ export const useSellerProfile = (userId?: string) => {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       const targetUserId = userId || user?.id;
-      
+
       if (!targetUserId) return null;
 
-      const { data, error } = await supabase
+      const { data: profileRow, error: profileError } = await supabase
         .from('seller_profiles')
-        .select(`
-          *,
-          stats:seller_stats(*)
-        `)
+        .select('*')
         .eq('user_id', targetUserId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      if (profileError) throw profileError;
+      if (!profileRow) return null;
+
+      const { data: statsRow } = await supabase
+        .from('seller_stats')
+        .select('*')
+        .eq('seller_id', targetUserId)
+        .maybeSingle();
+
+      return { ...profileRow, stats: statsRow || null } as any;
     },
-    enabled: !!userId || !!supabase.auth.getUser()
+    enabled: true,
   });
 
   const createOrUpdateProfile = useMutation({

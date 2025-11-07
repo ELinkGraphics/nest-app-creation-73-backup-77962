@@ -1049,6 +1049,7 @@ export type Database = {
           updated_at: string | null
           user_id: string
           viewer_count: number | null
+          visibility: string | null
         }
         Insert: {
           circle_id?: string | null
@@ -1066,6 +1067,7 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           viewer_count?: number | null
+          visibility?: string | null
         }
         Update: {
           circle_id?: string | null
@@ -1083,6 +1085,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           viewer_count?: number | null
+          visibility?: string | null
         }
         Relationships: [
           {

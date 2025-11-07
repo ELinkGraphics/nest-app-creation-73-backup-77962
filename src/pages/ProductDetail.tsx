@@ -9,10 +9,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import FooterNav from '@/components/FooterNav';
-import { mockShopItems } from '@/data/shop';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import { useShopItems } from '@/hooks/useShopItems';
+import { Loader2 } from 'lucide-react';
 
 interface Review {
   id: string;
@@ -89,8 +90,19 @@ const ProductDetail: React.FC = () => {
   const [showReviewInput, setShowReviewInput] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
 
+  // Fetch shop items from database
+  const { data: items, isLoading } = useShopItems({});
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   // Find the product
-  const product = mockShopItems.find(p => p.id === id);
+  const product = items?.find(p => p.id === id);
 
   if (!product) {
     return (
@@ -110,7 +122,7 @@ const ProductDetail: React.FC = () => {
   );
 
   // Get similar products
-  const similarProducts = mockShopItems
+  const similarProducts = (items || [])
     .filter(p => p.id !== product.id && p.category === product.category)
     .slice(0, 4);
 

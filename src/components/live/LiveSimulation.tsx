@@ -48,7 +48,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
     queryKey: ['live-stream', streamId],
     queryFn: async () => {
       if (!streamId) return null;
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('live_streams')
         .select('*')
         .eq('id', streamId)
@@ -106,10 +106,10 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
           filter: `stream_id=eq.${streamId}`
         },
         async (payload) => {
-          const { data: profile } = await supabase
+          const { data: profile } = await (supabase as any)
             .from('profiles')
             .select('username, name')
-            .eq('id', payload.new.user_id)
+            .eq('id', (payload.new as any).user_id)
             .single();
 
           const newMessage: LiveMessage = {
@@ -179,7 +179,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
       <div className="absolute top-4 right-4 flex items-center gap-2">
         <div className="bg-black/50 text-white px-2 py-1 rounded text-sm backdrop-blur-sm flex items-center gap-1">
           <Eye className="w-3 h-3" />
-          {stream?.viewer_count || 0}
+          {(stream as any)?.viewer_count || 0}
         </div>
       </div>
 
@@ -297,7 +297,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
           <div className="bg-white rounded-xl p-6 mx-4 max-w-sm w-full">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">End Live Stream?</h3>
             <p className="text-gray-600 text-sm mb-6">
-              You've been live for {formatDuration(duration)} with {stream?.viewer_count || 0} viewers.
+              You've been live for {formatDuration(duration)} with {(stream as any)?.viewer_count || 0} viewers.
               Are you sure you want to end your live stream?
             </p>
             <div className="flex gap-3">

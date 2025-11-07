@@ -22,7 +22,7 @@ export const useLiveMutations = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data: stream, error } = await supabase
+      const { data: stream, error } = await (supabase as any)
         .from('live_streams')
         .insert({
           user_id: user.id,
@@ -40,7 +40,7 @@ export const useLiveMutations = () => {
       if (error) throw error;
 
       // Join as viewer automatically
-      await supabase
+      await (supabase as any)
         .from('live_viewers')
         .insert({
           stream_id: stream.id,
@@ -75,7 +75,7 @@ export const useLiveMutations = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('live_streams')
         .update({
           status: 'ended',
@@ -99,7 +99,7 @@ export const useLiveMutations = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('live_viewers')
         .upsert({
           stream_id: streamId,
@@ -122,7 +122,7 @@ export const useLiveMutations = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      await supabase
+      await (supabase as any)
         .from('live_viewers')
         .delete()
         .eq('stream_id', streamId)
@@ -137,7 +137,7 @@ export const useLiveMutations = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('live_messages')
         .insert({
           stream_id: streamId,

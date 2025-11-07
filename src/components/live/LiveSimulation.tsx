@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Mic, MicOff, Camera, CameraOff, RotateCcw, Sparkles, MapPin, Users, Heart, MessageCircle, Eye, MoreVertical, PhoneOff } from 'lucide-react';
+import { Mic, MicOff, Camera, RotateCcw, Sparkles, MapPin, Users, Heart, Eye, MoreVertical, PhoneOff, Send } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useLiveMutations } from '@/hooks/useLiveMutations';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 interface LiveConfig {
   type: 'random' | 'circle';
@@ -19,71 +23,120 @@ interface LiveSimulationProps {
   onEndLive: () => void;
 }
 
-interface Comment {
+interface LiveMessage {
   id: string;
-  user: string;
-  text: string;
-  timestamp: Date;
-}
-
-interface Viewer {
-  id: string;
-  name: string;
-  avatar: string;
+  user_id: string;
+  message: string;
+  created_at: string;
+  profiles: {
+    username: string;
+    name: string;
+  };
 }
 
 const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) => {
-  const [viewers, setViewers] = useState(12);
-  const [likes, setLikes] = useState(34);
-  const [comments, setComments] = useState<Comment[]>([
-    { id: '1', user: 'Sarah_M', text: 'Hey! Great to see you live! 👋', timestamp: new Date(Date.now() - 30000) },
-    { id: '2', user: 'Mike_Jones', text: 'This is awesome!', timestamp: new Date(Date.now() - 20000) }
-  ]);
+  const [streamId, setStreamId] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [messages, setMessages] = useState<LiveMessage[]>([]);
+  
+  const { startLive, endLive, sendMessage } = useLiveMutations();
 
-  // Simulate live engagement
+  // Fetch stream data
+  const { data: stream } = useQuery({
+    queryKey: ['live-stream', streamId],
+    queryFn: async () => {
+      if (!streamId) return null;
+      const { data } = await supabase
+        .from('live_streams')
+        .select('*')
+        .eq('id', streamId)
+        .single();
+      return data;
+    },
+    enabled: !!streamId,
+    refetchInterval: 5000
+  });
+
+  // Start live stream on mount
+  useEffect(() => {
+    const initLive = async () => {
+      try {
+        const stream = await startLive({
+          type: config.type,
+          circleId: config.circleId,
+          title: config.title,
+          description: config.description,
+          visibility: config.visibility,
+          locationVisible: config.locationVisible
+        });
+        setStreamId(stream.id);
+      } catch (error) {
+        console.error('Failed to start live:', error);
+        toast.error('Failed to start live stream');
+        onEndLive();
+      }
+    };
+
+    initLive();
+  }, []);
+
+  // Duration counter
   useEffect(() => {
     const interval = setInterval(() => {
       setDuration(prev => prev + 1);
-      
-      // Randomly add viewers
-      if (Math.random() < 0.3) {
-        setViewers(prev => prev + Math.floor(Math.random() * 3));
-      }
-      
-      // Randomly add likes
-      if (Math.random() < 0.4) {
-        setLikes(prev => prev + Math.floor(Math.random() * 2) + 1);
-      }
-      
-      // Randomly add comments
-      if (Math.random() < 0.2) {
-        const newComments = [
-          'Love this!',
-          'Keep it up! 🔥',
-          'Amazing content',
-          'Can you show more?',
-          'This is so cool!',
-          'Where are you streaming from?',
-          'Great quality!',
-          'Hey from New York!'
-        ];
-        
-        const randomComment = newComments[Math.floor(Math.random() * newComments.length)];
-        const randomUser = `User${Math.floor(Math.random() * 1000)}`;
-        
-        setComments(prev => [...prev, {
-          id: Date.now().toString(),
-          user: randomUser,
-          text: randomComment,
-          timestamp: new Date()
-        }].slice(-20)); // Keep only last 20 comments
-      }
-    }, 3000);
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);
+
+  // Real-time messages subscription
+  useEffect(() => {
+    if (!streamId) return;
+
+    const channel = supabase
+      .channel(`live-messages-${streamId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'live_messages',
+          filter: `stream_id=eq.${streamId}`
+        },
+        async (payload) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, name')
+            .eq('id', payload.new.user_id)
+            .single();
+
+          const newMessage: LiveMessage = {
+            ...payload.new as any,
+            profiles: profile || { username: 'User', name: 'User' }
+          };
+          
+          setMessages(prev => [...prev, newMessage].slice(-20));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [streamId]);
+
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !streamId) return;
+    
+    try {
+      await sendMessage(streamId, messageText);
+      setMessageText('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
+  };
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -95,7 +148,14 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
     setShowEndConfirm(true);
   };
 
-  const confirmEndLive = () => {
+  const confirmEndLive = async () => {
+    if (streamId) {
+      try {
+        await endLive(streamId);
+      } catch (error) {
+        console.error('Failed to end live:', error);
+      }
+    }
     onEndLive();
   };
 
@@ -119,11 +179,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
       <div className="absolute top-4 right-4 flex items-center gap-2">
         <div className="bg-black/50 text-white px-2 py-1 rounded text-sm backdrop-blur-sm flex items-center gap-1">
           <Eye className="w-3 h-3" />
-          {viewers}
-        </div>
-        <div className="bg-black/50 text-white px-2 py-1 rounded text-sm backdrop-blur-sm flex items-center gap-1">
-          <Heart className="w-3 h-3" />
-          {likes}
+          {stream?.viewer_count || 0}
         </div>
       </div>
 
@@ -150,14 +206,35 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
       </div>
 
       {/* Comments Stream */}
-      <div className="absolute bottom-32 left-4 right-20 max-h-32 overflow-hidden">
+      <div className="absolute bottom-32 left-4 right-20 max-h-40 overflow-hidden">
         <div className="space-y-1">
-          {comments.slice(-5).map((comment) => (
-            <div key={comment.id} className="bg-black/40 backdrop-blur-sm rounded-lg px-2 py-1 text-white text-sm animate-fade-in">
-              <span className="font-medium text-blue-300">{comment.user}</span>
-              <span className="ml-1">{comment.text}</span>
+          {messages.slice(-5).map((msg) => (
+            <div key={msg.id} className="bg-black/40 backdrop-blur-sm rounded-lg px-2 py-1 text-white text-sm animate-fade-in">
+              <span className="font-medium text-blue-300">{msg.profiles.username}</span>
+              <span className="ml-1">{msg.message}</span>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Message Input */}
+      <div className="absolute bottom-16 left-4 right-4">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={messageText}
+            onChange={(e) => setMessageText(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            placeholder="Say something..."
+            className="flex-1 bg-black/40 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 text-white text-sm placeholder-white/50 focus:outline-none focus:border-white/40"
+          />
+          <button
+            onClick={handleSendMessage}
+            disabled={!messageText.trim()}
+            className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 text-white rounded-full p-2 transition-colors"
+          >
+            <Send className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
@@ -220,7 +297,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
           <div className="bg-white rounded-xl p-6 mx-4 max-w-sm w-full">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">End Live Stream?</h3>
             <p className="text-gray-600 text-sm mb-6">
-              You've been live for {formatDuration(duration)} with {viewers} viewers.
+              You've been live for {formatDuration(duration)} with {stream?.viewer_count || 0} viewers.
               Are you sure you want to end your live stream?
             </p>
             <div className="flex gap-3">

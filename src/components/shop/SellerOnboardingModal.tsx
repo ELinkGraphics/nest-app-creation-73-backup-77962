@@ -9,6 +9,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Store, User, Building2, FileText, ShieldCheck } from 'lucide-react';
 import { useSellerProfile } from '@/hooks/useSellerProfile';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { useUser } from '@/contexts/UserContext';
 
 interface SellerOnboardingModalProps {
   isOpen: boolean;
@@ -25,6 +27,8 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
   const [step, setStep] = useState<OnboardingStep>('type-selection');
   const [sellerType, setSellerType] = useState<SellerType>('personal');
   const { createOrUpdateProfile } = useSellerProfile();
+  const navigate = useNavigate();
+  const { user } = useUser();
   
   // Common fields
   const [email, setEmail] = useState('');
@@ -65,7 +69,8 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
       // Wait a bit for the query to invalidate and refetch
       setTimeout(() => {
         onClose();
-      }, 500);
+        if (user?.id) navigate(`/seller/${user.id}`);
+      }, 300);
     } catch (error) {
       toast.error('Failed to create seller account');
     }
@@ -93,7 +98,8 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
       // Wait a bit for the query to invalidate and refetch
       setTimeout(() => {
         onClose();
-      }, 500);
+        if (user?.id) navigate(`/seller/${user.id}`);
+      }, 300);
     } catch (error) {
       toast.error('Failed to create shop account');
     }

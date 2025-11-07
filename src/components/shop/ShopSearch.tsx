@@ -1,7 +1,8 @@
 import React from 'react';
-import { Search, Filter } from 'lucide-react';
+import { Search, User } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface ShopSearchProps {
   value: string;
@@ -9,6 +10,8 @@ interface ShopSearchProps {
 }
 
 export const ShopSearch: React.FC<ShopSearchProps> = ({ value, onChange }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="flex gap-2.5">
       <div className="relative flex-1">
@@ -24,8 +27,9 @@ export const ShopSearch: React.FC<ShopSearchProps> = ({ value, onChange }) => {
         variant="outline" 
         size="icon"
         className="touch-target shrink-0 border-border/50"
+        onClick={() => navigate('/create-shop')}
       >
-        <Filter className="h-5 w-5" />
+        <User className="h-5 w-5" />
       </Button>
     </div>
   );

@@ -1973,46 +1973,67 @@ export type Database = {
         Row: {
           avg_response_time: unknown
           badges: string[]
+          business_license_url: string | null
           business_name: string | null
+          business_registration_number: string | null
           description: string | null
           email: string
           joined_date: string
           location: string
           phone: string | null
           response_rate: number
+          seller_type: string
+          tax_id: string | null
           total_revenue: number
           total_sales: number
           user_id: string
+          verification_notes: string | null
+          verification_status: string
+          verification_submitted_at: string | null
           verified: boolean
         }
         Insert: {
           avg_response_time?: unknown
           badges?: string[]
+          business_license_url?: string | null
           business_name?: string | null
+          business_registration_number?: string | null
           description?: string | null
           email: string
           joined_date?: string
           location: string
           phone?: string | null
           response_rate?: number
+          seller_type?: string
+          tax_id?: string | null
           total_revenue?: number
           total_sales?: number
           user_id: string
+          verification_notes?: string | null
+          verification_status?: string
+          verification_submitted_at?: string | null
           verified?: boolean
         }
         Update: {
           avg_response_time?: unknown
           badges?: string[]
+          business_license_url?: string | null
           business_name?: string | null
+          business_registration_number?: string | null
           description?: string | null
           email?: string
           joined_date?: string
           location?: string
           phone?: string | null
           response_rate?: number
+          seller_type?: string
+          tax_id?: string | null
           total_revenue?: number
           total_sales?: number
           user_id?: string
+          verification_notes?: string | null
+          verification_status?: string
+          verification_submitted_at?: string | null
           verified?: boolean
         }
         Relationships: [

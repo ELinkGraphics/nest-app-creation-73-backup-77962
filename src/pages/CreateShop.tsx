@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -9,11 +9,13 @@ import { useShopItemMutations } from '../hooks/useShopItemMutations';
 import { useSellerProfile } from '../hooks/useSellerProfile';
 import { toast } from 'sonner';
 import { validateImageFiles } from '../utils/shopImageUpload';
+import { SellerOnboardingModal } from '../components/shop/SellerOnboardingModal';
 
 const CreateShop: React.FC = () => {
   const navigate = useNavigate();
   const { createItem } = useShopItemMutations();
   const { profile, isLoading: profileLoading } = useSellerProfile();
+  const [showOnboarding, setShowOnboarding] = useState(false);
   
   const [productName, setProductName] = useState('');
   const [description, setDescription] = useState('');
@@ -25,6 +27,13 @@ const CreateShop: React.FC = () => {
   const [location, setLocation] = useState('');
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
+  // Check if user needs to complete seller onboarding
+  useEffect(() => {
+    if (!profileLoading && !profile) {
+      setShowOnboarding(true);
+    }
+  }, [profile, profileLoading]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -271,6 +280,16 @@ const CreateShop: React.FC = () => {
           </div>
         )}
       </div>
+
+      <SellerOnboardingModal 
+        isOpen={showOnboarding} 
+        onClose={() => {
+          setShowOnboarding(false);
+          if (!profile) {
+            navigate('/shop');
+          }
+        }} 
+      />
     </div>
   );
 };

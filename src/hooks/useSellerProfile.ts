@@ -8,6 +8,10 @@ interface CreateSellerProfileData {
   phone?: string;
   email: string;
   location: string;
+  sellerType?: 'personal' | 'shop';
+  registrationNumber?: string;
+  taxId?: string;
+  businessLicenseUrl?: string;
 }
 
 export const useSellerProfile = (userId?: string) => {
@@ -47,17 +51,29 @@ export const useSellerProfile = (userId?: string) => {
         .eq('user_id', user.id)
         .single();
 
+      const updateData: any = {
+        business_name: data.businessName,
+        description: data.description,
+        phone: data.phone,
+        email: data.email,
+        location: data.location,
+        seller_type: data.sellerType || 'personal'
+      };
+
+      // Add shop-specific fields if sellerType is 'shop'
+      if (data.sellerType === 'shop') {
+        updateData.business_registration_number = data.registrationNumber;
+        updateData.tax_id = data.taxId;
+        updateData.business_license_url = data.businessLicenseUrl;
+        updateData.verification_status = 'pending';
+        updateData.verification_submitted_at = new Date().toISOString();
+      }
+
       if (existing) {
         // Update
         const { data: updated, error } = await supabase
           .from('seller_profiles')
-          .update({
-            business_name: data.businessName,
-            description: data.description,
-            phone: data.phone,
-            email: data.email,
-            location: data.location
-          })
+          .update(updateData)
           .eq('user_id', user.id)
           .select()
           .single();
@@ -68,14 +84,7 @@ export const useSellerProfile = (userId?: string) => {
         // Create
         const { data: created, error } = await supabase
           .from('seller_profiles')
-          .insert({
-            user_id: user.id,
-            business_name: data.businessName,
-            description: data.description,
-            phone: data.phone,
-            email: data.email,
-            location: data.location
-          })
+          .insert({ ...updateData, user_id: user.id })
           .select()
           .single();
 

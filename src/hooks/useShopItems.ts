@@ -1,6 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ShopItem } from "@/types/shop";
+import { useEffect } from "react";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface UseShopItemsParams {
   category?: string;
@@ -10,6 +12,43 @@ interface UseShopItemsParams {
 }
 
 export const useShopItems = ({ category, searchQuery, sellerId, limit }: UseShopItemsParams = {}) => {
+  const queryClient = useQueryClient();
+
+  // Set up realtime subscription
+  useEffect(() => {
+    const channel: RealtimeChannel = supabase
+      .channel('shop-items-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shop_items'
+        },
+        () => {
+          // Invalidate queries when shop items change
+          queryClient.invalidateQueries({ queryKey: ['shop-items'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shop_item_stats'
+        },
+        () => {
+          // Invalidate queries when item stats change
+          queryClient.invalidateQueries({ queryKey: ['shop-items'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ['shop-items', category, searchQuery, sellerId, limit],
     queryFn: async () => {

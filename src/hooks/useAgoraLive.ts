@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 AgoraRTC.setLogLevel(4); // Only errors in production
 
 interface AgoraConfig {
-  channelName: string;
+  channelName: string | null;
   role: 'host' | 'audience';
 }
 
@@ -27,6 +27,9 @@ export const useAgoraLive = ({ channelName, role }: AgoraConfig) => {
   const clientRef = useRef<IAgoraRTCClient | null>(null);
 
   useEffect(() => {
+    // Wait until we have a real channel name (streamId)
+    if (!channelName) return;
+
     const init = async () => {
       try {
         // Create Agora client

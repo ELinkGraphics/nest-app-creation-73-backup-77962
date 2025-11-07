@@ -155,7 +155,8 @@ export const useLiveMutations = () => {
         .insert({
           stream_id: streamId,
           user_id: user.id,
-          message
+          message_text: message,
+          message_type: 'text'
         });
 
       if (error) throw error;

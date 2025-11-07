@@ -69,14 +69,10 @@ export const useAgoraLive = ({ channelName, role }: AgoraConfig) => {
           setRemoteUsers((prev) => prev.filter((u) => u.uid !== user.uid));
         });
 
-        // TEMPORARY: Test with provided token to verify App ID
-        const TEST_TOKEN = '007eJxTYIj/O+md21kjr9u+z54rcGZN8dky6+ypy4IMr86cF464rTBDgcEkLS3ZwszQwNjE1Ngk2SLJ0tDE2CDFODHRKDkFCI15j/FmNgQyMvx8toWJkQECQXwOBr/U4hIF3/xcBgYAX84isw==';
-        const TEST_CHANNEL = 'Nest Mom';
-        
-        // Get App ID from edge function to verify it's correct
+        // Get token from edge function
         const { data, error } = await supabase.functions.invoke('generate-agora-token', {
           body: {
-            channelName: TEST_CHANNEL,
+            channelName,
             role: role === 'host' ? 1 : 2,
           },
         });
@@ -86,11 +82,11 @@ export const useAgoraLive = ({ channelName, role }: AgoraConfig) => {
           throw error;
         }
 
-        const { appId, uid } = data;
-        console.log('Using temp token for testing. AppId:', appId, 'Channel:', TEST_CHANNEL, 'UID:', uid);
+        const { token, appId, uid } = data;
+        console.log('Joining Agora. AppId:', appId, 'Channel:', channelName, 'UID:', uid);
 
-        // Join channel with temp token
-        await client.join(appId, TEST_CHANNEL, TEST_TOKEN, uid);
+        // Join channel with generated token
+        await client.join(appId, channelName, token, uid);
         setIsJoined(true);
 
         // If host, create and publish local tracks

@@ -152,12 +152,14 @@ serve(async (req) => {
       throw new Error('Agora credentials not configured');
     }
 
-    // Generate stable numeric UID from user ID
-    const uid = Math.abs(
+    // Generate unique UID per session (user ID hash + timestamp modulo)
+    const userIdHash = Math.abs(
       Array.from(user.id).reduce((acc, ch) => {
         return ((acc << 5) - acc + ch.charCodeAt(0)) | 0;
       }, 0)
     );
+    const timeComponent = Date.now() % 100000;
+    const uid = (userIdHash + timeComponent) % 2147483647; // Max uint32 / 2
 
     console.log(`Generating Agora token for channel="${channelName}" uid=${uid} role=${roleNum}`);
 

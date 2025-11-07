@@ -53,11 +53,15 @@ export const HelperResponse: React.FC = () => {
     });
   }, []);
 
-  // Update location when it changes
+  // Debounce location updates to avoid excessive API calls
   useEffect(() => {
-    if (userId && latitude && longitude && helperProfile?.is_available) {
+    if (!userId || !latitude || !longitude || !helperProfile?.is_available) return;
+    
+    const debounceTimer = setTimeout(() => {
       updateLocation.mutate({ lat: latitude, lng: longitude });
-    }
+    }, 5000); // Update every 5 seconds at most
+    
+    return () => clearTimeout(debounceTimer);
   }, [latitude, longitude, userId, helperProfile?.is_available]);
 
   const toggleSkill = (skill: string) => {

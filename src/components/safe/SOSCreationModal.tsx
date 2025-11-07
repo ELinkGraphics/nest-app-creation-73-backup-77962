@@ -48,6 +48,7 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [alertRadius, setAlertRadius] = useState(5); // km
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   
   const { triggerHaptic } = useHapticFeedback();
   const { latitude, longitude, refreshLocation } = useGeolocation();
@@ -221,13 +222,46 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
     return required.every(field => values[field as keyof typeof values]?.trim());
   };
 
+  const checkRateLimit = async () => {
+    if (!user) return false;
+    
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { data, error } = await supabase
+      .from('sos_alerts')
+      .select('id')
+      .eq('user_id', user.id)
+      .gte('created_at', oneHourAgo);
+    
+    if (error) {
+      console.error('Rate limit check error:', error);
+      return false;
+    }
+    
+    return (data?.length || 0) >= 3;
+  };
+
   const handleSubmit = async () => {
     if (!isFormValid()) return;
+    
+    // Show confirmation dialog first
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmedSubmit = async () => {
+    setShowConfirmDialog(false);
+    
+    // Check rate limit
+    const isRateLimited = await checkRateLimit();
+    if (isRateLimited) {
+      toast.error('Rate limit exceeded. Maximum 3 alerts per hour.');
+      return;
+    }
     
     setIsSubmitting(true);
     triggerHaptic('success');
     
-    const newAlert = await createAlert.mutateAsync({
+    try {
+      const newAlert = await createAlert.mutateAsync({
       sos_type: sosType,
       sub_category: subCategory,
       urgency,
@@ -259,25 +293,30 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
           },
         },
       });
-      toast.success('Alert broadcasted to all nearby users');
-    } catch (error) {
-      console.error('Failed to send notifications:', error);
-      // Don't fail the alert creation if notifications fail
+        toast.success('Alert broadcasted to all nearby users');
+      } catch (error) {
+        console.error('Failed to send notifications:', error);
+        // Don't fail the alert creation if notifications fail
+      }
+      
+      onClose();
+      
+      // Reset form
+      setDescription('');
+      setLocation('');
+      setPersonAge('');
+      setPersonDescription('');
+      setLastSeen('');
+      setInjuryType('');
+      setConsciousLevel('');
+      setUrgency('high');
+      setPhotos([]);
+    } catch (error: any) {
+      console.error('Failed to create alert:', error);
+      toast.error(error.message || 'Failed to create alert. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    onClose();
-    
-    // Reset form
-    setDescription('');
-    setLocation('');
-    setPersonAge('');
-    setPersonDescription('');
-    setLastSeen('');
-    setInjuryType('');
-    setConsciousLevel('');
-    setUrgency('high');
-    setPhotos([]);
-    setIsSubmitting(false);
   };
 
   const handleEmergencyCall = () => {
@@ -288,6 +327,24 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || !user) return;
+
+    // Validate files
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      
+      if (!validTypes.includes(file.type)) {
+        toast.error(`Invalid file type: ${file.name}. Only JPG, PNG, and WEBP are allowed.`);
+        return;
+      }
+      
+      if (file.size > maxSize) {
+        toast.error(`File too large: ${file.name}. Maximum size is 10MB.`);
+        return;
+      }
+    }
 
     setIsUploading(true);
     setUploadProgress(0);
@@ -862,6 +919,57 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
           </div>
         </div>
       </DialogContent>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Confirm Emergency Alert
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-sm text-amber-900">
+                You are about to send an emergency alert to nearby helpers. This should only be used for real emergencies.
+              </p>
+            </div>
+            <div className="space-y-2 text-xs text-gray-600">
+              <p>• Your location will be shared with nearby helpers</p>
+              <p>• Push notifications will be sent to people in your area</p>
+              <p>• False alerts may result in account suspension</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowConfirmDialog(false)}
+                className="flex-1"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmedSubmit}
+                disabled={isSubmitting}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Siren className="h-4 w-4 mr-2" />
+                    Confirm & Send Alert
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Location Privacy Modal */}
       <LocationPrivacyModal

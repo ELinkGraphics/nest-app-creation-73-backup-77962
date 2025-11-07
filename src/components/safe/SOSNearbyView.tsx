@@ -20,6 +20,8 @@ export const SOSNearbyView: React.FC = () => {
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userResponses, setUserResponses] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
   
   const { latitude, longitude, loading: locationLoading } = useGeolocation();
   const { alerts, isLoading: alertsLoading, updateAlertStatus } = useSOSAlerts(latitude, longitude);
@@ -102,6 +104,14 @@ export const SOSNearbyView: React.FC = () => {
       return;
     }
     
+    // Show legal disclaimer for first-time helpers
+    const hasAcceptedTerms = localStorage.getItem('helper_terms_accepted');
+    if (!hasAcceptedTerms) {
+      // Import and show legal modal
+      toast.info('Please accept helper terms before responding');
+      return;
+    }
+    
     respondToAlert.mutate(
       {
         alert_id: alertId,
@@ -114,11 +124,11 @@ export const SOSNearbyView: React.FC = () => {
             icon: '✓',
             duration: 3000,
           });
-          // Add to user responses immediately for better UX
           setUserResponses(prev => new Set(prev).add(alertId));
         },
-        onError: () => {
-          toast.error('Failed to send response. Please try again.');
+        onError: (error: any) => {
+          const errorMessage = error?.message || 'Failed to send response. Please try again.';
+          toast.error(errorMessage);
         },
       }
     );
@@ -131,6 +141,9 @@ export const SOSNearbyView: React.FC = () => {
         onSuccess: () => {
           toast.success('Emergency resolved successfully', { icon: '✓' });
         },
+        onError: (error: any) => {
+          toast.error(error?.message || 'Failed to resolve alert');
+        },
       }
     );
   };
@@ -141,6 +154,9 @@ export const SOSNearbyView: React.FC = () => {
       {
         onSuccess: () => {
           toast.success('Alert cancelled', { icon: '✓' });
+        },
+        onError: (error: any) => {
+          toast.error(error?.message || 'Failed to cancel alert');
         },
       }
     );
@@ -158,6 +174,24 @@ export const SOSNearbyView: React.FC = () => {
   };
 
   const activeEmergencies = alerts.filter(e => e.status === 'active');
+  
+  // Pagination
+  const totalPages = Math.ceil(activeEmergencies.length / pageSize);
+  const paginatedEmergencies = activeEmergencies.slice(page * pageSize, (page + 1) * pageSize);
+  
+  const handleNextPage = () => {
+    if (page < totalPages - 1) {
+      setPage(page + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+  
+  const handlePrevPage = () => {
+    if (page > 0) {
+      setPage(page - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -202,8 +236,9 @@ export const SOSNearbyView: React.FC = () => {
               </div>
             </Card>
           ) : (
-            activeEmergencies.map((emergency) => (
-              <Card key={emergency.id} className="p-4 border-l-4 border-l-red-500">
+            <>
+              {paginatedEmergencies.map((emergency) => (
+                <Card key={emergency.id} className="p-4 border-l-4 border-l-red-500">
                 <div className="space-y-3">
                    {/* Header */}
                   <div className="flex items-start justify-between">
@@ -368,7 +403,33 @@ export const SOSNearbyView: React.FC = () => {
                   )}
                 </div>
               </Card>
-            ))
+              ))}
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrevPage}
+                    disabled={page === 0}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Page {page + 1} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={page === totalPages - 1}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

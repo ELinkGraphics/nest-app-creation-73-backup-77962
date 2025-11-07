@@ -6,6 +6,7 @@ import { SOSEmergencyView } from '../components/safe/SOSEmergencyView';
 import { SOSNearbyView } from '../components/safe/SOSNearbyView';
 import { SOSProfile } from '../components/safe/SOSProfile';
 import { EmergencyContactsModal } from '../components/safe/EmergencyContactsModal';
+import { ErrorBoundary } from '../components/safe/ErrorBoundary';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
@@ -54,15 +55,21 @@ const Safe: React.FC<SafeProps> = ({
           </TabsList>
 
           <TabsContent value="sos" className="mt-4">
-            <SOSEmergencyView />
+            <ErrorBoundary fallbackMessage="Failed to load SOS emergency view">
+              <SOSEmergencyView />
+            </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="nearby" className="mt-4">
-            <SOSNearbyView />
+            <ErrorBoundary fallbackMessage="Failed to load nearby alerts">
+              <SOSNearbyView />
+            </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="profile" className="mt-4">
-            <SOSProfile />
+            <ErrorBoundary fallbackMessage="Failed to load helper profile">
+              <SOSProfile />
+            </ErrorBoundary>
           </TabsContent>
         </Tabs>
       </main>

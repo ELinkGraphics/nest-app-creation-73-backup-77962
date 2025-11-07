@@ -104,13 +104,13 @@ export const TrendingItemsCarousel: React.FC = () => {
       >
         <CarouselContent className="-ml-2">
           {trendingItems.map((item) => (
-            <CarouselItem key={item.id} className="pl-2 basis-[160px]">
+            <CarouselItem key={item.id} className="pl-2 basis-[140px]">
               <Card 
                 className="cursor-pointer active:shadow-lg transition-all duration-200 border border-border/40 bg-card"
                 onClick={() => handleItemClick(item.id)}
               >
-                <CardContent className="p-2.5">
-                  <div className="relative mb-2.5">
+                <CardContent className="p-2">
+                  <div className="relative mb-2">
                     <div className="aspect-square rounded-lg overflow-hidden">
                       <img
                         src={item.images[0]}
@@ -128,33 +128,33 @@ export const TrendingItemsCarousel: React.FC = () => {
                       <Button
                         size="sm"
                         variant="secondary"
-                        className="h-8 w-8 p-0 rounded-full bg-background/90 hover:bg-background shadow-md backdrop-blur-sm touch-target active:scale-90 transition-transform"
+                        className="h-7 w-7 p-0 rounded-full bg-background/90 hover:bg-background shadow-md backdrop-blur-sm touch-target active:scale-90 transition-transform"
                         onClick={(e) => handleLike(item.id, e)}
                       >
-                        <Heart className={`h-4 w-4 ${likedItems.has(item.id) ? 'fill-current text-red-500' : 'text-foreground'}`} />
+                        <Heart className={`h-3.5 w-3.5 ${likedItems.has(item.id) ? 'fill-current text-red-500' : 'text-foreground'}`} />
                       </Button>
                       <Button
                         size="sm"
                         variant="secondary"
-                        className="h-8 w-8 p-0 rounded-full bg-background/90 hover:bg-background shadow-md backdrop-blur-sm touch-target active:scale-90 transition-transform"
+                        className="h-7 w-7 p-0 rounded-full bg-background/90 hover:bg-background shadow-md backdrop-blur-sm touch-target active:scale-90 transition-transform"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAddToCart(item);
                         }}
                       >
-                        <ShoppingCart className="h-4 w-4 text-foreground" />
+                        <ShoppingCart className="h-3.5 w-3.5 text-foreground" />
                       </Button>
                     </div>
                   </div>
                   
-                  <div className="space-y-1.5">
-                    <h3 className="font-medium text-sm line-clamp-2 leading-tight min-h-[2.5rem]">
+                  <div className="space-y-1">
+                    <h3 className="font-medium text-sm line-clamp-2 leading-tight min-h-[2.25rem]">
                       {item.title}
                     </h3>
                     
                     <div className="flex items-baseline justify-between">
                       <div className="flex items-baseline gap-1.5">
-                        <span className="font-bold text-base text-primary">
+                        <span className="font-bold text-sm text-primary">
                           ${item.price}
                         </span>
                         {item.originalPrice && (

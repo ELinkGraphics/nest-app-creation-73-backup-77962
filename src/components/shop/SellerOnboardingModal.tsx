@@ -15,6 +15,7 @@ import { useUser } from '@/contexts/UserContext';
 interface SellerOnboardingModalProps {
   isOpen: boolean;
   onClose: () => void;
+  existingProfile?: any;
 }
 
 type SellerType = 'personal' | 'shop';
@@ -22,28 +23,34 @@ type OnboardingStep = 'type-selection' | 'personal-info' | 'shop-info';
 
 export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
   isOpen,
-  onClose
+  onClose,
+  existingProfile
 }) => {
-  const [step, setStep] = useState<OnboardingStep>('type-selection');
-  const [sellerType, setSellerType] = useState<SellerType>('personal');
+  const isEditMode = !!existingProfile;
+  const [step, setStep] = useState<OnboardingStep>(
+    isEditMode 
+      ? (existingProfile.seller_type === 'shop' ? 'shop-info' : 'personal-info')
+      : 'type-selection'
+  );
+  const [sellerType, setSellerType] = useState<SellerType>(existingProfile?.seller_type || 'personal');
   const { createOrUpdateProfile } = useSellerProfile();
   const navigate = useNavigate();
   const { user } = useUser();
   
-  // Common fields
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [location, setLocation] = useState('');
-  const [description, setDescription] = useState('');
+  // Common fields - populate from existing profile if in edit mode
+  const [email, setEmail] = useState(existingProfile?.email || '');
+  const [phone, setPhone] = useState(existingProfile?.phone || '');
+  const [location, setLocation] = useState(existingProfile?.location || '');
+  const [description, setDescription] = useState(existingProfile?.description || '');
   
   // Personal seller fields
-  const [businessName, setBusinessName] = useState('');
+  const [businessName, setBusinessName] = useState(existingProfile?.business_name || '');
   
   // Shop fields
-  const [shopName, setShopName] = useState('');
-  const [registrationNumber, setRegistrationNumber] = useState('');
-  const [taxId, setTaxId] = useState('');
-  const [businessLicense, setBusinessLicense] = useState('');
+  const [shopName, setShopName] = useState(existingProfile?.business_name || '');
+  const [registrationNumber, setRegistrationNumber] = useState(existingProfile?.business_registration_number || '');
+  const [taxId, setTaxId] = useState(existingProfile?.tax_id || '');
+  const [businessLicense, setBusinessLicense] = useState(existingProfile?.business_license_url || '');
 
   const handleTypeSelection = (type: SellerType) => {
     setSellerType(type);
@@ -65,11 +72,11 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
         location,
         sellerType: 'personal'
       });
-      toast.success('Personal seller account created!');
+      toast.success(isEditMode ? 'Profile updated successfully!' : 'Personal seller account created!');
       // Wait a bit for the query to invalidate and refetch
       setTimeout(() => {
         onClose();
-        if (user?.id) navigate(`/seller/${user.id}`);
+        if (!isEditMode && user?.id) navigate(`/seller/${user.id}`);
       }, 300);
     } catch (error) {
       toast.error('Failed to create seller account');
@@ -94,11 +101,11 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
         taxId,
         businessLicenseUrl: businessLicense || undefined
       });
-      toast.success('Shop account created! Pending verification.');
+      toast.success(isEditMode ? 'Profile updated successfully!' : 'Shop account created! Pending verification.');
       // Wait a bit for the query to invalidate and refetch
       setTimeout(() => {
         onClose();
-        if (user?.id) navigate(`/seller/${user.id}`);
+        if (!isEditMode && user?.id) navigate(`/seller/${user.id}`);
       }, 300);
     } catch (error) {
       toast.error('Failed to create shop account');
@@ -108,7 +115,7 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
-        {step === 'type-selection' && (
+        {!isEditMode && step === 'type-selection' && (
           <>
             <DialogHeader>
               <DialogTitle className="text-xl">Become a Seller</DialogTitle>
@@ -160,10 +167,10 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
             <DialogHeader>
               <DialogTitle className="text-xl flex items-center gap-2">
                 <User className="w-5 h-5" />
-                Personal Seller Information
+                {isEditMode ? 'Edit Profile' : 'Personal Seller Information'}
               </DialogTitle>
               <DialogDescription>
-                Fill in your details to start selling
+                {isEditMode ? 'Update your seller profile details' : 'Fill in your details to start selling'}
               </DialogDescription>
             </DialogHeader>
 
@@ -224,19 +231,24 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep('type-selection')}
-                  className="flex-1"
-                >
-                  Back
-                </Button>
+                {!isEditMode && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep('type-selection')}
+                    className="flex-1"
+                  >
+                    Back
+                  </Button>
+                )}
                 <Button
                   onClick={handlePersonalSubmit}
                   disabled={createOrUpdateProfile.isPending}
                   className="flex-1"
                 >
-                  {createOrUpdateProfile.isPending ? 'Creating...' : 'Create Account'}
+                  {createOrUpdateProfile.isPending 
+                    ? (isEditMode ? 'Updating...' : 'Creating...') 
+                    : (isEditMode ? 'Update Profile' : 'Create Account')
+                  }
                 </Button>
               </div>
             </div>
@@ -248,10 +260,10 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
             <DialogHeader>
               <DialogTitle className="text-xl flex items-center gap-2">
                 <Store className="w-5 h-5" />
-                Business Shop Registration
+                {isEditMode ? 'Edit Business Profile' : 'Business Shop Registration'}
               </DialogTitle>
               <DialogDescription>
-                Provide legal business information for verification
+                {isEditMode ? 'Update your business profile details' : 'Provide legal business information for verification'}
               </DialogDescription>
             </DialogHeader>
 
@@ -360,19 +372,24 @@ export const SellerOnboardingModal: React.FC<SellerOnboardingModalProps> = ({
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep('type-selection')}
-                  className="flex-1"
-                >
-                  Back
-                </Button>
+                {!isEditMode && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep('type-selection')}
+                    className="flex-1"
+                  >
+                    Back
+                  </Button>
+                )}
                 <Button
                   onClick={handleShopSubmit}
                   disabled={createOrUpdateProfile.isPending}
                   className="flex-1"
                 >
-                  {createOrUpdateProfile.isPending ? 'Submitting...' : 'Submit for Verification'}
+                  {createOrUpdateProfile.isPending 
+                    ? (isEditMode ? 'Updating...' : 'Submitting...') 
+                    : (isEditMode ? 'Update Profile' : 'Submit for Verification')
+                  }
                 </Button>
               </div>
             </div>

@@ -266,10 +266,11 @@ const SellerProfile: React.FC = () => {
       </div>
 
       {/* Seller Onboarding Modal for editing */}
-      {isOwnProfile && profile && (
+      {isOwnProfile && (
         <SellerOnboardingModal 
           isOpen={showOnboarding} 
           onClose={() => setShowOnboarding(false)}
+          existingProfile={profile}
         />
       )}
 
@@ -406,7 +407,7 @@ const SellerProfile: React.FC = () => {
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Active Listings ({sellerItems.length || 0})</h3>
               {isOwnProfile && (
-                <Button size="sm" onClick={() => navigate('/create-shop')}>
+                <Button size="sm" onClick={() => navigate('/create/shop')}>
                   Add Item
                 </Button>
               )}
@@ -446,7 +447,7 @@ const SellerProfile: React.FC = () => {
                 <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>No active listings</p>
                 {isOwnProfile && (
-                  <Button size="sm" className="mt-4" onClick={() => navigate('/create-shop')}>
+                  <Button size="sm" className="mt-4" onClick={() => navigate('/create/shop')}>
                     Create First Listing
                   </Button>
                 )}

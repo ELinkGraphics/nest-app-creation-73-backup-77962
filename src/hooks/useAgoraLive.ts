@@ -74,13 +74,28 @@ export const useAgoraLive = ({ channelName, role }: AgoraConfig) => {
           },
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Edge function error:', error);
+          throw error;
+        }
 
         const { token, appId, uid } = data;
 
-        console.log('Joining channel:', channelName, 'with uid:', uid);
+        console.log('Token response:', { 
+          appId, 
+          channelName, 
+          uid, 
+          tokenLength: token?.length,
+          appIdType: typeof appId,
+          appIdValue: appId 
+        });
+
+        if (!appId || !token) {
+          throw new Error(`Missing credentials - appId: ${!!appId}, token: ${!!token}`);
+        }
 
         // Join channel
+        console.log('Attempting to join with:', appId, channelName, uid);
         await client.join(appId, channelName, token, uid);
         setIsJoined(true);
 

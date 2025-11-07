@@ -165,9 +165,9 @@ export const SOSProfile: React.FC = () => {
   }
 
   return (
-    <div className="px-4 space-y-4">
+    <div className="px-2 sm:px-4 space-y-3 sm:space-y-4">
       {/* Helper Badge & Stats */}
-      <Card className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+      <Card className="p-4 sm:p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
         <div className="text-center space-y-3">
           <div className={`inline-flex items-center justify-center h-20 w-20 bg-gradient-to-br ${helperStats.badgeColor} rounded-2xl text-white shadow-xl`}>
             <Trophy className="h-10 w-10" />
@@ -180,18 +180,18 @@ export const SOSProfile: React.FC = () => {
               <span className="text-amber-600 text-sm">average rating</span>
             </div>
           </div>
-          <div className="flex justify-center gap-4 text-sm">
+          <div className="flex justify-center gap-3 sm:gap-4 text-xs sm:text-sm">
             <div className="text-center">
-              <div className="font-bold text-amber-800">{helperStats.totalStars}</div>
-              <div className="text-amber-600">Stars</div>
+              <div className="font-bold text-lg sm:text-xl text-amber-800">{helperStats.totalStars}</div>
+              <div className="text-amber-600 text-[10px] sm:text-xs">Stars</div>
             </div>
             <div className="text-center">
-              <div className="font-bold text-amber-800">{helperStats.peopleHelped}</div>
-              <div className="text-amber-600">Helped</div>
+              <div className="font-bold text-lg sm:text-xl text-amber-800">{helperStats.peopleHelped}</div>
+              <div className="text-amber-600 text-[10px] sm:text-xs">Helped</div>
             </div>
             <div className="text-center">
-              <div className="font-bold text-amber-800">{helperStats.responseTime}</div>
-              <div className="text-amber-600">Response</div>
+              <div className="font-bold text-lg sm:text-xl text-amber-800">{helperStats.responseTime}</div>
+              <div className="text-amber-600 text-[10px] sm:text-xs">Response</div>
             </div>
           </div>
         </div>
@@ -220,14 +220,14 @@ export const SOSProfile: React.FC = () => {
           <Star className="h-4 w-4 text-yellow-500" />
           Helper Statistics
         </h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <div className="text-lg font-bold text-blue-600">{helperStats.completionRate}%</div>
-            <div className="text-xs text-blue-600">Completion Rate</div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="text-center p-2 sm:p-3 bg-blue-50 rounded-lg">
+            <div className="text-base sm:text-lg font-bold text-blue-600">{helperStats.completionRate}%</div>
+            <div className="text-[10px] sm:text-xs text-blue-600">Completion Rate</div>
           </div>
-          <div className="text-center p-3 bg-green-50 rounded-lg">
-            <div className="text-lg font-bold text-green-600">{helperStats.weeklyStreak}</div>
-            <div className="text-xs text-green-600">Day Streak</div>
+          <div className="text-center p-2 sm:p-3 bg-green-50 rounded-lg">
+            <div className="text-base sm:text-lg font-bold text-green-600">{helperStats.weeklyStreak}</div>
+            <div className="text-[10px] sm:text-xs text-green-600">Day Streak</div>
           </div>
         </div>
       </Card>
@@ -238,22 +238,22 @@ export const SOSProfile: React.FC = () => {
           <Award className="h-4 w-4 text-purple-500" />
           Achievements
         </h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           {achievements.map((achievement, index) => {
             const IconComponent = achievement.icon;
             return (
               <div
                 key={index}
-                className={`text-center p-3 rounded-xl border transition-all ${
+                className={`text-center p-2 sm:p-3 rounded-xl border transition-all ${
                   achievement.earned
                     ? 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-sm'
                     : 'bg-gray-50 border-gray-200 opacity-50'
                 }`}
               >
-                <div className={`mb-2 flex justify-center ${achievement.earned ? achievement.color : 'text-gray-400'}`}>
-                  <IconComponent className="h-6 w-6" />
+                <div className={`mb-1 sm:mb-2 flex justify-center ${achievement.earned ? achievement.color : 'text-gray-400'}`}>
+                  <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-                <div className={`text-xs font-medium ${
+                <div className={`text-[9px] sm:text-xs font-medium leading-tight ${
                   achievement.earned ? 'text-purple-700' : 'text-gray-500'
                 }`}>
                   {achievement.name}
@@ -292,23 +292,23 @@ export const SOSProfile: React.FC = () => {
               const IconComponent = getIcon(activity.type);
               
               return (
-                <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                  <div className="p-2 bg-white rounded-lg shadow-sm border">
-                    <IconComponent className="h-5 w-5 text-gray-600" />
+                <div key={activity.id} className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="p-1.5 sm:p-2 bg-white rounded-lg shadow-sm border shrink-0">
+                    <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-gray-500">
-                        {formatDistanceToNow(new Date(activity.time), { addSuffix: true })}
+                    <p className="text-xs sm:text-sm font-medium text-gray-900 break-words">{activity.action}</p>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
+                      <span className="text-[10px] sm:text-xs text-gray-500 whitespace-nowrap">
+                        {formatDistanceToNow(new Date(activity.time), { addSuffix: true }).replace('about ', '')}
                       </span>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-gray-400" />
-                        <span className="text-xs text-gray-500">{activity.location}</span>
+                      <div className="flex items-center gap-1 min-w-0">
+                        <MapPin className="h-3 w-3 text-gray-400 shrink-0" />
+                        <span className="text-[10px] sm:text-xs text-gray-500 truncate">{activity.location}</span>
                       </div>
                     </div>
                   </div>
-                  <Badge className={
+                  <Badge className={`${
                     activity.status === 'completed'
                       ? 'bg-green-100 text-green-700 border-green-200'
                       : activity.status === 'responding'
@@ -316,10 +316,10 @@ export const SOSProfile: React.FC = () => {
                       : activity.status === 'arrived'
                       ? 'bg-amber-100 text-amber-700 border-amber-200'
                       : 'bg-gray-100 text-gray-700 border-gray-200'
-                  }>
-                    {activity.status === 'completed' ? 'Completed' : 
-                     activity.status === 'responding' ? 'In Progress' :
-                     activity.status === 'arrived' ? 'On Scene' : activity.status}
+                  } text-[10px] sm:text-xs shrink-0`}>
+                    {activity.status === 'completed' ? 'Done' : 
+                     activity.status === 'responding' ? 'Active' :
+                     activity.status === 'arrived' ? 'Scene' : activity.status}
                   </Badge>
                 </div>
               );

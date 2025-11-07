@@ -199,35 +199,35 @@ export const SOSNearbyView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Header with Live Badge and Map Toggle */}
-      <div className="px-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Badge className="bg-red-500 text-white animate-pulse">
+      <div className="px-3 sm:px-4 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Badge className="bg-red-500 text-white animate-pulse shrink-0">
             <Radio className="h-3 w-3 mr-1" />
             LIVE
           </Badge>
-          <h2 className="text-lg font-semibold text-gray-900">
-            {activeEmergencies.length} Active Nearby
+          <h2 className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
+            {activeEmergencies.length} Active
           </h2>
         </div>
         <Button
           variant="outline"
           size="sm"
           onClick={() => setShowMap(!showMap)}
-          className="text-xs"
+          className="text-xs shrink-0 min-h-[44px]"
         >
           <Map className="h-4 w-4 mr-1" />
-          {showMap ? 'List' : 'Map'}
+          <span className="hidden xs:inline">{showMap ? 'List' : 'Map'}</span>
         </Button>
       </div>
 
       {showMap ? (
-        <div className="px-4">
+        <div className="px-2 sm:px-4">
           <SOSMapInteractive userLat={latitude} userLng={longitude} />
         </div>
       ) : (
-        <div className="px-4 space-y-3">
+        <div className="px-2 sm:px-4 space-y-3">
           {alertsLoading || locationLoading ? (
             <Card className="p-8 text-center">
               <div className="text-muted-foreground">Loading emergencies...</div>
@@ -243,31 +243,31 @@ export const SOSNearbyView: React.FC = () => {
           ) : (
             <>
               {paginatedEmergencies.map((emergency) => (
-                <Card key={emergency.id} className="p-4 border-l-4 border-l-red-500">
+                <Card key={emergency.id} className="p-3 sm:p-4 border-l-4 border-l-red-500">
                 <div className="space-y-3">
                    {/* Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className={`h-12 w-12 rounded-xl ${getTypeColor(emergency.sos_type)} shadow-lg flex items-center justify-center text-white backdrop-blur-sm`}>
-                          {React.createElement(getTypeIcon(emergency.sos_type), { className: "h-6 w-6" })}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                      <div className="relative shrink-0">
+                        <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl ${getTypeColor(emergency.sos_type)} shadow-lg flex items-center justify-center text-white backdrop-blur-sm`}>
+                          {React.createElement(getTypeIcon(emergency.sos_type), { className: "h-5 w-5 sm:h-6 sm:w-6" })}
                         </div>
-                        <div className={`absolute -top-1 -right-1 h-4 w-4 ${getUrgencyDot(emergency.urgency)} rounded-full border-2 border-white shadow-sm ${emergency.urgency === 'high' ? 'animate-pulse' : ''}`} />
+                        <div className={`absolute -top-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 ${getUrgencyDot(emergency.urgency)} rounded-full border-2 border-white shadow-sm ${emergency.urgency === 'high' ? 'animate-pulse' : ''}`} />
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm sm:text-base text-gray-900 truncate">
                           {emergency.profiles?.name || 'Anonymous'}
                         </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge className={getUrgencyColor(emergency.urgency)}>
-                            {emergency.urgency} priority
+                        <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
+                          <Badge className={`${getUrgencyColor(emergency.urgency)} text-[10px] sm:text-xs`}>
+                            {emergency.urgency}
                           </Badge>
-                          <Badge variant="outline" className="text-xs capitalize">
+                          <Badge variant="outline" className="text-[10px] sm:text-xs capitalize">
                             {emergency.sos_type}
                           </Badge>
                           <Badge 
                             variant="outline" 
-                            className={`text-xs ${
+                            className={`text-[10px] sm:text-xs ${
                               emergency.status === 'active' 
                                 ? 'bg-red-50 text-red-700 border-red-200' 
                                 : emergency.status === 'responding'
@@ -280,31 +280,30 @@ export const SOSNearbyView: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Clock className="h-3 w-3" />
-                        {formatDistanceToNow(new Date(emergency.created_at), { addSuffix: true })}
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <div className="text-[10px] sm:text-xs text-gray-500 text-right whitespace-nowrap">
+                        {formatDistanceToNow(new Date(emergency.created_at), { addSuffix: true }).replace('about ', '')}
                       </div>
                       {(Date.now() - new Date(emergency.created_at).getTime()) < 5 * 60 * 1000 && (
-                        <Badge className="bg-red-500 text-white text-xs animate-pulse">NEW</Badge>
+                        <Badge className="bg-red-500 text-white text-[10px] sm:text-xs animate-pulse">NEW</Badge>
                       )}
                     </div>
                   </div>
 
                   {/* Description */}
-                  <p className="text-gray-700 text-sm bg-gray-50 p-3 rounded-lg">
+                  <p className="text-gray-700 text-xs sm:text-sm bg-gray-50 p-2 sm:p-3 rounded-lg break-words">
                     {emergency.description}
                   </p>
 
                   {/* Photos */}
                   {emergency.photo_urls && emergency.photo_urls.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto">
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                       {emergency.photo_urls.map((url, index) => (
                         <img
                           key={index}
                           src={url}
                           alt={`Emergency photo ${index + 1}`}
-                          className="h-20 w-20 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                          className="h-16 w-16 sm:h-20 sm:w-20 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity shrink-0"
                           onClick={() => window.open(url, '_blank')}
                         />
                       ))}
@@ -312,45 +311,45 @@ export const SOSNearbyView: React.FC = () => {
                   )}
 
                   {/* Stats */}
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-500">
                     {emergency.distance && (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 shrink-0">
                         <MapPin className="h-3 w-3 text-blue-500" />
-                        {emergency.distance} km away
+                        <span className="whitespace-nowrap">{emergency.distance} km</span>
                       </div>
                     )}
                     {emergency.location_address && (
-                      <div className="flex items-center gap-1 truncate max-w-[150px]">
-                        <MapPin className="h-3 w-3 text-blue-500" />
-                        {emergency.location_address}
+                      <div className="flex items-center gap-1 min-w-0 flex-1">
+                        <MapPin className="h-3 w-3 text-blue-500 shrink-0" />
+                        <span className="truncate">{emergency.location_address}</span>
                       </div>
                     )}
                     {emergency.helper_count > 0 && (
-                      <div className="flex items-center gap-1 text-green-600 font-medium">
+                      <div className="flex items-center gap-1 text-green-600 font-medium shrink-0">
                         <Users className="h-3 w-3" />
-                        {emergency.helper_count} responding
+                        <span className="whitespace-nowrap">{emergency.helper_count} helping</span>
                       </div>
                     )}
                   </div>
 
                   {/* Action Buttons */}
                   {isAlertCreator(emergency) ? (
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="flex-1"
+                        className="flex-1 min-h-[44px] text-xs sm:text-sm"
                         onClick={() => {
                           setSelectedAlert(emergency);
                           setShowEditAlert(true);
                         }}
                       >
                         <Edit className="h-4 w-4 mr-1" />
-                        Edit
+                        Edit Alert
                       </Button>
                       <Button 
                         size="sm" 
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 min-h-[44px] text-xs sm:text-sm"
                         onClick={() => handleResolveAlert(emergency.id)}
                         disabled={updateAlertStatus.isPending}
                       >
@@ -359,12 +358,12 @@ export const SOSNearbyView: React.FC = () => {
                         ) : (
                           <CheckCircle className="h-4 w-4 mr-1" />
                         )}
-                        Mark Resolved
+                        Resolve
                       </Button>
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="text-red-600 hover:text-red-700"
+                        className="text-red-600 hover:text-red-700 min-h-[44px] min-w-[44px]"
                         onClick={() => handleCancelAlert(emergency.id)}
                         disabled={updateAlertStatus.isPending}
                       >
@@ -372,11 +371,11 @@ export const SOSNearbyView: React.FC = () => {
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {userResponses.has(emergency.id) ? (
                         <Button 
                           size="sm" 
-                          className="flex-1 bg-green-100 text-green-700 border-green-300 cursor-not-allowed"
+                          className="flex-[1_1_100%] sm:flex-1 bg-green-100 text-green-700 border-green-300 cursor-not-allowed min-h-[44px] text-xs sm:text-sm"
                           disabled
                         >
                           ✓ Responding
@@ -384,7 +383,7 @@ export const SOSNearbyView: React.FC = () => {
                       ) : (
                         <Button 
                           size="sm" 
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                          className="flex-[1_1_100%] sm:flex-1 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 min-h-[44px] text-xs sm:text-sm"
                           onClick={() => handleRespond(emergency.id)}
                           disabled={respondToAlert.isPending || !latitude || !longitude}
                         >
@@ -399,15 +398,17 @@ export const SOSNearbyView: React.FC = () => {
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="flex-1"
+                        className="flex-1 min-w-[calc(50%-0.25rem)] min-h-[44px] text-xs sm:text-sm"
                         onClick={() => handleNavigate(emergency.location_lat, emergency.location_lng)}
                       >
                         <Navigation className="h-4 w-4 mr-1" />
-                        Navigate
+                        <span className="hidden xs:inline">Navigate</span>
+                        <span className="xs:hidden">Nav</span>
                       </Button>
                       <Button 
                         size="sm" 
                         variant="outline"
+                        className="min-h-[44px] min-w-[44px]"
                         onClick={() => {
                           setSelectedAlertId(emergency.id);
                           setShowMessaging(true);
@@ -418,7 +419,7 @@ export const SOSNearbyView: React.FC = () => {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="text-red-600"
+                        className="text-red-600 min-h-[44px] min-w-[44px]"
                         onClick={() => {
                           setSelectedAlert(emergency);
                           setShowAbuseReport(true);

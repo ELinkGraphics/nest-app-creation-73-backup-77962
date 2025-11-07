@@ -174,9 +174,9 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Map Container */}
-      <Card className="relative h-[500px] overflow-hidden">
+      <Card className="relative h-[400px] sm:h-[500px] overflow-hidden">
         {/* Mock Map Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-green-100 via-blue-50 to-gray-100">
           {/* Street Grid */}
@@ -302,8 +302,8 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
 
         {/* Selected Emergency Popup */}
         {selectedEmergencyData && (
-          <div className="absolute bottom-4 left-4 right-4 z-40 max-w-md mx-auto">
-            <Card className="p-4 border-l-4 border-l-red-500 shadow-2xl">
+          <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 z-40 max-w-md mx-auto">
+            <Card className="p-3 sm:p-4 border-l-4 border-l-red-500 shadow-2xl max-h-[50vh] overflow-y-auto">
               <button 
                 onClick={() => setSelectedEmergency(null)}
                 className="absolute top-2 right-2"

@@ -30,39 +30,39 @@ const Safe: React.FC<SafeProps> = ({
       <InstallPrompt />
       <Header onNotifications={() => alert("Notifications")} onMessages={() => alert("Messages")} />
       
-      <main className="pb-24">
-        <div className="bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-100 p-4 space-y-2">
+      <main className="pb-24 mobile-px">
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-100 p-3 sm:p-4 space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <Button
               onClick={() => setShowContactsModal(true)}
               variant="outline"
               size="sm"
-              className="w-full"
+              className="w-full min-h-[44px] text-xs sm:text-sm"
             >
-              <Users className="h-4 w-4 mr-2" />
-              Emergency Contacts
+              <Users className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="truncate">Contacts</span>
             </Button>
             <Button
               onClick={() => setShowNotificationPrefs(true)}
               variant="outline"
               size="sm"
-              className="w-full"
+              className="w-full min-h-[44px] text-xs sm:text-sm"
             >
-              <Bell className="h-4 w-4 mr-2" />
-              Notifications
+              <Bell className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="truncate">Notifications</span>
             </Button>
           </div>
         </div>
 
         <Tabs value={activeView} onValueChange={value => setActiveView(value as any)} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mx-auto max-w-sm mt-4 sticky top-0 z-10 bg-background">
-            <TabsTrigger value="sos" className="text-xs data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
+          <TabsList className="grid w-full grid-cols-3 mx-auto max-w-sm mt-2 sm:mt-4 sticky top-0 z-10 bg-background h-12">
+            <TabsTrigger value="sos" className="text-xs sm:text-sm data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
               SOS
             </TabsTrigger>
-            <TabsTrigger value="nearby" className="text-xs data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
+            <TabsTrigger value="nearby" className="text-xs sm:text-sm data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
               Nearby
             </TabsTrigger>
-            <TabsTrigger value="profile" className="text-xs data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
+            <TabsTrigger value="profile" className="text-xs sm:text-sm data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
               Profile
             </TabsTrigger>
           </TabsList>

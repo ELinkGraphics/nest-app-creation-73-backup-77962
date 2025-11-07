@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, MessageCircle, Shield, MapPin, Calendar, TrendingUp, Package, DollarSign, Users, Phone, Mail } from 'lucide-react';
+import { ArrowLeft, Star, MessageCircle, Shield, MapPin, Calendar, TrendingUp, Package, DollarSign, Users, Phone, Mail, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,7 +8,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import FooterNav from '@/components/FooterNav';
-import { mockShopItems } from '@/data/shop';
+import { useSellerProfile } from '@/hooks/useSellerProfile';
+import { useShopItems } from '@/hooks/useShopItems';
+import { useUser } from '@/contexts/UserContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Mock seller data that matches the shop items
 const mockSellers = {
@@ -131,23 +134,92 @@ const mockSellerReviews: Review[] = [
 const SellerProfile: React.FC = () => {
   const { sellerId } = useParams<{ sellerId: string }>();
   const navigate = useNavigate();
+  const { user } = useUser();
   const [activeTab, setActiveTab] = useState('listings');
 
-  const seller = sellerId ? mockSellers[sellerId as keyof typeof mockSellers] : null;
+  const { profile, isLoading } = useSellerProfile(sellerId);
+  const shopItemsQuery = useShopItems({ sellerId });
+  const sellerItems = shopItemsQuery.data || [];
 
-  if (!seller) {
+  const isOwnProfile = user?.id === sellerId;
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Seller not found</h2>
-          <Button onClick={() => navigate('/shop')}>Back to Shop</Button>
+      <div className="min-h-screen bg-background pb-20">
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b">
+          <div className="flex items-center justify-between p-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="p-2">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="font-semibold">Seller Profile</h1>
+            <div className="w-10" />
+          </div>
+        </div>
+        <div className="p-4 space-y-4">
+          <div className="flex items-start gap-4">
+            <Skeleton className="w-20 h-20 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i}>
+                <CardContent className="p-3">
+                  <Skeleton className="h-16 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
-  // Get seller's listings - match by seller ID
-  const sellerListings = mockShopItems.filter(item => item.seller.id === seller.id);
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Seller Profile Not Found</h2>
+          <p className="text-muted-foreground mb-4">
+            {isOwnProfile ? "You haven't set up your seller profile yet." : "This seller profile doesn't exist."}
+          </p>
+          {isOwnProfile && (
+            <Button onClick={() => navigate('/create-shop')}>
+              Set Up Seller Profile
+            </Button>
+          )}
+          {!isOwnProfile && (
+            <Button onClick={() => navigate('/shop')}>Back to Shop</Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const stats: {
+    total_sales: number;
+    revenue: number;
+    active_listings: number;
+    followers_count: number;
+    response_rate: number;
+    avg_response_time: number;
+  } = (Array.isArray(profile.stats) && profile.stats.length > 0) 
+    ? profile.stats[0] as any
+    : {
+        total_sales: 0,
+        revenue: 0,
+        active_listings: 0,
+        followers_count: 0,
+        response_rate: 0,
+        avg_response_time: 0
+      };
+
+  const rating = 0; // Will be calculated from reviews in the future
+  const totalReviews = 0; // Will be calculated from reviews in the future
+  const createdAt = (profile as any).created_at || Date.now();
 
   const renderStars = (rating: number, size: 'sm' | 'md' = 'md') => {
     const sizeClass = size === 'sm' ? 'w-3 h-3' : 'w-4 h-4';
@@ -187,7 +259,17 @@ const SellerProfile: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="font-semibold">Seller Profile</h1>
-          <div className="w-10" />
+          {isOwnProfile && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/create-shop')}
+              className="p-2"
+            >
+              <Settings className="w-5 h-5" />
+            </Button>
+          )}
+          {!isOwnProfile && <div className="w-10" />}
         </div>
       </div>
 
@@ -195,60 +277,84 @@ const SellerProfile: React.FC = () => {
       <div className="p-4 space-y-4">
         <div className="flex items-start gap-4">
           <Avatar className="w-20 h-20">
-            <AvatarImage src={seller.avatar} />
-            <AvatarFallback>{seller.name[0]}</AvatarFallback>
+            <AvatarImage src={profile.business_name?.[0]} />
+            <AvatarFallback>{profile.business_name?.[0] || 'S'}</AvatarFallback>
           </Avatar>
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h2 className="font-bold text-lg truncate">{seller.name}</h2>
-              {seller.verified && (
+              <h2 className="font-bold text-lg truncate">{profile.business_name || 'Seller'}</h2>
+              {profile.verification_status === 'verified' && (
                 <Badge variant="outline" className="text-xs">
                   <Shield className="w-3 h-3 mr-1" />
                   Verified
                 </Badge>
               )}
+              {profile.seller_type === 'shop' && (
+                <Badge variant="secondary" className="text-xs">
+                  Business
+                </Badge>
+              )}
             </div>
             
             <div className="flex items-center gap-2 mb-2">
-              {renderStars(seller.rating, 'sm')}
+              {renderStars(rating, 'sm')}
               <span className="text-sm text-muted-foreground">
-                {seller.rating} ({formatNumber(seller.totalReviews)} reviews)
+                {rating.toFixed(1)} ({formatNumber(stats.followers_count)} followers)
               </span>
             </div>
             
-            <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
-              <MapPin className="w-3 h-3" />
-              <span>{seller.location}</span>
-            </div>
+            {profile.location && (
+              <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+                <MapPin className="w-3 h-3" />
+                <span>{profile.location}</span>
+              </div>
+            )}
             
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <Calendar className="w-3 h-3" />
-              <span>Joined {new Date(seller.joinedDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+              <span>Joined {new Date(createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2">
-          <Button className="flex-1">
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Message
-          </Button>
-          <Button variant="outline" className="flex-1">
-            <Phone className="w-4 h-4 mr-2" />
-            Call
-          </Button>
-        </div>
+        {!isOwnProfile && (
+          <div className="flex gap-2">
+            <Button className="flex-1">
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Message
+            </Button>
+            {profile.phone && (
+              <Button variant="outline" className="flex-1">
+                <Phone className="w-4 h-4 mr-2" />
+                Call
+              </Button>
+            )}
+          </div>
+        )}
 
-        {/* Badges */}
-        <div className="flex flex-wrap gap-2">
-          {seller.badges.map((badge) => (
-            <Badge key={badge} variant="secondary" className="text-xs">
-              {badge}
-            </Badge>
-          ))}
-        </div>
+        {/* Verification Status */}
+        {profile.seller_type === 'shop' && (
+          <div className="flex flex-wrap gap-2">
+            {profile.verification_status === 'verified' && (
+              <Badge variant="default" className="text-xs">
+                <Shield className="w-3 h-3 mr-1" />
+                Verified Business
+              </Badge>
+            )}
+            {profile.verification_status === 'pending' && (
+              <Badge variant="secondary" className="text-xs">
+                Verification Pending
+              </Badge>
+            )}
+            {profile.verification_status === 'rejected' && (
+              <Badge variant="destructive" className="text-xs">
+                Verification Rejected
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -257,7 +363,7 @@ const SellerProfile: React.FC = () => {
           <Card>
             <CardContent className="p-3 text-center">
               <DollarSign className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="text-lg font-bold">${formatNumber(seller.stats.revenue)}</div>
+              <div className="text-lg font-bold">${formatNumber(stats.revenue || 0)}</div>
               <div className="text-xs text-muted-foreground">Total Revenue</div>
             </CardContent>
           </Card>
@@ -265,7 +371,7 @@ const SellerProfile: React.FC = () => {
           <Card>
             <CardContent className="p-3 text-center">
               <Package className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="text-lg font-bold">{formatNumber(seller.stats.totalSales)}</div>
+              <div className="text-lg font-bold">{formatNumber(stats.total_sales || 0)}</div>
               <div className="text-xs text-muted-foreground">Items Sold</div>
             </CardContent>
           </Card>
@@ -273,7 +379,7 @@ const SellerProfile: React.FC = () => {
           <Card>
             <CardContent className="p-3 text-center">
               <TrendingUp className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="text-lg font-bold">{seller.stats.activeListings}</div>
+              <div className="text-lg font-bold">{stats.active_listings || 0}</div>
               <div className="text-xs text-muted-foreground">Active Listings</div>
             </CardContent>
           </Card>
@@ -281,7 +387,7 @@ const SellerProfile: React.FC = () => {
           <Card>
             <CardContent className="p-3 text-center">
               <Users className="w-5 h-5 text-primary mx-auto mb-1" />
-              <div className="text-lg font-bold">{formatNumber(seller.stats.followers)}</div>
+              <div className="text-lg font-bold">{formatNumber(stats.followers_count || 0)}</div>
               <div className="text-xs text-muted-foreground">Followers</div>
             </CardContent>
           </Card>
@@ -299,37 +405,54 @@ const SellerProfile: React.FC = () => {
           
           <TabsContent value="listings" className="mt-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold">Active Listings ({sellerListings.length})</h3>
+              <h3 className="font-semibold">Active Listings ({sellerItems.length || 0})</h3>
+              {isOwnProfile && (
+                <Button size="sm" onClick={() => navigate('/create-shop')}>
+                  Add Item
+                </Button>
+              )}
             </div>
             
-            <div className="grid grid-cols-2 gap-3">
-              {sellerListings.map((item) => (
-                <Card 
-                  key={item.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => navigate(`/shop/product/${item.id}`)}
-                >
-                  <CardContent className="p-2">
-                    <div className="aspect-square bg-muted rounded-lg mb-2 overflow-hidden">
-                      <img 
-                        src={item.image} 
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <h4 className="font-medium text-xs line-clamp-2 mb-1 leading-tight">
-                      {item.name}
-                    </h4>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-primary">${item.price}</span>
-                      <Badge variant={item.condition === 'new' ? 'default' : 'secondary'} className="text-[10px]">
-                        {item.condition}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {sellerItems && sellerItems.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                {sellerItems.map((item) => (
+                  <Card 
+                    key={item.id}
+                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => navigate(`/shop/product/${item.id}`)}
+                  >
+                    <CardContent className="p-2">
+                      <div className="aspect-square bg-muted rounded-lg mb-2 overflow-hidden">
+                        <img 
+                          src={item.images?.[0] || '/placeholder.svg'} 
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <h4 className="font-medium text-xs line-clamp-2 mb-1 leading-tight">
+                        {item.title}
+                      </h4>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-primary">${item.price}</span>
+                        <Badge variant={'default'} className="text-[10px]">
+                          {item.condition}
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>No active listings</p>
+                {isOwnProfile && (
+                  <Button size="sm" className="mt-4" onClick={() => navigate('/create-shop')}>
+                    Create First Listing
+                  </Button>
+                )}
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="about" className="mt-4 space-y-4">
@@ -338,45 +461,94 @@ const SellerProfile: React.FC = () => {
                 <CardTitle className="text-sm">About the Seller</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {seller.description}
-                </p>
-                
-                <Separator />
+                {profile.description && (
+                  <>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {profile.description}
+                    </p>
+                    <Separator />
+                  </>
+                )}
                 
                 <div className="space-y-3">
                   <h4 className="font-semibold text-sm">Contact Information</h4>
                   <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-primary" />
-                      <span>{seller.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-primary" />
-                      <span>{seller.phone}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-primary" />
-                      <span>{seller.location}</span>
-                    </div>
+                    {profile.email && (
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-primary" />
+                        <span>{profile.email}</span>
+                      </div>
+                    )}
+                    {profile.phone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-primary" />
+                        <span>{profile.phone}</span>
+                      </div>
+                    )}
+                    {profile.location && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-primary" />
+                        <span>{profile.location}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
                 <Separator />
                 
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-sm">Performance</h4>
+                  <h4 className="font-semibold text-sm">Performance Metrics</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Response Rate:</span>
-                      <span className="font-medium">{seller.stats.responseRate}%</span>
+                      <span className="font-medium">{stats.response_rate || 0}%</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Response Time:</span>
-                      <span className="font-medium">{seller.stats.responseTime}</span>
+                      <span className="text-muted-foreground">Avg Response Time:</span>
+                      <span className="font-medium">{stats.avg_response_time ? `${stats.avg_response_time} hrs` : 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total Sales:</span>
+                      <span className="font-medium">{formatNumber(stats.total_sales || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Active Listings:</span>
+                      <span className="font-medium">{stats.active_listings || 0}</span>
                     </div>
                   </div>
                 </div>
+
+                {profile.seller_type === 'shop' && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-sm">Business Information</h4>
+                      <div className="space-y-2 text-sm">
+                        {profile.business_registration_number && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Registration Number:</span>
+                            <span className="font-medium">{profile.business_registration_number}</span>
+                          </div>
+                        )}
+                        {profile.tax_id && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Tax ID:</span>
+                            <span className="font-medium">{profile.tax_id}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Verification Status:</span>
+                          <Badge variant={
+                            profile.verification_status === 'verified' ? 'default' :
+                            profile.verification_status === 'pending' ? 'secondary' : 'destructive'
+                          } className="text-xs">
+                            {profile.verification_status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -385,44 +557,17 @@ const SellerProfile: React.FC = () => {
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Customer Reviews</h3>
               <div className="flex items-center gap-1">
-                {renderStars(seller.rating, 'sm')}
+                {renderStars(rating, 'sm')}
                 <span className="text-sm text-muted-foreground ml-1">
-                  {seller.rating} ({formatNumber(seller.totalReviews)})
+                  {rating.toFixed(1)} ({formatNumber(totalReviews)})
                 </span>
               </div>
             </div>
             
-            <div className="space-y-3">
-              {mockSellerReviews.map((review) => (
-                <Card key={review.id}>
-                  <CardContent className="p-3">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={review.user.avatar} />
-                        <AvatarFallback>{review.user.name[0]}</AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm">{review.user.name}</span>
-                          <span className="text-xs text-muted-foreground">• {review.timestamp}</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 mb-2">
-                          {renderStars(review.rating, 'sm')}
-                          <span className="text-xs text-muted-foreground">
-                            for {review.product}
-                          </span>
-                        </div>
-                        
-                        <p className="text-sm text-muted-foreground">
-                          {review.comment}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="text-center py-8 text-muted-foreground">
+              <Star className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>No reviews yet</p>
+              <p className="text-xs mt-1">Reviews will appear here once customers rate this seller</p>
             </div>
           </TabsContent>
         </Tabs>

@@ -3,6 +3,7 @@ import { Search, User } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '@/contexts/UserContext';
 
 interface ShopSearchProps {
   value: string;
@@ -11,6 +12,13 @@ interface ShopSearchProps {
 
 export const ShopSearch: React.FC<ShopSearchProps> = ({ value, onChange }) => {
   const navigate = useNavigate();
+  const { user } = useUser();
+
+  const handleProfileClick = () => {
+    if (user) {
+      navigate(`/seller/${user.id}`);
+    }
+  };
 
   return (
     <div className="flex gap-2.5">
@@ -27,7 +35,7 @@ export const ShopSearch: React.FC<ShopSearchProps> = ({ value, onChange }) => {
         variant="outline" 
         size="icon"
         className="touch-target shrink-0 border-border/50"
-        onClick={() => navigate('/create-shop')}
+        onClick={handleProfileClick}
       >
         <User className="h-5 w-5" />
       </Button>

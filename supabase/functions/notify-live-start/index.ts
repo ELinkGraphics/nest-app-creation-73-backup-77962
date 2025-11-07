@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     console.log('Sending live start notifications:', { streamId, title, type, circleId });
 
     // Get stream creator info
-    const { data: stream } = await supabase
+    const { data: stream, error: streamError } = await supabase
       .from('live_streams')
       .select(`
         *,
@@ -37,10 +37,19 @@ Deno.serve(async (req) => {
         )
       `)
       .eq('id', streamId)
-      .single();
+      .maybeSingle();
+
+    if (streamError) {
+      console.error('Error fetching stream:', streamError);
+      throw streamError;
+    }
 
     if (!stream) {
-      throw new Error('Stream not found');
+      console.error('Stream not found for ID:', streamId);
+      return new Response(
+        JSON.stringify({ error: 'Stream not found', streamId }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
     }
 
     const streamerName = stream.profiles?.name || stream.profiles?.username || 'Someone';

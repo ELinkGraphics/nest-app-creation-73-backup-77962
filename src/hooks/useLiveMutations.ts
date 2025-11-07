@@ -48,6 +48,9 @@ export const useLiveMutations = () => {
           is_active: true
         });
 
+      // Wait a moment for the database transaction to fully commit
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Send notification via edge function
       await supabase.functions.invoke('notify-live-start', {
         body: {

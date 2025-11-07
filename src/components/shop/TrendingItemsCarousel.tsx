@@ -131,7 +131,7 @@ export const TrendingItemsCarousel: React.FC = () => {
                         className="h-7 w-7 p-0 rounded-full bg-background/90 hover:bg-background shadow-md backdrop-blur-sm touch-target active:scale-90 transition-transform"
                         onClick={(e) => handleLike(item.id, e)}
                       >
-                        <Heart className={`h-3.5 w-3.5 ${likedItems.has(item.id) ? 'fill-current text-red-500' : 'text-foreground'}`} />
+                        <Heart className={`h-3 w-3 ${likedItems.has(item.id) ? 'fill-current text-red-500' : 'text-foreground'}`} />
                       </Button>
                       <Button
                         size="sm"
@@ -142,29 +142,29 @@ export const TrendingItemsCarousel: React.FC = () => {
                           handleAddToCart(item);
                         }}
                       >
-                        <ShoppingCart className="h-3.5 w-3.5 text-foreground" />
+                        <ShoppingCart className="h-3 w-3 text-foreground" />
                       </Button>
                     </div>
                   </div>
                   
                   <div className="space-y-1">
-                    <h3 className="font-medium text-sm line-clamp-2 leading-tight min-h-[2.25rem]">
+                    <h3 className="font-medium text-xs line-clamp-2 leading-tight min-h-[2rem]">
                       {item.title}
                     </h3>
                     
                     <div className="flex items-baseline justify-between">
                       <div className="flex items-baseline gap-1.5">
-                        <span className="font-bold text-sm text-primary">
+                        <span className="font-bold text-xs text-primary">
                           ${item.price}
                         </span>
                         {item.originalPrice && (
-                          <span className="text-xs text-muted-foreground line-through">
+                          <span className="text-[10px] text-muted-foreground line-through">
                             ${item.originalPrice}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Heart className={`h-3 w-3 ${likedItems.has(item.id) ? 'fill-current text-red-500' : 'fill-current'}`} />
+                      <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                        <Heart className={`h-2.5 w-2.5 ${likedItems.has(item.id) ? 'fill-current text-red-500' : 'fill-current'}`} />
                         <span className="font-medium">{item.likes + (likedItems.has(item.id) ? 1 : 0)}</span>
                       </div>
                     </div>

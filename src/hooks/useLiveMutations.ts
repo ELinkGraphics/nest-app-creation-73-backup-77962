@@ -48,17 +48,17 @@ export const useLiveMutations = () => {
           is_active: true
         });
 
-      // Wait a moment for the database transaction to fully commit
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Send notification via edge function
-      await supabase.functions.invoke('notify-live-start', {
+      // Send notification via edge function (non-blocking)
+      supabase.functions.invoke('notify-live-start', {
         body: {
           streamId: stream.id,
           title: data.title,
           type: data.type,
           circleId: data.circleId
         }
+      }).catch(err => {
+        console.error('Failed to send notifications:', err);
+        // Don't throw - notifications are not critical for going live
       });
 
       toast.success('You are now live!');

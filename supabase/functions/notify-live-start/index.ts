@@ -59,22 +59,34 @@ Deno.serve(async (req) => {
 
     if (type === 'circle' && circleId) {
       // Notify circle members
-      const { data: members } = await supabase
+      console.log('Fetching circle members for:', circleId);
+      const { data: members, error: membersError } = await supabase
         .from('circle_members')
         .select('user_id')
         .eq('circle_id', circleId)
         .eq('status', 'active')
         .neq('user_id', stream.user_id);
 
+      if (membersError) {
+        console.error('Error fetching members:', membersError);
+      }
+      
       targetUserIds = members?.map(m => m.user_id) || [];
+      console.log('Found circle members:', targetUserIds.length);
     } else {
       // Notify followers for random live
-      const { data: followers } = await supabase
+      console.log('Fetching followers for user:', stream.user_id);
+      const { data: followers, error: followersError } = await supabase
         .from('follows')
         .select('follower_id')
         .eq('following_id', stream.user_id);
 
+      if (followersError) {
+        console.error('Error fetching followers:', followersError);
+      }
+
       targetUserIds = followers?.map(f => f.follower_id) || [];
+      console.log('Found followers:', targetUserIds.length);
     }
 
     console.log(`Notifying ${targetUserIds.length} users`);
@@ -92,13 +104,20 @@ Deno.serve(async (req) => {
     }));
 
     if (notifications.length > 0) {
+      console.log('Inserting notifications:', notifications.length);
       const { error: notifError } = await supabase
         .from('push_notifications')
         .insert(notifications);
 
       if (notifError) {
         console.error('Error creating notifications:', notifError);
+        console.error('Notification error details:', JSON.stringify(notifError, null, 2));
+        // Don't throw, just log - notifications are not critical
+      } else {
+        console.log('Notifications created successfully');
       }
+    } else {
+      console.log('No users to notify');
     }
 
     return new Response(
@@ -107,9 +126,15 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in notify-live-start:', error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+    console.error('Error stack:', errorStack);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        error: errorMessage,
+        details: error instanceof Error ? error.stack : String(error)
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

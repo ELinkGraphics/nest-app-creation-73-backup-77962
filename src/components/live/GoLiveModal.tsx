@@ -52,8 +52,10 @@ const GoLiveModal: React.FC<GoLiveModalProps> = ({ isOpen, onClose }) => {
   };
 
   const handleSettingsComplete = (config: Partial<LiveConfig>) => {
+    console.log('Settings complete, transitioning to live with config:', config);
     setLiveConfig(prev => ({ ...prev, ...config }));
     setCurrentStep('live');
+    console.log('Current step set to: live');
   };
 
   const handleBack = () => {

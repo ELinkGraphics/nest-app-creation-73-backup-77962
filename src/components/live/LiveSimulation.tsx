@@ -43,6 +43,8 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
   
   const { startLive, endLive, sendMessage } = useLiveMutations();
 
+  console.log('LiveSimulation rendered with config:', config);
+
   // Fetch stream data
   const { data: stream } = useQuery({
     queryKey: ['live-stream', streamId],
@@ -63,6 +65,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
   useEffect(() => {
     const initLive = async () => {
       try {
+        console.log('Starting live stream with config:', config);
         const stream = await startLive({
           type: config.type,
           circleId: config.circleId,
@@ -71,6 +74,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
           visibility: config.visibility,
           locationVisible: config.locationVisible
         });
+        console.log('Live stream started:', stream);
         setStreamId(stream.id);
       } catch (error) {
         console.error('Failed to start live:', error);
@@ -185,7 +189,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
   };
 
   return (
-    <div className="relative h-[80vh] bg-gray-900 overflow-hidden">
+    <div className="relative h-screen w-screen bg-black overflow-hidden">
       {/* Video Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-purple-600/30" />
       

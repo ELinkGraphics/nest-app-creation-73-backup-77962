@@ -30,10 +30,12 @@ const PreLiveSettings: React.FC<PreLiveSettingsProps> = ({ config, onComplete, o
   };
 
   const handleStartLive = () => {
+    console.log('Starting live with settings:', settings);
     if (!settings.title.trim()) {
       alert('Please add a title for your live stream');
       return;
     }
+    console.log('Calling onComplete with settings');
     onComplete(settings);
   };
 

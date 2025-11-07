@@ -189,7 +189,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
   };
 
   return (
-    <div className="relative h-screen w-screen bg-black overflow-hidden">
+    <div className="fixed inset-0 z-[100] bg-black overflow-hidden">
       {/* Video Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-purple-600/30" />
       

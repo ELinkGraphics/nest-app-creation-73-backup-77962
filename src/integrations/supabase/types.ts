@@ -997,6 +997,138 @@ export type Database = {
           },
         ]
       }
+      live_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_text: string
+          message_type: string
+          stream_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_text: string
+          message_type?: string
+          stream_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_text?: string
+          message_type?: string
+          stream_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_messages_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_streams: {
+        Row: {
+          circle_id: string | null
+          created_at: string | null
+          description: string | null
+          ended_at: string | null
+          id: string
+          location_visible: boolean | null
+          peak_viewers: number | null
+          started_at: string
+          status: string
+          thumbnail_url: string | null
+          title: string
+          type: string
+          updated_at: string | null
+          user_id: string
+          viewer_count: number | null
+        }
+        Insert: {
+          circle_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          location_visible?: boolean | null
+          peak_viewers?: number | null
+          started_at?: string
+          status?: string
+          thumbnail_url?: string | null
+          title: string
+          type: string
+          updated_at?: string | null
+          user_id: string
+          viewer_count?: number | null
+        }
+        Update: {
+          circle_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          location_visible?: boolean | null
+          peak_viewers?: number | null
+          started_at?: string
+          status?: string
+          thumbnail_url?: string | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+          viewer_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_streams_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_viewers: {
+        Row: {
+          id: string
+          is_active: boolean | null
+          joined_at: string | null
+          last_ping: string | null
+          stream_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          last_ping?: string | null
+          stream_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          last_ping?: string | null
+          stream_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_viewers_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           alert_updates: boolean | null
@@ -2074,6 +2206,26 @@ export type Database = {
           user_has_liked: boolean
           user_id: string
           username: string
+        }[]
+      }
+      get_live_streams: {
+        Args: { page_num?: number; page_size?: number }
+        Returns: {
+          avatar_url: string
+          circle_id: string
+          circle_name: string
+          description: string
+          is_verified: boolean
+          name: string
+          started_at: string
+          stream_id: string
+          thumbnail_url: string
+          title: string
+          type: string
+          user_id: string
+          user_is_viewing: boolean
+          username: string
+          viewer_count: number
         }[]
       }
       get_nearby_alerts: {

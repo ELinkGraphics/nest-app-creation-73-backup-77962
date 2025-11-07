@@ -29,13 +29,7 @@ Deno.serve(async (req) => {
     // Get stream creator info
     const { data: stream, error: streamError } = await supabase
       .from('live_streams')
-      .select(`
-        *,
-        profiles:user_id (
-          username,
-          name
-        )
-      `)
+      .select('id,user_id,circle_id')
       .eq('id', streamId)
       .maybeSingle();
 
@@ -52,7 +46,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    const streamerName = stream.profiles?.name || stream.profiles?.username || 'Someone';
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('name,username')
+      .eq('id', stream.user_id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+    }
+
+    const streamerName = profile?.name || profile?.username || 'Someone';
 
     // Determine who to notify based on type
     let targetUserIds: string[] = [];

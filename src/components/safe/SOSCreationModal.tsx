@@ -279,18 +279,35 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
       photo_urls: photos.length > 0 ? photos : undefined,
     });
     
-    // Send push notifications to all users
+    // Auto-notify emergency contacts
     try {
-      await supabase.functions.invoke('send-push-notification', {
+      await supabase.functions.invoke('notify-emergency-contacts', {
         body: {
-          title: `🚨 New ${sosType} Alert`,
-          body: description || 'Emergency assistance needed',
-          notificationType: 'new_alert',
-          data: {
-            alertId: newAlert.id,
-            alertType: sosType,
-            urgency,
-          },
+          alert_id: newAlert.id,
+          sos_type: sosType,
+          urgency,
+          description,
+          location_lat: latitude,
+          location_lng: longitude,
+          location_address: location,
+        },
+      });
+      console.log('Emergency contacts notified');
+    } catch (error) {
+      console.error('Failed to notify emergency contacts:', error);
+    }
+    
+    // Notify nearby users
+    try {
+      await supabase.functions.invoke('notify-nearby-users', {
+        body: {
+          alert_id: newAlert.id,
+          sos_type: sosType,
+          urgency,
+          description,
+          location_lat: latitude,
+          location_lng: longitude,
+          location_address: location,
         },
       });
         toast.success('Alert broadcasted to all nearby users');

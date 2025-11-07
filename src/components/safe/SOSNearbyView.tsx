@@ -3,9 +3,11 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MapPin, Clock, Users, MessageCircle, Navigation, Radio, Map, Heart, Shield, Flame, Car, Tornado, Zap, CheckCircle, XCircle } from 'lucide-react';
+import { MapPin, Clock, Users, MessageCircle, Navigation, Radio, Map, Heart, Shield, Flame, Car, Tornado, Zap, CheckCircle, XCircle, Flag, Edit } from 'lucide-react';
 import { SOSMapInteractive } from './SOSMapInteractive';
 import { SOSMessaging } from './SOSMessaging';
+import { AbuseReportModal } from './AbuseReportModal';
+import { EditAlertModal } from './EditAlertModal';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useSOSAlerts } from '@/hooks/useSOSAlerts';
 import { useSOSHelpers } from '@/hooks/useSOSHelpers';
@@ -17,7 +19,10 @@ import { supabase } from '@/integrations/supabase/client';
 export const SOSNearbyView: React.FC = () => {
   const [showMap, setShowMap] = useState(false);
   const [showMessaging, setShowMessaging] = useState(false);
+  const [showAbuseReport, setShowAbuseReport] = useState(false);
+  const [showEditAlert, setShowEditAlert] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userResponses, setUserResponses] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
@@ -333,6 +338,18 @@ export const SOSNearbyView: React.FC = () => {
                     <div className="flex gap-2">
                       <Button 
                         size="sm" 
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => {
+                          setSelectedAlert(emergency);
+                          setShowEditAlert(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button 
+                        size="sm" 
                         className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                         onClick={() => handleResolveAlert(emergency.id)}
                         disabled={updateAlertStatus.isPending}
@@ -347,12 +364,11 @@ export const SOSNearbyView: React.FC = () => {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        className="flex-1 text-red-600 hover:text-red-700"
+                        className="text-red-600 hover:text-red-700"
                         onClick={() => handleCancelAlert(emergency.id)}
                         disabled={updateAlertStatus.isPending}
                       >
-                        <XCircle className="h-4 w-4 mr-1" />
-                        Cancel
+                        <XCircle className="h-4 w-4" />
                       </Button>
                     </div>
                   ) : (
@@ -398,6 +414,17 @@ export const SOSNearbyView: React.FC = () => {
                         }}
                       >
                         <MessageCircle className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="text-red-600"
+                        onClick={() => {
+                          setSelectedAlert(emergency);
+                          setShowAbuseReport(true);
+                        }}
+                      >
+                        <Flag className="h-4 w-4" />
                       </Button>
                     </div>
                   )}
@@ -448,6 +475,33 @@ export const SOSNearbyView: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Abuse Report Modal */}
+      {selectedAlert && (
+        <AbuseReportModal
+          isOpen={showAbuseReport}
+          onClose={() => {
+            setShowAbuseReport(false);
+            setSelectedAlert(null);
+          }}
+          alertId={selectedAlert.id}
+          reportedUserId={selectedAlert.user_id}
+        />
+      )}
+
+      {/* Edit Alert Modal */}
+      {selectedAlert && (
+        <EditAlertModal
+          isOpen={showEditAlert}
+          onClose={() => {
+            setShowEditAlert(false);
+            setSelectedAlert(null);
+          }}
+          alertId={selectedAlert.id}
+          currentDescription={selectedAlert.description}
+          currentUrgency={selectedAlert.urgency}
+        />
+      )}
     </div>
   );
 };

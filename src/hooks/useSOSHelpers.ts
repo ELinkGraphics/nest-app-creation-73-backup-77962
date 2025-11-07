@@ -197,6 +197,27 @@ export const useSOSHelpers = (alertId?: string) => {
     };
   }, [queryClient]);
 
+  const cancelResponse = useMutation({
+    mutationFn: async ({ helperId }: { helperId: string }) => {
+      const { error } = await supabase
+        .from('sos_helpers')
+        .delete()
+        .eq('id', helperId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sos-helpers'] });
+      queryClient.invalidateQueries({ queryKey: ['sos-alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['helper-profile'] });
+      toast.success('Response cancelled');
+    },
+    onError: (error) => {
+      console.error('Error cancelling response:', error);
+      toast.error('Failed to cancel response');
+    },
+  });
+
   return {
     helpers: helpers || [],
     isLoading,
@@ -206,5 +227,6 @@ export const useSOSHelpers = (alertId?: string) => {
     markAsArrived,
     updateHelperStatus,
     checkExistingResponse,
+    cancelResponse,
   };
 };

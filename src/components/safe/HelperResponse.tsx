@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin, Clock, MessageCircle, Phone, Star, Navigation, UserPlus, CheckCircle } from 'lucide-react';
+import { MapPin, Clock, MessageCircle, Phone, Star, Navigation, UserPlus, CheckCircle, XCircle } from 'lucide-react';
 import { useHelperProfile } from '@/hooks/useHelperProfile';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useSOSHelpers } from '@/hooks/useSOSHelpers';
@@ -44,7 +44,7 @@ export const HelperResponse: React.FC = () => {
   } = useHelperProfile(userId || undefined);
   
   const activeResponse = activeResponses[0];
-  const { markAsArrived, completeHelp } = useSOSHelpers(activeResponse?.alert_id || '');
+  const { markAsArrived, completeHelp, cancelResponse } = useSOSHelpers(activeResponse?.alert_id || '');
 
   // Get current user
   useEffect(() => {
@@ -277,26 +277,44 @@ export const HelperResponse: React.FC = () => {
                 {/* Status Action Buttons */}
                 <div className="flex gap-2 mt-2">
                   {response.status === 'responding' && (
-                    <Button 
-                      size="sm" 
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-                      onClick={() => markAsArrived.mutate(
-                        { helperId: response.id },
-                        {
-                          onSuccess: () => {
-                            toast.success('Marked as arrived', { icon: '✓' });
-                          },
-                        }
-                      )}
-                      disabled={markAsArrived.isPending}
-                    >
-                      {markAsArrived.isPending ? (
-                        <div className="h-4 w-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <MapPin className="h-4 w-4 mr-1" />
-                      )}
-                      Mark as Arrived
-                    </Button>
+                    <>
+                      <Button 
+                        size="sm" 
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                        onClick={() => markAsArrived.mutate(
+                          { helperId: response.id },
+                          {
+                            onSuccess: () => {
+                              toast.success('Marked as arrived', { icon: '✓' });
+                            },
+                          }
+                        )}
+                        disabled={markAsArrived.isPending}
+                      >
+                        {markAsArrived.isPending ? (
+                          <div className="h-4 w-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <MapPin className="h-4 w-4 mr-1" />
+                        )}
+                        Mark as Arrived
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="text-red-600"
+                        onClick={() => cancelResponse.mutate(
+                          { helperId: response.id },
+                          {
+                            onSuccess: () => {
+                              toast.success('Response cancelled', { icon: '✓' });
+                            },
+                          }
+                        )}
+                        disabled={cancelResponse.isPending}
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
+                    </>
                   )}
                   {response.status === 'arrived' && (
                     <Button 

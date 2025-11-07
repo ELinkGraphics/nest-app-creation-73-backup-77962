@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      abuse_reports: {
+        Row: {
+          alert_id: string | null
+          created_at: string | null
+          description: string
+          id: string
+          report_type: string
+          reported_user_id: string | null
+          reporter_user_id: string
+          resolution_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+        }
+        Insert: {
+          alert_id?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          report_type: string
+          reported_user_id?: string | null
+          reporter_user_id: string
+          resolution_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          alert_id?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          report_type?: string
+          reported_user_id?: string | null
+          reporter_user_id?: string
+          resolution_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abuse_reports_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "sos_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       answer_votes: {
         Row: {
           answer_id: string
@@ -943,6 +993,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_preferences: {
+        Row: {
+          alert_updates: boolean | null
+          created_at: string | null
+          emergency_contact_alerts: boolean | null
+          enabled: boolean | null
+          helper_responses: boolean | null
+          id: string
+          max_distance_km: number | null
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          sos_alerts: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_updates?: boolean | null
+          created_at?: string | null
+          emergency_contact_alerts?: boolean | null
+          enabled?: boolean | null
+          helper_responses?: boolean | null
+          id?: string
+          max_distance_km?: number | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          sos_alerts?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_updates?: boolean | null
+          created_at?: string | null
+          emergency_contact_alerts?: boolean | null
+          enabled?: boolean | null
+          helper_responses?: boolean | null
+          id?: string
+          max_distance_km?: number | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          sos_alerts?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       post_stats: {
         Row: {

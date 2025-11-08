@@ -147,17 +147,29 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || map.current || !currentUserLat || !currentUserLng) return;
+    if (!mapContainer.current || !mapboxToken || map.current) return;
 
     setIsMapLoaded(false);
     mapboxgl.accessToken = mapboxToken;
+
+    // Determine initial center - use user location, first emergency, or default
+    let initialCenter: [number, number] = [0, 0];
+    let initialZoom = 2;
+
+    if (currentUserLat && currentUserLng) {
+      initialCenter = [currentUserLng, currentUserLat];
+      initialZoom = 13;
+    } else if (activeEmergencies.length > 0 && activeEmergencies[0].location_lat && activeEmergencies[0].location_lng) {
+      initialCenter = [activeEmergencies[0].location_lng, activeEmergencies[0].location_lat];
+      initialZoom = 13;
+    }
 
     try {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v12',
-        center: [currentUserLng, currentUserLat],
-        zoom: 13,
+        center: initialCenter,
+        zoom: initialZoom,
         // Performance optimizations
         antialias: false,
         preserveDrawingBuffer: false,
@@ -191,7 +203,7 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
       }
       setIsMapLoaded(false);
     };
-  }, [mapboxToken, currentUserLat, currentUserLng]);
+  }, [mapboxToken, activeEmergencies]);
 
   // Update markers when emergencies or helpers change
   useEffect(() => {

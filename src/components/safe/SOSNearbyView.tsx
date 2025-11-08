@@ -370,41 +370,55 @@ export const SOSNearbyView: React.FC = () => {
 
                   {/* Action Buttons */}
                   {isAlertCreator(emergency) ? (
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="space-y-2">
                       <Button 
                         size="sm" 
-                        variant="outline"
-                        className="flex-1 min-h-[44px] text-xs sm:text-sm"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white min-h-[44px] text-xs sm:text-sm animate-pulse"
                         onClick={() => {
                           setSelectedAlert(emergency);
-                          setShowEditAlert(true);
+                          setSelectedAlertId(emergency.id);
+                          setShowHelperTracking(true);
                         }}
                       >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit Alert
+                        <Map className="h-4 w-4 mr-1" />
+                        Track Helpers (Real-time)
                       </Button>
-                      <Button 
-                        size="sm" 
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 min-h-[44px] text-xs sm:text-sm"
-                        onClick={() => handleResolveAlert(emergency.id)}
-                        disabled={updateAlertStatus.isPending}
-                      >
-                        {updateAlertStatus.isPending ? (
-                          <div className="h-4 w-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                        )}
-                        Resolve
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="text-red-600 hover:text-red-700 min-h-[44px] min-w-[44px]"
-                        onClick={() => handleCancelAlert(emergency.id)}
-                        disabled={updateAlertStatus.isPending}
-                      >
-                        <XCircle className="h-4 w-4" />
-                      </Button>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="flex-1 min-h-[44px] text-xs sm:text-sm"
+                          onClick={() => {
+                            setSelectedAlert(emergency);
+                            setShowEditAlert(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edit Alert
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 min-h-[44px] text-xs sm:text-sm"
+                          onClick={() => handleResolveAlert(emergency.id)}
+                          disabled={updateAlertStatus.isPending}
+                        >
+                          {updateAlertStatus.isPending ? (
+                            <div className="h-4 w-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                          )}
+                          Resolve
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="text-red-600 hover:text-red-700 min-h-[44px] min-w-[44px]"
+                          onClick={() => handleCancelAlert(emergency.id)}
+                          disabled={updateAlertStatus.isPending}
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-2">
@@ -440,20 +454,6 @@ export const SOSNearbyView: React.FC = () => {
                         <Navigation className="h-4 w-4 mr-1" />
                         <span className="hidden xs:inline">Navigate</span>
                         <span className="xs:hidden">Nav</span>
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="flex-1 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 min-h-[44px] text-xs sm:text-sm"
-                        onClick={() => {
-                          setSelectedAlert(emergency);
-                          setSelectedAlertId(emergency.id);
-                          setShowHelperTracking(true);
-                        }}
-                      >
-                        <Map className="h-4 w-4 mr-1" />
-                        <span className="hidden xs:inline">Track Helper</span>
-                        <span className="xs:hidden">Track</span>
                       </Button>
                       <Button 
                         size="sm" 

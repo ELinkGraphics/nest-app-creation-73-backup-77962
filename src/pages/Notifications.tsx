@@ -43,7 +43,17 @@ const Notifications = () => {
       case 'emergency_contact':
         return Shield;
       case 'live_start': return Video;
-      case 'order': return ShoppingBag;
+      case 'circle_member':
+      case 'circle_post':
+      case 'circle_event':
+        return UserPlus;
+      case 'order_placed':
+      case 'order_status':
+      case 'new_product':
+        return ShoppingBag;
+      case 'product_review':
+      case 'seller_follow':
+        return Heart;
       case 'event': return Calendar;
       case 'reward': return Gift;
       default: return AlertCircle;
@@ -62,7 +72,17 @@ const Notifications = () => {
       case 'emergency_contact':
         return 'bg-red-100 text-red-600';
       case 'live_start': return 'bg-purple-100 text-purple-600';
-      case 'order': return 'bg-green-100 text-green-600';
+      case 'circle_member':
+      case 'circle_post':
+      case 'circle_event':
+        return 'bg-blue-100 text-blue-600';
+      case 'order_placed':
+      case 'order_status':
+      case 'new_product':
+        return 'bg-green-100 text-green-600';
+      case 'product_review':
+      case 'seller_follow':
+        return 'bg-yellow-100 text-yellow-600';
       case 'event': return 'bg-orange-100 text-orange-600';
       case 'reward': return 'bg-yellow-100 text-yellow-600';
       default: return 'bg-muted text-muted-foreground';
@@ -74,11 +94,16 @@ const Notifications = () => {
   };
 
   const isSocialNotification = (type: string) => {
-    return ['like', 'comment', 'follow', 'mention', 'new_post', 'new_video'].includes(type);
+    return ['like', 'comment', 'follow', 'mention', 'new_post', 'new_video', 'circle_member', 'circle_post', 'circle_event'].includes(type);
+  };
+
+  const isShopNotification = (type: string) => {
+    return ['order_placed', 'order_status', 'product_review', 'seller_follow', 'new_product'].includes(type);
   };
 
   const safetyNotifications = dbNotifications.filter(n => isSafetyNotification(n.notification_type));
   const socialNotifications = dbNotifications.filter(n => isSocialNotification(n.notification_type));
+  const shopNotifications = dbNotifications.filter(n => isShopNotification(n.notification_type));
 
   const markAllAsRead = async () => {
     const unreadIds = dbNotifications.filter(n => !n.read_at).map(n => n.id);
@@ -102,6 +127,8 @@ const Notifications = () => {
         return safetyNotifications;
       case 'social':
         return socialNotifications;
+      case 'shop':
+        return shopNotifications;
       default:
         return dbNotifications;
     }
@@ -238,6 +265,9 @@ const Notifications = () => {
             <TabsTrigger value="social" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
               Social ({socialNotifications.length})
             </TabsTrigger>
+            <TabsTrigger value="shop" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+              Shop ({shopNotifications.length})
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -266,6 +296,14 @@ const Notifications = () => {
         </TabsContent>
 
         <TabsContent value="social" className="mt-0">
+          <div className="divide-y divide-border">
+            {getFilteredNotifications().map(notification => (
+              <NotificationItem key={notification.id} notification={notification} />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="shop" className="mt-0">
           <div className="divide-y divide-border">
             {getFilteredNotifications().map(notification => (
               <NotificationItem key={notification.id} notification={notification} />

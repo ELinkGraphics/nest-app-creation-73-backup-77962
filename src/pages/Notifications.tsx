@@ -144,7 +144,7 @@ const Notifications = () => {
       case 'new_video':
       case 'video_like':
       case 'video_comment':
-        if (data.videoId) navigate('/'); // Videos are on home feed
+        navigate('/'); // Videos are on home feed
         break;
       
       case 'follow':
@@ -152,14 +152,24 @@ const Notifications = () => {
         break;
       
       case 'circle_member':
+        if (data.circleId) navigate(`/circles/${data.circleId}`);
+        break;
+      
       case 'circle_post':
+        if (data.postId && data.circleId) {
+          navigate(`/circles/${data.circleId}/post/${data.postId}`);
+        } else if (data.circleId) {
+          navigate(`/circles/${data.circleId}`);
+        }
+        break;
+      
       case 'circle_event':
         if (data.circleId) navigate(`/circles/${data.circleId}`);
         break;
       
       case 'order_placed':
       case 'order_status':
-        if (data.orderId) navigate('/orders'); // Navigate to orders page
+        if (data.orderId) navigate('/cart'); // Navigate to cart/orders
         break;
       
       case 'product_review':
@@ -173,6 +183,8 @@ const Notifications = () => {
       
       case 'sos_alert':
       case 'helper_response':
+      case 'emergency_contact':
+      case 'alert_update':
         navigate('/safe');
         break;
       

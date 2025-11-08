@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation, Users, Clock, Target, Zap, Plus, Minus, Heart, Shield, Flame, Car, Tornado, AlertTriangle, Share2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { MapPin, Navigation, Users, Clock, Target, AlertTriangle, Share2, Activity, Loader2, Heart, Shield, Flame, Car, Tornado } from 'lucide-react';
 import { useSOSAlerts } from '@/hooks/useSOSAlerts';
 import { useSOSHelpers } from '@/hooks/useSOSHelpers';
 import { useGeolocation } from '@/hooks/useGeolocation';
-import { useQuery } from '@tanstack/react-query';
+import { useLiveLocationTracking } from '@/hooks/useLiveLocationTracking';
+import { useMapboxToken } from '@/hooks/useMapboxToken';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -18,16 +23,21 @@ interface SOSMapProps {
 
 export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
   const [selectedEmergency, setSelectedEmergency] = useState<string | null>(null);
-  const [zoomLevel, setZoomLevel] = useState(14);
-  const { latitude: userLat2, longitude: userLng2, refreshLocation } = useGeolocation();
-  const currentUserLat = userLat || userLat2;
-  const currentUserLng = userLng || userLng2;
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({});
+  const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  
+  const { latitude, longitude, refreshLocation } = useGeolocation();
+  const currentUserLat = userLat || latitude;
+  const currentUserLng = userLng || longitude;
   const { alerts } = useSOSAlerts(currentUserLat, currentUserLng);
   const { respondToAlert } = useSOSHelpers();
-
-  useEffect(() => {
-    refreshLocation();
-  }, []);
+  const queryClient = useQueryClient();
+  const { data: mapboxToken, isLoading: isLoadingToken } = useMapboxToken();
+  const { location: liveLocation, isTracking } = useLiveLocationTracking({ 
+    enabled: false // Only track when user creates an alert
+  });
 
   // Fetch all active helpers with their current locations
   const { data: activeHelpers } = useQuery({
@@ -57,46 +67,74 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
     refetchInterval: 10000, // Refresh every 10 seconds
   });
 
-  // Real-time subscription for map updates
+  // Initialize Mapbox
   useEffect(() => {
-    const channel = supabase
-      .channel('map-realtime-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'sos_alerts',
-        },
-        () => {
-          // Refetch alerts when changes occur
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'helper_profiles',
-        },
-        () => {
-          // Refetch helpers when location updates
-        }
-      )
-      .subscribe();
+    if (!mapContainer.current || !mapboxToken || map.current) return;
+
+    mapboxgl.accessToken = mapboxToken;
+
+    const userLatitude = currentUserLat || 0;
+    const userLongitude = currentUserLng || 0;
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [userLongitude, userLatitude],
+      zoom: 14,
+      pitch: 45,
+    });
+
+    // Add navigation controls
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    map.current.addControl(new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true
+      },
+      trackUserLocation: true,
+      showUserHeading: true
+    }), 'top-right');
 
     return () => {
-      supabase.removeChannel(channel);
+      map.current?.remove();
+      map.current = null;
     };
-  }, []);
-  
-  const activeEmergencies = alerts.filter(e => e.status === 'active');
+  }, [mapboxToken]);
+
+  // Update user location marker
+  useEffect(() => {
+    if (!map.current || !currentUserLat || !currentUserLng) return;
+
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setLngLat([currentUserLng, currentUserLat]);
+    } else {
+      const userEl = document.createElement('div');
+      userEl.className = 'relative';
+      userEl.innerHTML = `
+        <div class="relative">
+          <div class="w-4 h-4 bg-blue-500 border-2 border-white rounded-full shadow-lg"></div>
+          <div class="absolute inset-0 bg-blue-400 rounded-full animate-pulse opacity-50 scale-150"></div>
+        </div>
+      `;
+
+      userMarkerRef.current = new mapboxgl.Marker({ element: userEl })
+        .setLngLat([currentUserLng, currentUserLat])
+        .addTo(map.current);
+    }
+
+    // Center map on user location on first load
+    if (map.current.getZoom() === 14) {
+      map.current.flyTo({
+        center: [currentUserLng, currentUserLat],
+        zoom: 14,
+      });
+    }
+  }, [currentUserLat, currentUserLng]);
 
   const getUrgencyColor = (priority: string) => {
     const colors = {
-      low: 'bg-yellow-500',
-      medium: 'bg-orange-500',
-      high: 'bg-red-500',
+      low: '#eab308',
+      medium: '#f97316',
+      high: '#ef4444',
     };
     return colors[priority as keyof typeof colors] || colors.medium;
   };
@@ -113,7 +151,126 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
     return icons[type as keyof typeof icons] || AlertTriangle;
   };
 
-  const selectedEmergencyData = alerts.find(e => e.id === selectedEmergency);
+  // Update markers for alerts and helpers
+  useEffect(() => {
+    if (!map.current || !alerts) return;
+
+    // Clear existing alert markers
+    Object.keys(markersRef.current).forEach(key => {
+      if (key.startsWith('alert-')) {
+        markersRef.current[key].remove();
+        delete markersRef.current[key];
+      }
+    });
+
+    const activeEmergencies = alerts.filter(alert => alert.status === 'active');
+
+    // Add emergency markers
+    activeEmergencies.forEach(emergency => {
+      if (!emergency.location_lat || !emergency.location_lng) return;
+
+      const markerEl = document.createElement('div');
+      markerEl.className = 'relative cursor-pointer';
+      
+      const urgencyColor = getUrgencyColor(emergency.urgency);
+      const IconComponent = getTypeIcon(emergency.sos_type);
+      
+      markerEl.innerHTML = `
+        <div class="relative">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-2 border-white ${emergency.urgency === 'high' ? 'animate-pulse' : ''}" style="background-color: ${urgencyColor}">
+            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          ${emergency.urgency === 'high' ? '<div class="absolute inset-0 rounded-full animate-ping opacity-40" style="background-color: ' + urgencyColor + '"></div>' : ''}
+        </div>
+      `;
+
+      const marker = new mapboxgl.Marker({ element: markerEl })
+        .setLngLat([emergency.location_lng, emergency.location_lat])
+        .addTo(map.current!);
+
+      // Add popup on click
+      markerEl.addEventListener('click', () => {
+        setSelectedEmergency(emergency.id);
+        map.current?.flyTo({
+          center: [emergency.location_lng!, emergency.location_lat!],
+          zoom: 16,
+          duration: 1000,
+        });
+      });
+
+      markersRef.current[`alert-${emergency.id}`] = marker;
+    });
+  }, [alerts]);
+
+  // Update helper markers
+  useEffect(() => {
+    if (!map.current || !activeHelpers) return;
+
+    // Clear existing helper markers
+    Object.keys(markersRef.current).forEach(key => {
+      if (key.startsWith('helper-')) {
+        markersRef.current[key].remove();
+        delete markersRef.current[key];
+      }
+    });
+
+    // Add helper markers
+    activeHelpers.forEach((helper: any) => {
+      if (!helper.location_lat || !helper.location_lng) return;
+
+      const helperEl = document.createElement('div');
+      const profile = helper.profiles;
+      helperEl.className = 'relative cursor-pointer';
+      helperEl.innerHTML = `
+        <div class="relative">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center shadow-md border-2 border-white text-xs font-semibold text-white" style="background-color: ${profile?.avatar_color || '#10b981'}">
+            ${profile?.initials || 'H'}
+          </div>
+          <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+        </div>
+      `;
+
+      const marker = new mapboxgl.Marker({ element: helperEl })
+        .setLngLat([helper.location_lng, helper.location_lat])
+        .addTo(map.current!);
+
+      markersRef.current[`helper-${helper.user_id}`] = marker;
+    });
+  }, [activeHelpers]);
+
+  // Set up realtime subscriptions
+  useEffect(() => {
+    const alertsChannel = supabase
+      .channel('sos-alerts-map-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sos_alerts' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['sos-alerts'] });
+        }
+      )
+      .subscribe();
+
+    const helpersChannel = supabase
+      .channel('helper-profiles-map-changes')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'helper_profiles' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['active-helpers'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(alertsChannel);
+      supabase.removeChannel(helpersChannel);
+    };
+  }, [queryClient]);
+
+  const selectedEmergencyData = alerts?.find(e => e.id === selectedEmergency);
 
   const handleShareLocation = () => {
     if (currentUserLat && currentUserLng) {
@@ -134,122 +291,40 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
     }
   };
 
+  if (isLoadingToken) {
+    return (
+      <Card className="w-full h-[600px] relative overflow-hidden">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading map...</p>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Map Container */}
-      <Card className="relative h-80 overflow-hidden">
-        {/* Mock Map Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-100 via-blue-50 to-gray-100">
-          {/* Street Grid */}
-          <div className="absolute inset-0">
-            {[...Array(8)].map((_, i) => (
-              <div
-                key={`h-${i}`}
-                className="absolute w-full h-px bg-gray-300 opacity-30"
-                style={{ top: `${(i + 1) * 12.5}%` }}
-              />
-            ))}
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={`v-${i}`}
-                className="absolute h-full w-px bg-gray-300 opacity-30"
-                style={{ left: `${(i + 1) * 16.66}%` }}
-              />
-            ))}
+      <Card className="relative h-[500px] overflow-hidden">
+        <div ref={mapContainer} className="absolute inset-0" />
+
+        {/* Tracking Status */}
+        {isTracking && (
+          <div className="absolute top-4 left-4 bg-green-500 text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center gap-2 z-10 animate-pulse">
+            <Activity className="h-4 w-4" />
+            Live Tracking Active
           </div>
+        )}
 
-          {/* Emergency Markers */}
-          {alerts.map((emergency, index) => {
-            const IconComponent = getTypeIcon(emergency.sos_type);
-            return (
-              <button
-                key={emergency.id}
-                className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 ${
-                  selectedEmergency === emergency.id ? 'scale-125 z-20' : 'hover:scale-110 z-10'
-                }`}
-                style={{
-                  left: `${25 + (index * 15)}%`,
-                  top: `${30 + (index * 12)}%`
-                }}
-                onClick={() => setSelectedEmergency(
-                  selectedEmergency === emergency.id ? null : emergency.id
-                )}
-              >
-                <div className={`relative`}>
-                  <div className={`h-10 w-10 ${getUrgencyColor(emergency.urgency)} rounded-full flex items-center justify-center text-white shadow-xl border-2 border-white`}>
-                    <IconComponent className="h-5 w-5" />
-                  </div>
-                  {emergency.urgency === 'high' && (
-                    <div className="absolute inset-0 rounded-full animate-ping bg-red-400 opacity-40" />
-                  )}
-                </div>
-              </button>
-            );
-          })}
-
-          {/* Helper Markers - Real Data */}
-          {activeHelpers?.map((helper: any, i) => {
-            const profile = helper.profiles;
-            return (
-              <div
-                key={helper.user_id}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2 z-5"
-                style={{
-                  left: `${20 + (i * 18)}%`,
-                  top: `${25 + (i * 15)}%`
-                }}
-              >
-                <div className="relative">
-                  <div 
-                    className="h-8 w-8 rounded-full flex items-center justify-center text-white shadow-lg border-2 border-white text-xs font-semibold"
-                    style={{ backgroundColor: profile?.avatar_color || '#10b981' }}
-                  >
-                    {profile?.initials || 'H'}
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-white"></div>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* User Location */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="relative">
-              <div className="h-4 w-4 bg-blue-500 rounded-full border-2 border-white shadow-lg" />
-              <div className="absolute inset-0 rounded-full animate-pulse bg-blue-400 opacity-30 scale-150" />
-            </div>
-          </div>
-        </div>
-
-        {/* Map Controls */}
-        <div className="absolute top-4 right-4 flex flex-col gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 w-8 p-0 bg-white shadow-md"
-            onClick={() => setZoomLevel(Math.min(zoomLevel + 1, 18))}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 w-8 p-0 bg-white shadow-md"
-            onClick={() => setZoomLevel(Math.max(zoomLevel - 1, 10))}
-          >
-            <Minus className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Location Button */}
-        <div className="absolute bottom-4 right-4">
+        {/* Refresh Location Button */}
+        <div className="absolute bottom-4 left-4 z-10">
           <Button
             size="sm"
             className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-            onClick={() => refreshLocation()}
+            onClick={refreshLocation}
           >
             <Target className="h-4 w-4 mr-1" />
-            {currentUserLat && currentUserLng ? 'Refresh Location' : 'Find Me'}
+            {currentUserLat && currentUserLng ? 'Refresh' : 'Find Me'}
           </Button>
         </div>
       </Card>
@@ -290,7 +365,7 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
       <div className="grid grid-cols-3 gap-2">
         <Card className="p-3 text-center">
           <div className="text-lg font-bold text-red-600">
-            {alerts.filter(e => e.status === 'active').length}
+            {alerts?.filter(e => e.status === 'active').length || 0}
           </div>
           <div className="text-xs text-muted-foreground">Active</div>
         </Card>
@@ -331,11 +406,13 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="font-medium">{selectedEmergencyData.profiles?.full_name || 'Anonymous'}</h3>
-                <Badge className={`${getUrgencyColor(selectedEmergencyData.urgency)} text-white text-xs`}>
+                <Badge className={`text-white text-xs`} style={{ backgroundColor: getUrgencyColor(selectedEmergencyData.urgency) }}>
                   {selectedEmergencyData.urgency} priority
                 </Badge>
               </div>
-              <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(selectedEmergencyData.created_at), { addSuffix: true })}</span>
+              <span className="text-xs text-muted-foreground">
+                {formatDistanceToNow(new Date(selectedEmergencyData.created_at), { addSuffix: true })}
+              </span>
             </div>
             
             <p className="text-sm text-gray-700">{selectedEmergencyData.description}</p>
@@ -352,10 +429,18 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
             </div>
             
             <div className="flex gap-2">
-              <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700">
+              <Button 
+                size="sm" 
+                className="flex-1 bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  if (selectedEmergencyData.id) {
+                    toast.success('Responding to alert...');
+                  }
+                }}
+              >
                 I can help
               </Button>
-              <Button size="sm" variant="outline" className="flex-1">
+              <Button size="sm" variant="outline" className="flex-1" onClick={handleNavigate}>
                 <Navigation className="h-4 w-4 mr-1" />
                 Navigate
               </Button>

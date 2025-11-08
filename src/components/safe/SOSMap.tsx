@@ -71,20 +71,30 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
 
+    console.log('Initializing Mapbox with token');
     mapboxgl.accessToken = mapboxToken;
 
-    const userLatitude = currentUserLat || 0;
-    const userLongitude = currentUserLng || 0;
+    const userLatitude = currentUserLat || 9.03; // Default to Addis Ababa
+    const userLongitude = currentUserLng || 38.74;
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [userLongitude, userLatitude],
-      zoom: 14,
-      pitch: 45,
+      zoom: 12,
     });
 
-    // Add navigation controls
+    // Wait for the style to load before adding controls
+    map.current.on('load', () => {
+      console.log('Map style loaded successfully');
+    });
+
+    map.current.on('error', (e) => {
+      console.error('Map error:', e);
+      toast.error('Failed to load map. Please check your connection.');
+    });
+
+    // Add navigation controls after map loads
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
     map.current.addControl(new mapboxgl.GeolocateControl({
       positionOptions: {

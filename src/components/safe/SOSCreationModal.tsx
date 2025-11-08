@@ -869,10 +869,15 @@ export const SOSCreationModal: React.FC<SOSCreationModalProps> = ({
                 variant="outline"
                 size="sm"
                 className="px-3"
-                onClick={() => {
-                  // Simulate getting current location
-                  setLocation('Current Location: 123 Main St, San Francisco, CA');
+                onClick={async () => {
                   triggerHaptic('light');
+                  await refreshLocation();
+                  if (latitude && longitude) {
+                    setLocation(`GPS: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+                    toast.success('Location detected');
+                  } else {
+                    toast.error('Unable to detect location. Please enable location services.');
+                  }
                 }}
               >
                 <Target className="h-4 w-4" />

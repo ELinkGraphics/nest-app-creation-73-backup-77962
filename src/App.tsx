@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +10,7 @@ import { InstallPrompt } from "@/components/InstallPrompt";
 import { AppLoader } from "@/components/AppLoader";
 import { NotificationPermissionPrompt } from "@/components/NotificationPermissionPrompt";
 import { IncomingHelperRequestAlert } from "@/components/safe/IncomingHelperRequestAlert";
+import { cacheManager } from "@/utils/cacheManager";
 import Index from "./pages/Index";
 import Notifications from "./pages/Notifications";
 import Messages from "./pages/Messages";
@@ -92,6 +93,37 @@ const AppRoutes = () => (
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Clear cache and ensure fresh data on app load
+    const initializeApp = async () => {
+      try {
+        // Check if version has changed
+        const versionChanged = cacheManager.checkVersion();
+        
+        if (versionChanged) {
+          console.log('App version changed, clearing caches...');
+          // Clear React Query cache
+          queryClient.clear();
+          // Update to new version
+          cacheManager.updateVersion();
+        }
+        
+        // Always invalidate queries on app load to fetch fresh data
+        await queryClient.invalidateQueries();
+        
+        // Check for service worker updates
+        const hasUpdate = await cacheManager.checkForUpdates();
+        if (hasUpdate) {
+          console.log('Service worker update available');
+        }
+      } catch (error) {
+        console.error('Error initializing app:', error);
+      }
+    };
+
+    initializeApp();
+  }, []);
 
   if (isLoading) {
     return <AppLoader onComplete={() => setIsLoading(false)} />;

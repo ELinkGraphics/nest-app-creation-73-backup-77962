@@ -225,8 +225,8 @@ export const HelperTrackingModal: React.FC<HelperTrackingModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full h-full max-w-full md:max-w-4xl md:h-[90vh] p-0 gap-0 m-0 md:m-4">
-        <DialogHeader className="p-3 md:p-4 border-b sticky top-0 bg-background z-20">
+      <DialogContent className="flex flex-col w-full h-full max-w-full md:max-w-4xl md:h-[90vh] p-0 gap-0 m-0 md:m-4">
+        <DialogHeader className="p-3 md:p-4 border-b bg-background z-20 flex-shrink-0">
           <DialogTitle className="flex items-center justify-between text-base md:text-lg">
             <span>Helper Tracking</span>
             <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 md:h-10 md:w-10">
@@ -235,7 +235,7 @@ export const HelperTrackingModal: React.FC<HelperTrackingModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 relative overflow-hidden">
+        <div className="flex-1 relative overflow-hidden min-h-0">
           {/* Loading Skeleton */}
           {(!isMapLoaded || isTokenLoading) && (
             <div className="absolute inset-0 bg-muted z-30 flex flex-col items-center justify-center">

@@ -48,24 +48,40 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
   const { data: alerts, isLoading, error } = useQuery({
     queryKey: ['sos-alerts', userLat, userLng],
     queryFn: async () => {
-      // Use a single optimized query with joins instead of N+1 queries
-      const { data, error } = await supabase
+      // Fetch alerts
+      const { data: alertsData, error: alertsError } = await supabase
         .from('sos_alerts')
-        .select(`
-          *,
-          profiles!user_id (
-            name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .in('status', ['active', 'responding'])
         .order('created_at', { ascending: false })
-        .limit(50); // Limit results for better performance
+        .limit(50);
 
-      if (error) throw error;
+      if (alertsError) {
+        console.error('Error fetching alerts:', alertsError);
+        throw alertsError;
+      }
 
-      // Batch fetch helper counts for all alerts in one query
-      const alertIds = data.map(alert => alert.id);
+      if (!alertsData || alertsData.length === 0) {
+        return [];
+      }
+
+      // Get unique user IDs
+      const userIds = [...new Set(alertsData.map(alert => alert.user_id))];
+      
+      // Batch fetch profiles
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name, avatar_url')
+        .in('id', userIds);
+
+      // Create profile map for quick lookup
+      const profileMap = (profilesData || []).reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {} as Record<string, any>);
+
+      // Batch fetch helper counts
+      const alertIds = alertsData.map(alert => alert.id);
       const { data: helperCounts } = await supabase
         .from('sos_helpers')
         .select('alert_id')
@@ -78,10 +94,11 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
         return acc;
       }, {} as Record<string, number>);
 
-      // Process alerts with distance calculation
-      const alertsWithData = data.map((alert: any) => {
-        let processedAlert = {
+      // Process alerts with all data
+      const processedAlerts = alertsData.map((alert: any) => {
+        let processed = {
           ...alert,
+          profiles: profileMap[alert.user_id] || null,
           helper_count: helperCountMap[alert.id] || 0
         };
 
@@ -93,13 +110,14 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
             alert.location_lat,
             alert.location_lng
           );
-          processedAlert = { ...processedAlert, distance };
+          processed = { ...processed, distance };
         }
 
-        return processedAlert;
+        return processed;
       });
 
-      return alertsWithData;
+      console.log('Fetched alerts:', processedAlerts.length);
+      return processedAlerts;
     },
     enabled: true,
     staleTime: 10000, // Consider data fresh for 10 seconds

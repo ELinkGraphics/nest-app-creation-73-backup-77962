@@ -35,34 +35,54 @@ export const SOSNearbyView: React.FC = () => {
   const { alerts, isLoading: alertsLoading, updateAlertStatus } = useSOSAlerts(latitude, longitude);
   const { respondToAlert, checkExistingResponse } = useSOSHelpers();
 
-  // Fetch available helpers with caching and deduplication
+  // Fetch available helpers with optimized query
   const { data: availableHelpers } = useQuery({
     queryKey: ['available-helpers'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch helpers
+      const { data: helpersData, error: helpersError } = await supabase
         .from('helper_profiles')
-        .select(`
-          user_id,
-          location_lat,
-          location_lng,
-          availability_status,
-          profiles!user_id (
-            name,
-            avatar_url,
-            initials,
-            avatar_color
-          )
-        `)
+        .select('user_id, location_lat, location_lng, availability_status')
         .eq('is_available', true)
         .not('location_lat', 'is', null)
         .not('location_lng', 'is', null)
-        .limit(20); // Limit for performance
+        .limit(20);
 
-      if (error) throw error;
-      return data || [];
+      if (helpersError) {
+        console.error('Error fetching helpers:', helpersError);
+        throw helpersError;
+      }
+
+      if (!helpersData || helpersData.length === 0) {
+        return [];
+      }
+
+      // Get unique user IDs
+      const userIds = helpersData.map(h => h.user_id);
+
+      // Batch fetch profiles
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name, avatar_url, initials, avatar_color')
+        .in('id', userIds);
+
+      // Create profile map
+      const profileMap = (profilesData || []).reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {} as Record<string, any>);
+
+      // Combine helpers with profiles
+      const helpersWithProfiles = helpersData.map(helper => ({
+        ...helper,
+        profiles: profileMap[helper.user_id] || null
+      }));
+
+      console.log('Fetched helpers:', helpersWithProfiles.length);
+      return helpersWithProfiles;
     },
-    staleTime: 15000, // Consider fresh for 15 seconds
-    gcTime: 300000, // Keep in cache for 5 minutes
+    staleTime: 15000,
+    gcTime: 300000,
     refetchInterval: 10000,
   });
 

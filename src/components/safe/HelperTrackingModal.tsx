@@ -37,7 +37,7 @@ export const HelperTrackingModal: React.FC<HelperTrackingModalProps> = ({
   const requesterMarker = useRef<mapboxgl.Marker | null>(null);
   const helperMarker = useRef<mapboxgl.Marker | null>(null);
   
-  const { data: mapboxToken } = useMapboxToken();
+  const { data: mapboxToken, isLoading: isTokenLoading } = useMapboxToken();
   const { sentRequests } = useHelperRequests(alertId);
   const autoRequest = useAutoHelperRequest({
     helpers,
@@ -48,6 +48,7 @@ export const HelperTrackingModal: React.FC<HelperTrackingModalProps> = ({
 
   const [acceptedHelper, setAcceptedHelper] = useState<any>(null);
   const [helperLocation, setHelperLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   // Check for accepted helper
   useEffect(() => {
@@ -99,20 +100,48 @@ export const HelperTrackingModal: React.FC<HelperTrackingModalProps> = ({
   useEffect(() => {
     if (!isOpen || !mapContainer.current || !mapboxToken || map.current) return;
 
+    setIsMapLoaded(false);
     mapboxgl.accessToken = mapboxToken;
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [alertLng, alertLat],
-      zoom: 14,
-    });
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [alertLng, alertLat],
+        zoom: 13,
+        // Performance optimizations
+        antialias: false,
+        preserveDrawingBuffer: false,
+        refreshExpiredTiles: false,
+      });
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // Navigation control
+      map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+
+      // Mark as loaded when map is ready
+      map.current.on('load', () => {
+        setIsMapLoaded(true);
+      });
+
+      // Error handling
+      map.current.on('error', (e) => {
+        console.error('Map error:', e);
+        toast.error('Map failed to load. Please try again.');
+        setIsMapLoaded(true);
+      });
+
+    } catch (error) {
+      console.error('Failed to initialize map:', error);
+      toast.error('Unable to load map');
+      setIsMapLoaded(true);
+    }
 
     return () => {
-      map.current?.remove();
-      map.current = null;
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+      setIsMapLoaded(false);
     };
   }, [isOpen, mapboxToken, alertLat, alertLng]);
 
@@ -196,44 +225,52 @@ export const HelperTrackingModal: React.FC<HelperTrackingModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[90vh] p-0 gap-0">
-        <DialogHeader className="p-4 border-b">
-          <DialogTitle className="flex items-center justify-between">
+      <DialogContent className="w-full h-full max-w-full md:max-w-4xl md:h-[90vh] p-0 gap-0 m-0 md:m-4">
+        <DialogHeader className="p-3 md:p-4 border-b sticky top-0 bg-background z-20">
+          <DialogTitle className="flex items-center justify-between text-base md:text-lg">
             <span>Helper Tracking</span>
-            <Button variant="ghost" size="icon" onClick={onClose}>
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 md:h-10 md:w-10">
               <X className="h-4 w-4" />
             </Button>
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 relative overflow-hidden">
+          {/* Loading Skeleton */}
+          {(!isMapLoaded || isTokenLoading) && (
+            <div className="absolute inset-0 bg-muted z-30 flex flex-col items-center justify-center">
+              <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+              <p className="text-sm text-muted-foreground">Loading map...</p>
+            </div>
+          )}
+          
           {/* Map */}
           <div ref={mapContainer} className="absolute inset-0" />
 
-          {/* Helper Info Card */}
+          {/* Helper Info Card - Mobile First */}
           {acceptedHelper && helperProfile && (
-            <Card className="absolute top-4 left-4 right-4 z-10 p-4 shadow-lg">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16 border-2 border-green-500">
+            <Card className="absolute top-2 left-2 right-2 md:top-4 md:left-4 md:right-4 z-10 p-3 md:p-4 shadow-lg">
+              <div className="flex items-start gap-3 md:gap-4">
+                <Avatar className="h-12 w-12 md:h-16 md:w-16 border-2 border-green-500 flex-shrink-0">
                   <AvatarImage src={helperProfile.profiles?.avatar_url || ''} />
                   <AvatarFallback style={{ backgroundColor: helperProfile.profiles?.avatar_color }}>
                     {helperProfile.profiles?.initials || 'H'}
                   </AvatarFallback>
                 </Avatar>
 
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div>
-                      <h3 className="font-bold text-lg">
+                      <h3 className="font-bold text-sm md:text-lg truncate">
                         {helperProfile.profiles?.name || 'Helper'}
                       </h3>
-                      <Badge className="bg-green-500 text-white mt-1">
+                      <Badge className="bg-green-500 text-white text-xs mt-1">
                         On the way
                       </Badge>
                     </div>
                     {distance && eta && (
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-blue-600">
+                      <div className="text-left md:text-right">
+                        <div className="text-xl md:text-2xl font-bold text-blue-600">
                           {eta} min
                         </div>
                         <div className="text-xs text-muted-foreground">
@@ -243,32 +280,31 @@ export const HelperTrackingModal: React.FC<HelperTrackingModalProps> = ({
                     )}
                   </div>
 
-                  <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      <span>Tracking live location</span>
-                    </div>
+                  <div className="flex items-center gap-1 mt-2 text-xs md:text-sm text-muted-foreground">
+                    <MapPin className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+                    <span className="truncate">Tracking live location</span>
                   </div>
                 </div>
               </div>
             </Card>
           )}
 
-          {/* Request in Progress */}
+          {/* Request in Progress - Mobile First */}
           {autoRequest.isRequesting && !acceptedHelper && (
-            <Card className="absolute bottom-4 left-4 right-4 z-10 p-4 shadow-lg bg-blue-50 border-blue-200">
-              <div className="flex items-center gap-3">
-                <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
-                <div className="flex-1">
-                  <h4 className="font-semibold">Requesting Helper...</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Trying helper {autoRequest.currentHelperIndex}/{autoRequest.totalHelpers} • {autoRequest.timeRemaining}s remaining
+            <Card className="absolute bottom-2 left-2 right-2 md:bottom-4 md:left-4 md:right-4 z-10 p-3 md:p-4 shadow-lg bg-blue-50 border-blue-200">
+              <div className="flex items-center gap-2 md:gap-3">
+                <Loader2 className="h-5 w-5 md:h-6 md:w-6 text-blue-500 animate-spin flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-sm md:text-base">Requesting Helper...</h4>
+                  <p className="text-xs md:text-sm text-muted-foreground truncate">
+                    Helper {autoRequest.currentHelperIndex}/{autoRequest.totalHelpers} • {autoRequest.timeRemaining}s
                   </p>
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={autoRequest.stopRequesting}
+                  className="flex-shrink-0 text-xs md:text-sm"
                 >
                   Cancel
                 </Button>
@@ -276,19 +312,19 @@ export const HelperTrackingModal: React.FC<HelperTrackingModalProps> = ({
             </Card>
           )}
 
-          {/* No Helper Yet - Start Request */}
+          {/* No Helper Yet - Start Request - Mobile First */}
           {!autoRequest.isRequesting && !acceptedHelper && (
-            <Card className="absolute bottom-4 left-4 right-4 z-10 p-4 shadow-lg">
+            <Card className="absolute bottom-2 left-2 right-2 md:bottom-4 md:left-4 md:right-4 z-10 p-3 md:p-4 shadow-lg">
               <Button
-                className="w-full bg-green-600 hover:bg-green-700 text-white h-12"
+                className="w-full bg-green-600 hover:bg-green-700 text-white h-10 md:h-12 text-sm md:text-base"
                 onClick={autoRequest.startRequesting}
                 disabled={!helpers || helpers.length === 0}
               >
-                <Phone className="h-5 w-5 mr-2" />
+                <Phone className="h-4 w-4 md:h-5 md:w-5 mr-2" />
                 Request Helper Automatically
               </Button>
               <p className="text-xs text-center text-muted-foreground mt-2">
-                We'll contact nearby helpers one by one until someone accepts
+                We'll contact nearby helpers until someone accepts
               </p>
             </Card>
           )}

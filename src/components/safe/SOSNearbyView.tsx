@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { MapPin, Clock, Users, MessageCircle, Navigation, Radio, Map, Heart, Shield, Flame, Car, Tornado, Zap, CheckCircle, XCircle, Flag, Edit } from 'lucide-react';
-import { SOSMapInteractive } from './SOSMapInteractive';
+import { LazyMap } from './LazyMap';
 import { SOSMessaging } from './SOSMessaging';
 import { AbuseReportModal } from './AbuseReportModal';
 import { EditAlertModal } from './EditAlertModal';
@@ -35,36 +35,34 @@ export const SOSNearbyView: React.FC = () => {
   const { alerts, isLoading: alertsLoading, updateAlertStatus } = useSOSAlerts(latitude, longitude);
   const { respondToAlert, checkExistingResponse } = useSOSHelpers();
 
-  // Fetch available helpers
+  // Fetch available helpers with caching and deduplication
   const { data: availableHelpers } = useQuery({
     queryKey: ['available-helpers'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('helper_profiles')
-        .select('user_id, location_lat, location_lng, availability_status')
+        .select(`
+          user_id,
+          location_lat,
+          location_lng,
+          availability_status,
+          profiles!user_id (
+            name,
+            avatar_url,
+            initials,
+            avatar_color
+          )
+        `)
         .eq('is_available', true)
         .not('location_lat', 'is', null)
-        .not('location_lng', 'is', null);
+        .not('location_lng', 'is', null)
+        .limit(20); // Limit for performance
 
       if (error) throw error;
-
-      const helpersWithProfiles = await Promise.all(
-        (data || []).map(async (helper) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('name, avatar_url, initials, avatar_color')
-            .eq('id', helper.user_id)
-            .single();
-
-          return {
-            ...helper,
-            profiles: profile,
-          };
-        })
-      );
-
-      return helpersWithProfiles;
+      return data || [];
     },
+    staleTime: 15000, // Consider fresh for 15 seconds
+    gcTime: 300000, // Keep in cache for 5 minutes
     refetchInterval: 10000,
   });
 
@@ -260,7 +258,7 @@ export const SOSNearbyView: React.FC = () => {
 
       {showMap ? (
         <div className="px-2 sm:px-4">
-          <SOSMapInteractive userLat={latitude} userLng={longitude} />
+          <LazyMap userLat={latitude} userLng={longitude} />
         </div>
       ) : (
         <div className="px-2 sm:px-4 space-y-3">

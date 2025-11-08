@@ -48,55 +48,65 @@ export const useSOSAlerts = (userLat?: number | null, userLng?: number | null) =
   const { data: alerts, isLoading, error } = useQuery({
     queryKey: ['sos-alerts', userLat, userLng],
     queryFn: async () => {
+      // Use a single optimized query with joins instead of N+1 queries
       const { data, error } = await supabase
         .from('sos_alerts')
-        .select('*')
+        .select(`
+          *,
+          profiles!user_id (
+            name,
+            avatar_url
+          )
+        `)
         .in('status', ['active', 'responding'])
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50); // Limit results for better performance
 
       if (error) throw error;
 
-      // Fetch profiles and helper count for each alert
-      const alertsWithProfiles = await Promise.all(
-        data.map(async (alert: any) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('name, avatar_url')
-            .eq('id', alert.user_id)
-            .single();
-          
-          // Get helper count for this alert
-          const { count: helperCount } = await supabase
-            .from('sos_helpers')
-            .select('*', { count: 'exact', head: true })
-            .eq('alert_id', alert.id)
-            .in('status', ['responding', 'arrived']);
-          
-          let alertWithProfile = { 
-            ...alert, 
-            profiles: profile,
-            helper_count: helperCount || 0
-          };
-          
-          // Calculate distance if user location is available
-          if (userLat && userLng && alert.location_lat && alert.location_lng) {
-            const distance = calculateDistance(
-              userLat,
-              userLng,
-              alert.location_lat,
-              alert.location_lng
-            );
-            alertWithProfile = { ...alertWithProfile, distance };
-          }
-          
-          return alertWithProfile;
-        })
-      );
+      // Batch fetch helper counts for all alerts in one query
+      const alertIds = data.map(alert => alert.id);
+      const { data: helperCounts } = await supabase
+        .from('sos_helpers')
+        .select('alert_id')
+        .in('alert_id', alertIds)
+        .in('status', ['responding', 'arrived']);
 
-      return alertsWithProfiles;
+      // Count helpers per alert
+      const helperCountMap = (helperCounts || []).reduce((acc, helper) => {
+        acc[helper.alert_id] = (acc[helper.alert_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Process alerts with distance calculation
+      const alertsWithData = data.map((alert: any) => {
+        let processedAlert = {
+          ...alert,
+          helper_count: helperCountMap[alert.id] || 0
+        };
+
+        // Calculate distance if user location is available
+        if (userLat && userLng && alert.location_lat && alert.location_lng) {
+          const distance = calculateDistance(
+            userLat,
+            userLng,
+            alert.location_lat,
+            alert.location_lng
+          );
+          processedAlert = { ...processedAlert, distance };
+        }
+
+        return processedAlert;
+      });
+
+      return alertsWithData;
     },
     enabled: true,
-    refetchInterval: 30000, // Refetch every 30 seconds as backup (realtime is primary)
+    staleTime: 10000, // Consider data fresh for 10 seconds
+    gcTime: 300000, // Keep in cache for 5 minutes
+    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchOnWindowFocus: true,
+    retry: 2,
   });
 
   const createAlert = useMutation({

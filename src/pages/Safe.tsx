@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import Header from '../components/Header';
 import FooterNav from '../components/FooterNav';
 import { InstallPrompt } from '../components/InstallPrompt';
 import { SOSEmergencyView } from '../components/safe/SOSEmergencyView';
-import { SOSNearbyView } from '../components/safe/SOSNearbyView';
 import { SOSProfile } from '../components/safe/SOSProfile';
 import { EmergencyContactsModal } from '../components/safe/EmergencyContactsModal';
 import { NotificationPreferencesModal } from '../components/safe/NotificationPreferencesModal';
 import { ErrorBoundary } from '../components/safe/ErrorBoundary';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Users, Bell } from 'lucide-react';
+import { Users, Bell, Loader2 } from 'lucide-react';
 import { type TabKey } from '@/hooks/useAppNav';
+
+// Lazy load the nearby view for better initial load performance
+const SOSNearbyView = lazy(() => 
+  import('../components/safe/SOSNearbyView').then(module => ({ default: module.SOSNearbyView }))
+);
 interface SafeProps {
   activeTab: TabKey;
   onTabSelect: (tab: TabKey) => void;
@@ -75,7 +79,13 @@ const Safe: React.FC<SafeProps> = ({
 
           <TabsContent value="nearby" className="mt-4">
             <ErrorBoundary fallbackMessage="Failed to load nearby alerts">
-              <SOSNearbyView />
+              <Suspense fallback={
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              }>
+                <SOSNearbyView />
+              </Suspense>
             </ErrorBoundary>
           </TabsContent>
 

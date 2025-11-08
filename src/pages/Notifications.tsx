@@ -1,161 +1,135 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Check, Trash2, Shield, Heart, MessageCircle, UserPlus, ShoppingBag, Calendar, Gift } from 'lucide-react';
+import { ArrowLeft, Check, Trash2, Shield, Heart, MessageCircle, UserPlus, ShoppingBag, Calendar, Gift, AlertCircle, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import FooterNav from '@/components/FooterNav';
-
-// Mock notifications data
-const mockNotifications = [
-  {
-    id: '1',
-    type: 'safety',
-    icon: Shield,
-    title: 'Emergency Alert Resolved',
-    message: 'The emergency situation in your area has been resolved. Thank you for your cooperation.',
-    time: '2 min ago',
-    isRead: false,
-    priority: 'high'
-  },
-  {
-    id: '2',
-    type: 'social',
-    icon: Heart,
-    title: 'Sarah liked your post',
-    message: 'Your wellness tip post received a like',
-    time: '15 min ago',
-    isRead: false,
-    avatar: { color: '#8B5CF6', initials: 'SJ' }
-  },
-  {
-    id: '3',
-    type: 'social',
-    icon: MessageCircle,
-    title: 'New comment on your story',
-    message: 'Mike commented: "This looks amazing! 🔥"',
-    time: '1h ago',
-    isRead: true,
-    avatar: { color: '#10B981', initials: 'MR' }
-  },
-  {
-    id: '4',
-    type: 'social',
-    icon: UserPlus,
-    title: 'Emma started following you',
-    message: 'You have a new follower',
-    time: '2h ago',
-    isRead: false,
-    avatar: { color: '#F59E0B', initials: 'EW' }
-  },
-  {
-    id: '5',
-    type: 'order',
-    icon: ShoppingBag,
-    title: 'Order Delivered',
-    message: 'Your order #12345 has been delivered successfully',
-    time: '3h ago',
-    isRead: true
-  },
-  {
-    id: '6',
-    type: 'safety',
-    icon: Shield,
-    title: 'Weekly Safety Check',
-    message: 'Complete your weekly safety check-in',
-    time: '1 day ago',
-    isRead: false,
-    priority: 'medium'
-  },
-  {
-    id: '7',
-    type: 'event',
-    icon: Calendar,
-    title: 'Wellness Circle Meeting',
-    message: 'Your wellness circle meeting starts in 30 minutes',
-    time: '2 days ago',
-    isRead: true
-  },
-  {
-    id: '8',
-    type: 'reward',
-    icon: Gift,
-    title: 'Congratulations!',
-    message: 'You earned 50 wellness points for your daily check-in streak',
-    time: '3 days ago',
-    isRead: true
-  }
-];
-
-import { type TabKey } from '@/hooks/useAppNav';
+import { useNotifications } from '@/hooks/useNotifications';
+import { formatDistanceToNow } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 const Notifications = () => {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const { notifications: dbNotifications, isLoading, unreadCount, markAsRead } = useNotifications();
   const [activeTab, setActiveTab] = useState('all');
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-  const safetyNotifications = notifications.filter(n => n.type === 'safety');
-  const socialNotifications = notifications.filter(n => n.type === 'social');
+  // Fetch user profiles for notifications
+  const { data: profiles } = useQuery({
+    queryKey: ['notification-profiles'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, name, username, avatar_url, initials, avatar_color');
+      return data || [];
+    },
+  });
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    );
+  const getProfileById = (userId: string) => {
+    return profiles?.find(p => p.id === userId);
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, isRead: true }))
-    );
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'like': return Heart;
+      case 'comment': return MessageCircle;
+      case 'follow': return UserPlus;
+      case 'sos_alert': 
+      case 'helper_response':
+      case 'emergency_contact':
+        return Shield;
+      case 'live_start': return Video;
+      case 'order': return ShoppingBag;
+      case 'event': return Calendar;
+      case 'reward': return Gift;
+      default: return MessageCircle;
+    }
   };
 
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
+  const getNotificationColor = (type: string) => {
+    switch (type) {
+      case 'like': return 'bg-red-100 text-red-600';
+      case 'comment': return 'bg-blue-100 text-blue-600';
+      case 'follow': return 'bg-green-100 text-green-600';
+      case 'sos_alert':
+      case 'helper_response':
+      case 'emergency_contact':
+        return 'bg-red-100 text-red-600';
+      case 'live_start': return 'bg-purple-100 text-purple-600';
+      case 'order': return 'bg-green-100 text-green-600';
+      case 'event': return 'bg-orange-100 text-orange-600';
+      case 'reward': return 'bg-yellow-100 text-yellow-600';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const isSafetyNotification = (type: string) => {
+    return ['sos_alert', 'helper_response', 'emergency_contact', 'alert_update'].includes(type);
+  };
+
+  const isSocialNotification = (type: string) => {
+    return ['like', 'comment', 'follow', 'mention'].includes(type);
+  };
+
+  const safetyNotifications = dbNotifications.filter(n => isSafetyNotification(n.notification_type));
+  const socialNotifications = dbNotifications.filter(n => isSocialNotification(n.notification_type));
+
+  const markAllAsRead = async () => {
+    const unreadIds = dbNotifications.filter(n => !n.read_at).map(n => n.id);
+    for (const id of unreadIds) {
+      await markAsRead.mutateAsync(id);
+    }
+  };
+
+  const deleteNotification = async (id: string) => {
+    await supabase
+      .from('push_notifications')
+      .delete()
+      .eq('id', id);
   };
 
   const getFilteredNotifications = () => {
     switch (activeTab) {
       case 'unread':
-        return notifications.filter(n => !n.isRead);
+        return dbNotifications.filter(n => !n.read_at);
       case 'safety':
         return safetyNotifications;
       case 'social':
         return socialNotifications;
       default:
-        return notifications;
+        return dbNotifications;
     }
   };
 
   const NotificationItem = ({ notification }: { notification: any }) => {
-    const Icon = notification.icon;
+    const Icon = getNotificationIcon(notification.notification_type);
+    const profile = notification.data?.userId ? getProfileById(notification.data.userId) : null;
+    const isUnread = !notification.read_at;
+    const isSafety = isSafetyNotification(notification.notification_type);
     
     return (
       <div 
         className={`px-4 py-3 border-b border-border hover:bg-muted/50 transition-colors ${
-          !notification.isRead ? 'bg-primary/5 border-l-2 border-l-primary' : ''
+          isUnread ? 'bg-primary/5 border-l-2 border-l-primary' : ''
         }`}
-        onClick={() => markAsRead(notification.id)}
+        onClick={() => !isUnread && markAsRead.mutate(notification.id)}
       >
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 mt-0.5">
-            {notification.avatar ? (
-              <div 
-                className="size-9 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm"
-                style={{ backgroundColor: notification.avatar.color }}
-              >
-                {notification.avatar.initials}
-              </div>
+            {profile ? (
+              <Avatar className="size-9">
+                <AvatarImage src={profile.avatar_url} />
+                <AvatarFallback 
+                  className="text-xs font-medium text-white"
+                  style={{ backgroundColor: profile.avatar_color }}
+                >
+                  {profile.initials}
+                </AvatarFallback>
+              </Avatar>
             ) : (
-              <div className={`p-2 rounded-full shadow-sm ${
-                notification.type === 'safety' ? 'bg-red-100 text-red-600' :
-                notification.type === 'social' ? 'bg-blue-100 text-blue-600' :
-                notification.type === 'order' ? 'bg-green-100 text-green-600' :
-                notification.type === 'event' ? 'bg-purple-100 text-purple-600' :
-                'bg-yellow-100 text-yellow-600'
-              }`}>
+              <div className={`p-2 rounded-full shadow-sm ${getNotificationColor(notification.notification_type)}`}>
                 <Icon className="size-4" />
               </div>
             )}
@@ -165,14 +139,11 @@ const Notifications = () => {
             <div className="flex items-start justify-between gap-2 mb-1">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <h3 className="font-semibold text-xs text-foreground truncate">{notification.title}</h3>
-                {!notification.isRead && (
+                {isUnread && (
                   <div className="size-1.5 bg-primary rounded-full flex-shrink-0" />
                 )}
-                {notification.priority === 'high' && (
+                {isSafety && (
                   <Badge variant="destructive" className="text-[10px] px-1 py-0 flex-shrink-0">Urgent</Badge>
-                )}
-                {notification.priority === 'medium' && (
-                  <Badge variant="secondary" className="text-[10px] px-1 py-0 flex-shrink-0">Important</Badge>
                 )}
               </div>
               <Button
@@ -188,16 +159,26 @@ const Notifications = () => {
               </Button>
             </div>
             
-            <p className="text-muted-foreground text-xs truncate mb-1.5 leading-relaxed">{notification.message}</p>
+            <p className="text-muted-foreground text-xs truncate mb-1.5 leading-relaxed">{notification.body}</p>
             
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-muted-foreground font-medium">{notification.time}</span>
+              <span className="text-[10px] text-muted-foreground font-medium">
+                {formatDistanceToNow(new Date(notification.sent_at), { addSuffix: true })}
+              </span>
             </div>
           </div>
         </div>
       </div>
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background" data-testid="notifications-page">
@@ -242,7 +223,7 @@ const Notifications = () => {
         <div className="sticky top-[73px] bg-background border-b border-border">
           <TabsList className="w-full h-12 bg-transparent justify-start rounded-none p-0">
             <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-              All ({notifications.length})
+              All ({dbNotifications.length})
             </TabsTrigger>
             <TabsTrigger value="unread" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
               Unread ({unreadCount})

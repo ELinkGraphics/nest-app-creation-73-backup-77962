@@ -6,6 +6,7 @@ import { useAppNav } from '@/hooks/useAppNav';
 import { useNavigate } from 'react-router-dom';
 import ProfileModal from './ProfileModal';
 import { cacheManager } from '@/utils/cacheManager';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface HeaderProps {
   onNotifications?: () => void;
@@ -66,6 +67,7 @@ const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages, onMenuOpen
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const { unreadCount } = useNotifications();
 
   React.useEffect(() => {
     onMenuOpenChange?.(menuOpen);
@@ -112,7 +114,7 @@ const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages, onMenuOpen
           <div className="flex items-center gap-1">
             <IconButton 
               label="Notifications" 
-              badge={3} 
+              badge={unreadCount} 
               onClick={navigateToNotifications}
               data-testid="header-notifications"
             >

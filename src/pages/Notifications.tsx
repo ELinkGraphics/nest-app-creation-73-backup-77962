@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Check, Trash2, Shield, Heart, MessageCircle, UserPlus, ShoppingBag, Calendar, Gift, AlertCircle, Video } from 'lucide-react';
+import { ArrowLeft, Check, Trash2, Shield, Heart, MessageCircle, UserPlus, ShoppingBag, Calendar, Gift, AlertCircle, Video, CheckCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,8 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { useSwipeGestures } from '@/hooks/useSwipeGestures';
+import { toast } from 'sonner';
 
 const Notifications = () => {
   const navigate = useNavigate();
@@ -113,10 +115,75 @@ const Notifications = () => {
   };
 
   const deleteNotification = async (id: string) => {
-    await supabase
+    const { error } = await supabase
       .from('push_notifications')
       .delete()
       .eq('id', id);
+    
+    if (error) {
+      toast.error('Failed to delete notification');
+    }
+  };
+
+  const handleNotificationClick = (notification: any) => {
+    const data = notification.data || {};
+    
+    // Mark as read if unread
+    if (!notification.read_at) {
+      markAsRead.mutate(notification.id);
+    }
+
+    // Navigate based on notification type
+    switch (notification.notification_type) {
+      case 'like':
+      case 'comment':
+      case 'new_post':
+        if (data.postId) navigate(`/post/${data.postId}`);
+        break;
+      
+      case 'new_video':
+      case 'video_like':
+      case 'video_comment':
+        if (data.videoId) navigate('/'); // Videos are on home feed
+        break;
+      
+      case 'follow':
+        if (data.userId) navigate(`/profile/${data.userId}`);
+        break;
+      
+      case 'circle_member':
+      case 'circle_post':
+      case 'circle_event':
+        if (data.circleId) navigate(`/circles/${data.circleId}`);
+        break;
+      
+      case 'order_placed':
+      case 'order_status':
+        if (data.orderId) navigate('/orders'); // Navigate to orders page
+        break;
+      
+      case 'product_review':
+      case 'new_product':
+        if (data.itemId) navigate(`/product/${data.itemId}`);
+        break;
+      
+      case 'seller_follow':
+        if (data.sellerId) navigate(`/seller/${data.sellerId}`);
+        break;
+      
+      case 'sos_alert':
+      case 'helper_response':
+        navigate('/safe');
+        break;
+      
+      case 'live_start':
+        if (data.streamId) navigate(`/live/${data.streamId}`);
+        break;
+      
+      default:
+        // Do nothing for unknown types
+        break;
+    }
   };
 
   const getFilteredNotifications = () => {
@@ -135,22 +202,59 @@ const Notifications = () => {
   };
 
   const NotificationItem = ({ notification }: { notification: any }) => {
+    const [isDeleting, setIsDeleting] = useState(false);
     const Icon = getNotificationIcon(notification.notification_type);
     const profile = notification.data?.userId ? getProfileById(notification.data.userId) : null;
     const isUnread = !notification.read_at;
     const isSafety = isSafetyNotification(notification.notification_type);
     
+    const swipeHandlers = useSwipeGestures(
+      {
+        onSwipeLeft: () => {
+          setIsDeleting(true);
+          setTimeout(() => {
+            deleteNotification(notification.id);
+          }, 300);
+        },
+        onSwipeRight: () => {
+          if (isUnread) {
+            markAsRead.mutate(notification.id);
+            toast.success('Marked as read');
+          }
+        },
+      },
+      {
+        threshold: 100,
+      }
+    );
+
+    const handleDelete = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setIsDeleting(true);
+      setTimeout(() => {
+        deleteNotification(notification.id);
+      }, 300);
+    };
+
+    const handleMarkRead = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (isUnread) {
+        await markAsRead.mutateAsync(notification.id);
+      }
+    };
+    
     return (
       <div 
-        className={`px-4 py-3 border-b border-border hover:bg-muted/50 transition-colors ${
+        {...swipeHandlers}
+        className={`relative px-4 py-3 border-b border-border hover:bg-muted/50 active:bg-muted transition-all cursor-pointer ${
           isUnread ? 'bg-primary/5 border-l-2 border-l-primary' : ''
-        }`}
-        onClick={() => !isUnread && markAsRead.mutate(notification.id)}
+        } ${isDeleting ? 'animate-fade-out' : 'animate-fade-in'}`}
+        onClick={() => handleNotificationClick(notification)}
       >
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 mt-0.5">
             {profile ? (
-              <Avatar className="size-9">
+              <Avatar className="size-9 transition-transform hover:scale-105">
                 <AvatarImage src={profile.avatar_url} />
                 <AvatarFallback 
                   className="text-xs font-medium text-white"
@@ -160,7 +264,7 @@ const Notifications = () => {
                 </AvatarFallback>
               </Avatar>
             ) : (
-              <div className={`p-2 rounded-full shadow-sm ${getNotificationColor(notification.notification_type)}`}>
+              <div className={`p-2 rounded-full shadow-sm transition-transform hover:scale-105 ${getNotificationColor(notification.notification_type)}`}>
                 <Icon className="size-4" />
               </div>
             )}
@@ -171,26 +275,37 @@ const Notifications = () => {
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <h3 className="font-semibold text-xs text-foreground truncate">{notification.title}</h3>
                 {isUnread && (
-                  <div className="size-1.5 bg-primary rounded-full flex-shrink-0" />
+                  <div className="size-1.5 bg-primary rounded-full flex-shrink-0 animate-pulse" />
                 )}
                 {isSafety && (
-                  <Badge variant="destructive" className="text-[10px] px-1 py-0 flex-shrink-0">Urgent</Badge>
+                  <Badge variant="destructive" className="text-[10px] px-1 py-0 flex-shrink-0 animate-pulse">Urgent</Badge>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteNotification(notification.id);
-                }}
-                className="h-5 w-5 p-0 hover:bg-destructive/20 hover:text-destructive flex-shrink-0"
-              >
-                <Trash2 className="size-2.5" />
-              </Button>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {isUnread && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleMarkRead}
+                    className="h-5 w-5 p-0 hover:bg-primary/20 hover:text-primary transition-colors"
+                    title="Mark as read"
+                  >
+                    <CheckCheck className="size-2.5" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDelete}
+                  className="h-5 w-5 p-0 hover:bg-destructive/20 hover:text-destructive transition-colors"
+                  title="Delete"
+                >
+                  <Trash2 className="size-2.5" />
+                </Button>
+              </div>
             </div>
             
-            <p className="text-muted-foreground text-xs truncate mb-1.5 leading-relaxed">{notification.body}</p>
+            <p className="text-muted-foreground text-xs line-clamp-2 mb-1.5 leading-relaxed">{notification.body}</p>
             
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-muted-foreground font-medium">
@@ -313,13 +428,30 @@ const Notifications = () => {
       </Tabs>
 
       {getFilteredNotifications().length === 0 && (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="p-4 bg-muted rounded-full mb-4">
+        <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
+          <div className="p-4 bg-muted rounded-full mb-4 animate-scale-in">
             <Check className="size-8 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-medium mb-2">No notifications</h3>
-          <p className="text-muted-foreground">
-            You're all caught up! Check back later for new notifications.
+          <p className="text-muted-foreground text-sm px-8">
+            {activeTab === 'unread' 
+              ? "You're all caught up! No unread notifications." 
+              : activeTab === 'safety'
+              ? "No safety alerts. Stay safe!"
+              : activeTab === 'social'
+              ? "No social updates yet. Start engaging with content!"
+              : activeTab === 'shop'
+              ? "No shop updates. Browse our marketplace!"
+              : "You're all caught up! Check back later for new notifications."}
+          </p>
+        </div>
+      )}
+
+      {/* Swipe hint for mobile */}
+      {dbNotifications.length > 0 && (
+        <div className="px-4 py-3 bg-muted/30 text-center border-t border-border">
+          <p className="text-[10px] text-muted-foreground">
+            💡 Swipe left to delete • Swipe right to mark as read
           </p>
         </div>
       )}

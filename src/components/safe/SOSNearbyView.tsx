@@ -8,6 +8,7 @@ import { SOSMapInteractive } from './SOSMapInteractive';
 import { SOSMessaging } from './SOSMessaging';
 import { AbuseReportModal } from './AbuseReportModal';
 import { EditAlertModal } from './EditAlertModal';
+import { HelperTrackingModal } from './HelperTrackingModal';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useSOSAlerts } from '@/hooks/useSOSAlerts';
 import { useSOSHelpers } from '@/hooks/useSOSHelpers';
@@ -15,12 +16,14 @@ import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 export const SOSNearbyView: React.FC = () => {
   const [showMap, setShowMap] = useState(false);
   const [showMessaging, setShowMessaging] = useState(false);
   const [showAbuseReport, setShowAbuseReport] = useState(false);
   const [showEditAlert, setShowEditAlert] = useState(false);
+  const [showHelperTracking, setShowHelperTracking] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -31,6 +34,39 @@ export const SOSNearbyView: React.FC = () => {
   const { latitude, longitude, loading: locationLoading } = useGeolocation();
   const { alerts, isLoading: alertsLoading, updateAlertStatus } = useSOSAlerts(latitude, longitude);
   const { respondToAlert, checkExistingResponse } = useSOSHelpers();
+
+  // Fetch available helpers
+  const { data: availableHelpers } = useQuery({
+    queryKey: ['available-helpers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('helper_profiles')
+        .select('user_id, location_lat, location_lng, availability_status')
+        .eq('is_available', true)
+        .not('location_lat', 'is', null)
+        .not('location_lng', 'is', null);
+
+      if (error) throw error;
+
+      const helpersWithProfiles = await Promise.all(
+        (data || []).map(async (helper) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name, avatar_url, initials, avatar_color')
+            .eq('id', helper.user_id)
+            .single();
+
+          return {
+            ...helper,
+            profiles: profile,
+          };
+        })
+      );
+
+      return helpersWithProfiles;
+    },
+    refetchInterval: 10000,
+  });
 
   // Get current user
   React.useEffect(() => {
@@ -408,6 +444,20 @@ export const SOSNearbyView: React.FC = () => {
                       <Button 
                         size="sm" 
                         variant="outline"
+                        className="flex-1 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 min-h-[44px] text-xs sm:text-sm"
+                        onClick={() => {
+                          setSelectedAlert(emergency);
+                          setSelectedAlertId(emergency.id);
+                          setShowHelperTracking(true);
+                        }}
+                      >
+                        <Map className="h-4 w-4 mr-1" />
+                        <span className="hidden xs:inline">Track Helper</span>
+                        <span className="xs:hidden">Track</span>
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
                         className="min-h-[44px] min-w-[44px]"
                         onClick={() => {
                           setSelectedAlertId(emergency.id);
@@ -501,6 +551,22 @@ export const SOSNearbyView: React.FC = () => {
           alertId={selectedAlert.id}
           currentDescription={selectedAlert.description}
           currentUrgency={selectedAlert.urgency}
+        />
+      )}
+
+      {/* Helper Tracking Modal */}
+      {selectedAlert && (
+        <HelperTrackingModal
+          isOpen={showHelperTracking}
+          onClose={() => {
+            setShowHelperTracking(false);
+            setSelectedAlert(null);
+            setSelectedAlertId(null);
+          }}
+          alertId={selectedAlert.id}
+          alertLat={selectedAlert.location_lat}
+          alertLng={selectedAlert.location_lng}
+          helpers={availableHelpers || []}
         />
       )}
     </div>

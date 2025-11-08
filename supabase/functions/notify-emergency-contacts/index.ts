@@ -33,13 +33,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Get the user who created the alert
     const { data: alert, error: alertError } = await supabase
       .from('sos_alerts')
-      .select(`
-        user_id,
-        profiles (
-          name,
-          email
-        )
-      `)
+      .select('user_id')
       .eq('id', alert_id)
       .single();
 
@@ -47,7 +41,16 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Alert not found');
     }
 
-    const profile = alert.profiles as any;
+    // Get user profile separately
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('name, email')
+      .eq('id', alert.user_id)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching user profile:', profileError);
+    }
 
     // Get emergency contacts for the user
     const { data: contacts, error: contactsError } = await supabase

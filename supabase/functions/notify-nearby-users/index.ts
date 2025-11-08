@@ -65,22 +65,10 @@ Deno.serve(async (req) => {
 
     const { location_lat, location_lng, max_distance_km = 10 } = payload;
 
-    // Get all helper profiles with their notification preferences and last known location
+    // Get all available helper profiles
     const { data: helpers, error: helpersError } = await supabase
       .from('helper_profiles')
-      .select(`
-        user_id,
-        is_available,
-        last_known_lat,
-        last_known_lng,
-        notification_preferences (
-          enabled,
-          sos_alerts,
-          max_distance_km,
-          quiet_hours_start,
-          quiet_hours_end
-        )
-      `)
+      .select('user_id, is_available, last_known_lat, last_known_lng')
       .eq('is_available', true);
 
     if (helpersError) {
@@ -96,8 +84,34 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Get notification preferences for these helpers
+    const helperIds = helpers.map(h => h.user_id);
+    const { data: preferences, error: prefsError } = await supabase
+      .from('notification_preferences')
+      .select('user_id, enabled, sos_alerts, max_distance_km, quiet_hours_start, quiet_hours_end')
+      .in('user_id', helperIds);
+
+    if (prefsError) {
+      console.error('Error fetching notification preferences:', prefsError);
+      // Continue without preferences rather than failing
+    }
+
+    // Create a map of preferences by user_id
+    const prefsMap = new Map();
+    if (preferences) {
+      preferences.forEach(pref => {
+        prefsMap.set(pref.user_id, pref);
+      });
+    }
+
+    // Merge helpers with their preferences
+    const helpersWithPrefs = helpers.map(helper => ({
+      ...helper,
+      notification_preferences: prefsMap.get(helper.user_id) || null,
+    }));
+
     // Filter helpers by distance and preferences
-    const eligibleHelpers = helpers.filter(helper => {
+    const eligibleHelpers = helpersWithPrefs.filter(helper => {
       // Check if helper has location
       if (!helper.last_known_lat || !helper.last_known_lng) {
         return false;
@@ -134,7 +148,7 @@ Deno.serve(async (req) => {
       return true;
     });
 
-    console.log(`Found ${eligibleHelpers.length} eligible helpers out of ${helpers.length} total`);
+    console.log(`Found ${eligibleHelpers.length} eligible helpers out of ${helpersWithPrefs.length} total`);
 
     if (eligibleHelpers.length === 0) {
       return new Response(

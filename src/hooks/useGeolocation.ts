@@ -72,9 +72,9 @@ export const useGeolocation = (): UseGeolocationReturn => {
     setState(prev => ({ ...prev, loading: true }));
     
     navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0,
+      enableHighAccuracy: false,
+      timeout: 5000,
+      maximumAge: 300000,
     });
   };
 

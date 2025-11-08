@@ -30,8 +30,9 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
   const [showMessaging, setShowMessaging] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [userResponses, setUserResponses] = useState<Set<string>>(new Set());
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   
-  const { latitude: userLat2, longitude: userLng2, refreshLocation } = useGeolocation();
+  const { latitude: userLat2, longitude: userLng2, refreshLocation, error: geoError, loading: geoLoading } = useGeolocation();
   const currentUserLat = userLat || userLat2;
   const currentUserLng = userLng || userLng2;
   const { alerts } = useSOSAlerts(currentUserLat, currentUserLng);
@@ -60,6 +61,15 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
 
     checkUserResponses();
   }, [alerts, checkExistingResponse]);
+
+  // Show location permission prompt when needed
+  useEffect(() => {
+    if (!currentUserLat || !currentUserLng) {
+      setShowLocationPrompt(Boolean(geoError));
+    } else {
+      setShowLocationPrompt(false);
+    }
+  }, [currentUserLat, currentUserLng, geoError]);
 
   // Fetch all active helpers with their current locations
   const { data: activeHelpers, refetch: refetchHelpers } = useQuery({
@@ -348,6 +358,25 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
             <span className="hidden xs:inline">{currentUserLat && currentUserLng ? 'Refresh' : 'Find Me'}</span>
           </Button>
         </div>
+
+        {/* Location Permission/Timeout Prompt */}
+        {showLocationPrompt && !currentUserLat && !currentUserLng && (
+          <Card className="absolute top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-auto z-40 max-w-md">
+            <div className="p-3 sm:p-4">
+              <div className="text-sm text-muted-foreground mb-3">
+                {geoError || "We couldn't detect your location. Please enable location to see nearby emergencies."}
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => refreshLocation()}>
+                  Enable Location
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setShowLocationPrompt(false)}>
+                  Continue without location
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Selected Emergency Popup - Mobile First */}
         {selectedEmergencyData && (

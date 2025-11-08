@@ -1085,6 +1085,50 @@ export type Database = {
         }
         Relationships: []
       }
+      helper_requests: {
+        Row: {
+          alert_id: string
+          created_at: string
+          estimated_arrival_minutes: number | null
+          helper_id: string
+          id: string
+          request_message: string | null
+          requester_id: string
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          alert_id: string
+          created_at?: string
+          estimated_arrival_minutes?: number | null
+          helper_id: string
+          id?: string
+          request_message?: string | null
+          requester_id: string
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          alert_id?: string
+          created_at?: string
+          estimated_arrival_minutes?: number | null
+          helper_id?: string
+          id?: string
+          request_message?: string | null
+          requester_id?: string
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "helper_requests_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "sos_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       likes: {
         Row: {
           created_at: string | null

@@ -15,6 +15,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import { NearbyHelpersList } from './NearbyHelpersList';
+import { IncomingHelperRequestAlert } from './IncomingHelperRequestAlert';
 
 interface SOSMapProps {
   userLat?: number | null;
@@ -338,6 +340,16 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
           </Button>
         </div>
       </Card>
+
+      {/* Nearby Helpers List - Ride-hailing style */}
+      {selectedEmergencyData && (
+        <NearbyHelpersList
+          helpers={activeHelpers || []}
+          alertId={selectedEmergencyData.id}
+          userLat={selectedEmergencyData.location_lat}
+          userLng={selectedEmergencyData.location_lng}
+        />
+      )}
 
       {/* Map Legend */}
       <Card className="p-3">

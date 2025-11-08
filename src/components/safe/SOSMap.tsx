@@ -5,18 +5,20 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MapPin, Navigation, Users, Clock, Target, AlertTriangle, Share2, Activity, Loader2, Heart, Shield, Flame, Car, Tornado } from 'lucide-react';
+import { MapPin, Navigation, Users, Clock, Target, AlertTriangle, Share2, Activity, Loader2, Heart, Shield, Flame, Car, Tornado, Phone } from 'lucide-react';
 import { useSOSAlerts } from '@/hooks/useSOSAlerts';
 import { useSOSHelpers } from '@/hooks/useSOSHelpers';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useLiveLocationTracking } from '@/hooks/useLiveLocationTracking';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
+import { useAutoHelperRequest } from '@/hooks/useAutoHelperRequest';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { NearbyHelpersList } from './NearbyHelpersList';
 import { IncomingHelperRequestAlert } from './IncomingHelperRequestAlert';
+import { AutoRequestProgress } from './AutoRequestProgress';
 
 interface SOSMapProps {
   userLat?: number | null;
@@ -47,24 +49,30 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('helper_profiles')
-        .select(`
-          user_id,
-          location_lat,
-          location_lng,
-          availability_status,
-          profiles!user_id (
-            full_name,
-            avatar_url,
-            initials,
-            avatar_color
-          )
-        `)
+        .select('user_id, location_lat, location_lng, availability_status')
         .eq('is_available', true)
         .not('location_lat', 'is', null)
         .not('location_lng', 'is', null);
 
       if (error) throw error;
-      return data || [];
+
+      // Fetch profiles manually
+      const helpersWithProfiles = await Promise.all(
+        (data || []).map(async (helper) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name, avatar_url, initials, avatar_color')
+            .eq('id', helper.user_id)
+            .single();
+
+          return {
+            ...helper,
+            profiles: profile,
+          };
+        })
+      );
+
+      return helpersWithProfiles;
     },
     refetchInterval: 10000, // Refresh every 10 seconds
   });
@@ -284,6 +292,14 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
 
   const selectedEmergencyData = alerts?.find(e => e.id === selectedEmergency);
 
+  // Auto helper request system
+  const autoRequest = useAutoHelperRequest({
+    helpers: activeHelpers || [],
+    alertId: selectedEmergency || '',
+    userLat: selectedEmergencyData?.location_lat,
+    userLng: selectedEmergencyData?.location_lng,
+  });
+
   const handleShareLocation = () => {
     if (currentUserLat && currentUserLng) {
       const locationUrl = `https://www.google.com/maps?q=${currentUserLat},${currentUserLng}`;
@@ -328,8 +344,8 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
           </div>
         )}
 
-        {/* Refresh Location Button */}
-        <div className="absolute bottom-4 left-4 z-10">
+        {/* Action Buttons */}
+        <div className="absolute bottom-4 left-4 z-10 flex gap-2">
           <Button
             size="sm"
             className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
@@ -338,11 +354,34 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
             <Target className="h-4 w-4 mr-1" />
             {currentUserLat && currentUserLng ? 'Refresh' : 'Find Me'}
           </Button>
+          
+          {selectedEmergencyData && !autoRequest.isRequesting && (
+            <Button
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white shadow-lg animate-pulse"
+              onClick={() => autoRequest.startRequesting()}
+              disabled={!activeHelpers || activeHelpers.length === 0}
+            >
+              <Phone className="h-4 w-4 mr-1" />
+              Request Helper
+            </Button>
+          )}
         </div>
       </Card>
 
+      {/* Auto Request Progress Modal */}
+      <AutoRequestProgress
+        isRequesting={autoRequest.isRequesting}
+        currentHelper={autoRequest.currentHelper}
+        timeRemaining={autoRequest.timeRemaining}
+        totalElapsed={autoRequest.totalElapsed}
+        currentHelperIndex={autoRequest.currentHelperIndex}
+        totalHelpers={autoRequest.totalHelpers}
+        onCancel={autoRequest.stopRequesting}
+      />
+
       {/* Nearby Helpers List - Ride-hailing style */}
-      {selectedEmergencyData && (
+      {selectedEmergencyData && !autoRequest.isRequesting && (
         <NearbyHelpersList
           helpers={activeHelpers || []}
           alertId={selectedEmergencyData.id}

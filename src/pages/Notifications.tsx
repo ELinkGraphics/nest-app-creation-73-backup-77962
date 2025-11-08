@@ -36,6 +36,8 @@ const Notifications = () => {
       case 'like': return Heart;
       case 'comment': return MessageCircle;
       case 'follow': return UserPlus;
+      case 'new_post': return MessageCircle;
+      case 'new_video': return Video;
       case 'sos_alert': 
       case 'helper_response':
       case 'emergency_contact':
@@ -44,7 +46,7 @@ const Notifications = () => {
       case 'order': return ShoppingBag;
       case 'event': return Calendar;
       case 'reward': return Gift;
-      default: return MessageCircle;
+      default: return AlertCircle;
     }
   };
 
@@ -53,6 +55,8 @@ const Notifications = () => {
       case 'like': return 'bg-red-100 text-red-600';
       case 'comment': return 'bg-blue-100 text-blue-600';
       case 'follow': return 'bg-green-100 text-green-600';
+      case 'new_post': return 'bg-indigo-100 text-indigo-600';
+      case 'new_video': return 'bg-purple-100 text-purple-600';
       case 'sos_alert':
       case 'helper_response':
       case 'emergency_contact':
@@ -70,7 +74,7 @@ const Notifications = () => {
   };
 
   const isSocialNotification = (type: string) => {
-    return ['like', 'comment', 'follow', 'mention'].includes(type);
+    return ['like', 'comment', 'follow', 'mention', 'new_post', 'new_video'].includes(type);
   };
 
   const safetyNotifications = dbNotifications.filter(n => isSafetyNotification(n.notification_type));

@@ -282,7 +282,7 @@ export const SOSNearbyView: React.FC = () => {
         </div>
       ) : (
         <div className="px-2 sm:px-4 space-y-3">
-          {alertsLoading || locationLoading ? (
+          {alertsLoading ? (
             <Card className="p-8 text-center">
               <div className="text-muted-foreground">Loading emergencies...</div>
             </Card>

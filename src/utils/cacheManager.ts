@@ -36,12 +36,14 @@ export const cacheManager = {
     }
   },
 
-  // Check for app updates (non-intrusive; no forced update call)
+  // Check for app updates with active polling
   async checkForUpdates() {
     if ('serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.getRegistration();
         if (registration) {
+          // Actively check for updates
+          await registration.update();
           return registration.waiting !== null;
         }
       } catch (error) {

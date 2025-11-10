@@ -27,13 +27,22 @@ const UpdateNotifier: React.FC = () => {
     // Initial check
     checkForUpdates();
 
-    // Check every 30 seconds
-    checkInterval = setInterval(checkForUpdates, 30000);
+    // Check every 5 seconds for immediate updates
+    checkInterval = setInterval(checkForUpdates, 5000);
+
+    // Also check on page visibility change
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkForUpdates();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       if (checkInterval) {
         clearInterval(checkInterval);
       }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [updateAvailable]);
 
@@ -60,41 +69,33 @@ const UpdateNotifier: React.FC = () => {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50 bg-primary text-primary-foreground p-4 rounded-lg shadow-lg max-w-sm">
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-primary text-primary-foreground p-4 rounded-xl shadow-2xl max-w-sm w-[calc(100%-2rem)] animate-slide-down">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
-          <h4 className="font-semibold text-sm">Update Available</h4>
-          <p className="text-xs opacity-90 mt-1">
-            A new version of the app is ready. Refresh to get the latest features.
+          <h4 className="font-semibold text-base">🎉 New Update Available!</h4>
+          <p className="text-xs opacity-95 mt-1.5 leading-relaxed">
+            We've made improvements to MomsNest. Update now to get the latest features and fixes.
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-primary-foreground hover:bg-primary-foreground/20 h-6 w-6"
-          onClick={() => setShowNotification(false)}
-        >
-          <X className="h-3 w-3" />
-        </Button>
       </div>
       
-      <div className="flex gap-2 mt-3">
+      <div className="flex gap-2 mt-4">
         <Button
           variant="secondary"
           size="sm"
           onClick={handleUpdate}
-          className="flex items-center gap-1 text-xs"
+          className="flex-1 flex items-center justify-center gap-1.5 text-sm font-medium active:scale-95 transition-transform"
         >
-          <RefreshCw className="h-3 w-3" />
-          Update
+          <RefreshCw className="h-3.5 w-3.5" />
+          Update Now
         </Button>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          onClick={handleForceRefresh}
-          className="text-xs bg-primary-foreground/10 border-primary-foreground/30 hover:bg-primary-foreground/20"
+          onClick={() => setShowNotification(false)}
+          className="text-xs text-primary-foreground/80 hover:bg-primary-foreground/10 px-3"
         >
-          Force Refresh
+          Later
         </Button>
       </div>
     </div>

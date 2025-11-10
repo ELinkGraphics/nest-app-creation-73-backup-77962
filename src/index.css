@@ -304,6 +304,22 @@ All colors MUST be HSL.
     transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
+  /* Update notifier slide down animation */
+  .animate-slide-down {
+    animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  @keyframes slideDown {
+    from {
+      transform: translate(-50%, calc(-100% - 1rem));
+      opacity: 0;
+    }
+    to {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+  }
+
   /* Prevent pull-to-refresh on modal */
   .no-pull-refresh {
     touch-action: none !important;

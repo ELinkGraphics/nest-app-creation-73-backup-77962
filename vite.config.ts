@@ -57,11 +57,12 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB for Agora SDK
-        skipWaiting: true,
-        clientsClaim: true,
+        skipWaiting: true, // Activate new service worker immediately
+        clientsClaim: true, // Take control of all pages immediately
         cleanupOutdatedCaches: true, // Clean old caches automatically
+        sourcemap: true, // Enable source maps for debugging
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
@@ -75,14 +76,15 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
-            // Critical: App JS/CSS should always fetch from network first
+            // Critical: App JS/CSS should always fetch from network first for updates
             urlPattern: /\.(?:js|css)$/,
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'app-assets-v1',
-              networkTimeoutSeconds: 5, // Increased timeout
+              cacheName: 'app-assets-v2',
+              networkTimeoutSeconds: 3,
               expiration: {
-                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days max
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 2 // 2 days max for faster updates
               },
               cacheableResponse: {
                 statuses: [0, 200]

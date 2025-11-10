@@ -45,11 +45,11 @@ const Messages = () => {
     <div className="min-h-screen bg-background">
       {/* Header - Only show when no conversation selected on mobile */}
       {!selectedConversationId && (
-        <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-lg border-b border-border/50 px-4 py-3 lg:hidden">
-          <div className="flex items-center justify-between">
+        <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-lg border-b border-border/50 safe-top lg:hidden">
+          <div className="flex items-center justify-between px-3 py-3">
             <button
               onClick={() => navigate(-1)}
-              className="p-1 hover:bg-muted rounded-full transition-colors"
+              className="p-2 -ml-2 hover:bg-muted rounded-full active:scale-95 transition-all"
             >
               <ArrowLeft className="h-6 w-6" />
             </button>
@@ -62,8 +62,8 @@ const Messages = () => {
       {/* Desktop Layout */}
       <div className="hidden lg:flex h-screen">
         {/* Conversations List */}
-        <div className="w-96 border-r border-border">
-          <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3">
+        <div className="w-96 border-r border-border bg-background">
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-lg border-b border-border px-4 py-4">
             <h1 className="text-xl font-bold">Messages</h1>
           </div>
           <ConversationsList

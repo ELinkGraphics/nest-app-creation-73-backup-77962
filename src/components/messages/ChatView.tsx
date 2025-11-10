@@ -48,18 +48,23 @@ const ChatView: React.FC<ChatViewProps> = ({ conversation, currentUserId, onBack
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-lg border-b border-border px-4 py-3">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack} className="lg:hidden">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-lg border-b border-border">
+        <div className="flex items-center gap-3 px-3 py-3 safe-top">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onBack} 
+            className="lg:hidden -ml-2 h-10 w-10 active:scale-95 transition-transform"
+          >
             <ArrowLeft className="h-5 w-5" />
           </Button>
 
           <div className="relative">
-            <Avatar className="h-10 w-10">
+            <Avatar className="h-11 w-11">
               <AvatarImage src={conversation.other_user_avatar || undefined} />
-              <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white">
+              <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-sm">
                 {conversation.other_user_initials}
               </AvatarFallback>
             </Avatar>
@@ -69,7 +74,7 @@ const ChatView: React.FC<ChatViewProps> = ({ conversation, currentUserId, onBack
           </div>
 
           <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-foreground truncate">
+            <h2 className="font-semibold text-foreground truncate text-base">
               {conversation.other_user_name}
             </h2>
             <p className="text-xs text-muted-foreground">
@@ -80,20 +85,22 @@ const ChatView: React.FC<ChatViewProps> = ({ conversation, currentUserId, onBack
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3 overscroll-contain">
         {isLoading ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
-                <Skeleton className="h-16 w-3/4 rounded-lg" />
+                <Skeleton className="h-16 w-3/4 rounded-2xl" />
               </div>
             ))}
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-center">
-            <p className="text-muted-foreground">
-              No messages yet. Start the conversation!
-            </p>
+          <div className="flex items-center justify-center h-full text-center px-4">
+            <div className="animate-fade-in">
+              <p className="text-muted-foreground text-sm">
+                No messages yet. Start the conversation!
+              </p>
+            </div>
           </div>
         ) : (
           messages.map((message) => {
@@ -102,10 +109,10 @@ const ChatView: React.FC<ChatViewProps> = ({ conversation, currentUserId, onBack
             return (
               <div
                 key={message.id}
-                className={`flex gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-2 animate-fade-in ${isOwn ? 'justify-end' : 'justify-start'}`}
               >
                 {!isOwn && (
-                  <Avatar className="h-8 w-8 shrink-0">
+                  <Avatar className="h-8 w-8 shrink-0 mt-1">
                     <AvatarImage src={conversation.other_user_avatar || undefined} />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-xs">
                       {conversation.other_user_initials}
@@ -113,23 +120,23 @@ const ChatView: React.FC<ChatViewProps> = ({ conversation, currentUserId, onBack
                   </Avatar>
                 )}
 
-                <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} max-w-[75%]`}>
+                <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} max-w-[80%]`}>
                   <div
-                    className={`rounded-2xl px-4 py-2 ${
+                    className={`rounded-2xl px-4 py-2.5 shadow-sm ${
                       isOwn
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-foreground'
+                        ? 'bg-primary text-primary-foreground rounded-br-md'
+                        : 'bg-muted text-foreground rounded-bl-md'
                     }`}
                   >
-                    <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                    <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">{message.content}</p>
                   </div>
-                  <span className="text-xs text-muted-foreground mt-1">
+                  <span className="text-xs text-muted-foreground mt-1 px-1">
                     {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
                   </span>
                 </div>
 
                 {isOwn && (
-                  <Avatar className="h-8 w-8 shrink-0">
+                  <Avatar className="h-8 w-8 shrink-0 mt-1">
                     <AvatarImage src={undefined} />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-xs">
                       You
@@ -144,21 +151,21 @@ const ChatView: React.FC<ChatViewProps> = ({ conversation, currentUserId, onBack
       </div>
 
       {/* Message Input */}
-      <div className="sticky bottom-0 bg-background border-t border-border p-4">
-        <div className="flex gap-2">
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-lg border-t border-border safe-bottom">
+        <div className="flex gap-2 p-3">
           <Textarea
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder="Type a message..."
-            className="resize-none min-h-[44px] max-h-32"
+            className="resize-none min-h-[44px] max-h-32 text-[16px] rounded-2xl"
             rows={1}
           />
           <Button
             onClick={handleSendMessage}
             disabled={!messageText.trim() || isSending}
             size="icon"
-            className="shrink-0 h-11 w-11"
+            className="shrink-0 h-11 w-11 rounded-full active:scale-95 transition-transform"
           >
             {isSending ? (
               <Loader2 className="h-5 w-5 animate-spin" />

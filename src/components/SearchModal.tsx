@@ -163,10 +163,10 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="h-full w-full bg-background overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-lg border-b border-border px-4 py-3">
+        <div className="sticky top-0 z-[101] bg-background/95 backdrop-blur-lg border-b border-border px-4 py-3">
           <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 

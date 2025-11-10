@@ -50,8 +50,10 @@ const Profile: React.FC = () => {
   }, [username]);
 
   const handleMessageClick = () => {
-    // Navigate to messages with this user
-    navigate('/messages');
+    // Navigate to messages with userId to create/open conversation
+    if (userId) {
+      navigate(`/messages?userId=${userId}`);
+    }
   };
 
   if (isLoading) {

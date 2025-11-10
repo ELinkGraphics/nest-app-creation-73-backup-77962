@@ -446,7 +446,13 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
           <Button
             variant="outline"
             className="flex-1"
-            onClick={onMessageClick}
+            onClick={() => {
+              if (onMessageClick) {
+                onMessageClick();
+              } else {
+                navigate(`/messages?userId=${userId}`);
+              }
+            }}
           >
             <MessageCircle className="h-4 w-4 mr-2" />
             Message

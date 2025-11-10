@@ -785,6 +785,56 @@ export type Database = {
           },
         ]
       }
+      conversation_members: {
+        Row: {
+          conversation_id: string
+          id: string
+          joined_at: string
+          last_read_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          id?: string
+          joined_at?: string
+          last_read_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          id?: string
+          joined_at?: string
+          last_read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_members_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       emergency_contacts: {
         Row: {
           contact_name: string
@@ -1296,6 +1346,41 @@ export type Database = {
             columns: ["stream_id"]
             isOneToOne: false
             referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -3249,6 +3334,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_or_create_conversation: {
+        Args: { _user1_id: string; _user2_id: string }
+        Returns: string
+      }
       get_post_comments: {
         Args: { _post_id: string }
         Returns: {
@@ -3264,6 +3353,22 @@ export type Database = {
           user_has_liked: boolean
           user_id: string
           username: string
+        }[]
+      }
+      get_user_conversations: {
+        Args: { _user_id: string }
+        Returns: {
+          conversation_id: string
+          last_message: string
+          last_message_at: string
+          last_message_sender_id: string
+          other_user_avatar: string
+          other_user_id: string
+          other_user_initials: string
+          other_user_name: string
+          other_user_online: boolean
+          other_user_username: string
+          unread_count: number
         }[]
       }
       get_video_comments: {
@@ -3316,6 +3421,10 @@ export type Database = {
       is_circle_member: {
         Args: { _circle_id: string; _user_id: string }
         Returns: boolean
+      }
+      mark_conversation_read: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: undefined
       }
       update_item_stock: {
         Args: { item_id: string; quantity_sold: number }

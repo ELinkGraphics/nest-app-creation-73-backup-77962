@@ -1,7 +1,9 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import UserProfile from '@/components/UserProfile';
+import { useUser } from '@/contexts/UserContext';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -9,11 +11,18 @@ interface ProfileModalProps {
 }
 
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
+  const { user } = useUser();
+
   if (!isOpen) return null;
 
   const handleMessageClick = () => {
-    // Handle message action
-    console.log('Message clicked');
+    // Can't message yourself
+    if (!user?.id) return;
+    
+    // Navigate to messages - this is the user's own profile
+    // so they would message themselves which doesn't make sense
+    console.log('Cannot message yourself');
   };
 
   const handleSettingsClick = () => {

@@ -29,6 +29,7 @@ import CreatePost from "./pages/CreatePost";
 import CreateVideo from "./pages/CreateVideo";
 import CreateCircle from "./pages/CreateCircle";
 import CreateShop from "./pages/CreateShop";
+import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
@@ -86,6 +87,7 @@ const AppRoutes = () => (
     <Route path="/post/:postId" element={<ProtectedRoute><PostDetail /></ProtectedRoute>} />
     <Route path="/circle/:id" element={<ProtectedRoute><CircleDetailWrapper /></ProtectedRoute>} />
     <Route path="/circle/:circleId/post/:postId" element={<ProtectedRoute><CirclePostDetail /></ProtectedRoute>} />
+    <Route path="/profile/:username" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
     <Route path="*" element={<NotFound />} />
   </Routes>

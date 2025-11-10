@@ -446,7 +446,9 @@ const PublicUserProfile: React.FC<PublicUserProfileProps> = ({
           <Button
             variant="outline"
             className="flex-1"
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               if (onMessageClick) {
                 onMessageClick();
               } else {

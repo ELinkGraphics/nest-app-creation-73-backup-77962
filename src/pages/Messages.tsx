@@ -18,18 +18,20 @@ const Messages = () => {
   // Handle opening conversation from URL params (when clicking "Message" on profile)
   useEffect(() => {
     const userId = searchParams.get('userId');
-    if (userId && user?.id) {
+    if (userId && user?.id && !selectedConversationId) {
       const initConversation = async () => {
         try {
           const conversationId = await createConversation(user.id, userId);
           setSelectedConversationId(conversationId);
+          // Clear the userId from URL after creating conversation
+          navigate('/messages', { replace: true });
         } catch (error) {
           console.error('Error creating conversation:', error);
         }
       };
       initConversation();
     }
-  }, [searchParams, user?.id, createConversation]);
+  }, [searchParams, user?.id, createConversation, selectedConversationId, navigate]);
 
   const selectedConversation = conversations.find(
     (c) => c.conversation_id === selectedConversationId
@@ -37,6 +39,8 @@ const Messages = () => {
 
   const handleBack = () => {
     setSelectedConversationId(null);
+    // Clear the userId from URL when going back
+    navigate('/messages', { replace: true });
   };
 
   if (!user) return null;

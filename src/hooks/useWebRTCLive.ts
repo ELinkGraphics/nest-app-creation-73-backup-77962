@@ -156,6 +156,13 @@ export const useWebRTCLive = ({ streamId, role }: WebRTCConfig) => {
 
     const init = async () => {
       try {
+        const currentUser = await supabase.auth.getUser();
+        const userId = currentUser.data.user?.id;
+        
+        if (!userId) {
+          throw new Error('User not authenticated');
+        }
+
         // Set up signaling channel
         const channel = supabase.channel(`live-signaling-${streamId}`);
         channelRef.current = channel;
@@ -168,10 +175,14 @@ export const useWebRTCLive = ({ streamId, role }: WebRTCConfig) => {
             }
           })
           .subscribe(async (status) => {
+            console.log('Channel subscription status:', status);
+            
             if (status !== 'SUBSCRIBED') return;
 
             // Host: start local media and send offers to viewers
             if (role === 'host') {
+              console.log('Starting host media...');
+              
               const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                   width: { ideal: 1280 },
@@ -185,46 +196,59 @@ export const useWebRTCLive = ({ streamId, role }: WebRTCConfig) => {
                 }
               });
 
+              console.log('Media stream obtained:', stream);
               setLocalStream(stream);
               localStreamRef.current = stream;
+              setIsConnected(true);
 
-              // Send presence to signal we're live
+              // Track presence as host
               await channel.track({
-                user_id: (await supabase.auth.getUser()).data.user?.id,
+                user_id: userId,
                 role: 'host',
                 online_at: new Date().toISOString()
               });
 
+              console.log('Host ready and broadcasting presence');
               toast.success('Live stream started!');
             }
 
             // Audience: signal presence and wait for offer
             if (role === 'audience') {
+              console.log('Joining as audience...');
+              
               await channel.track({
-                user_id: (await supabase.auth.getUser()).data.user?.id,
+                user_id: userId,
                 role: 'audience',
                 online_at: new Date().toISOString()
               });
+
+              console.log('Audience presence sent, waiting for host offer');
             }
           });
 
         // Listen for new viewers joining (host only)
         if (role === 'host') {
-          channel.on('presence', { event: 'join' }, async ({ key, newPresences }) => {
+          channel.on('presence', { event: 'join' }, async ({ newPresences }) => {
+            console.log('New presence detected:', newPresences);
+            
             for (const presence of newPresences) {
-              if (presence.role === 'audience' && presence.user_id) {
+              if (presence.role === 'audience' && presence.user_id && presence.user_id !== userId) {
+                console.log('Creating peer connection for viewer:', presence.user_id);
+                
                 const viewerId = presence.user_id;
                 const pc = createPeerConnection(viewerId);
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
 
+                console.log('Sending offer to viewer:', viewerId);
+                
                 channel.send({
                   type: 'broadcast',
                   event: 'signaling',
                   payload: {
                     type: 'offer',
                     data: offer,
-                    from: (await supabase.auth.getUser()).data.user?.id,
+                    from: userId,
                     to: viewerId,
                     streamId
                   }

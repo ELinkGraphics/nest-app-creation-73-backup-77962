@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { Story } from '@/data/mock';
 import StoryViewer from './StoryViewer';
 import CreateStoryModal from './CreateStoryModal';
+import WebRTCLiveViewer from './live/WebRTCLiveViewer';
 import { useUser } from '@/contexts/UserContext';
 import { useStoryPersistence } from '@/hooks/useStoryPersistence';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,13 +12,16 @@ const StoriesBar: React.FC = () => {
   const { user } = useUser();
   const [isStoryViewerOpen, setIsStoryViewerOpen] = useState(false);
   const [isCreateStoryOpen, setIsCreateStoryOpen] = useState(false);
+  const [isLiveViewerOpen, setIsLiveViewerOpen] = useState(false);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
+  const [selectedLiveStreamId, setSelectedLiveStreamId] = useState<string | null>(null);
   const [stories, refreshStories, isLoading] = useStoryPersistence();
 
   const handleStoryClick = (story: Story, index: number) => {
-    // If it's a live story, navigate to the live stream instead
+    // If it's a live story, open live viewer modal
     if ((story as any).isLive && (story as any).liveStreamId) {
-      window.location.href = `/?live=${(story as any).liveStreamId}`;
+      setSelectedLiveStreamId((story as any).liveStreamId);
+      setIsLiveViewerOpen(true);
       return;
     }
     
@@ -143,6 +147,16 @@ const StoriesBar: React.FC = () => {
         onClose={() => setIsCreateStoryOpen(false)}
         onCreateStory={handleCreateStory}
       />
+
+      {isLiveViewerOpen && selectedLiveStreamId && (
+        <WebRTCLiveViewer
+          streamId={selectedLiveStreamId}
+          onClose={() => {
+            setIsLiveViewerOpen(false);
+            setSelectedLiveStreamId(null);
+          }}
+        />
+      )}
     </>
   );
 };

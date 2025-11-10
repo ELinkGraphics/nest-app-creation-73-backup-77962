@@ -36,8 +36,11 @@ export const useWebRTCLive = ({ streamId, role }: WebRTCConfig) => {
   };
 
   // Create peer connection for a specific viewer
-  const createPeerConnection = useCallback((viewerId: string): RTCPeerConnection => {
+  const createPeerConnection = useCallback(async (viewerId: string): Promise<RTCPeerConnection> => {
     const pc = new RTCPeerConnection(iceServers);
+    
+    const currentUser = await supabase.auth.getUser();
+    const userId = currentUser.data.user?.id;
 
     // Add local stream tracks to peer connection (for host)
     if (role === 'host' && localStreamRef.current) {
@@ -49,13 +52,14 @@ export const useWebRTCLive = ({ streamId, role }: WebRTCConfig) => {
     // Handle ICE candidates
     pc.onicecandidate = (event) => {
       if (event.candidate && channelRef.current && streamId) {
+        console.log('Sending ICE candidate from', userId, 'to', viewerId);
         channelRef.current.send({
           type: 'broadcast',
           event: 'signaling',
           payload: {
             type: 'ice-candidate',
             data: event.candidate,
-            from: supabase.auth.getUser().then(u => u.data.user?.id),
+            from: userId,
             to: viewerId,
             streamId
           }
@@ -109,11 +113,13 @@ export const useWebRTCLive = ({ streamId, role }: WebRTCConfig) => {
       case 'offer':
         // Audience receives offer from host
         if (role === 'audience') {
-          pc = createPeerConnection(senderId);
+          console.log('Audience received offer from host:', senderId);
+          pc = await createPeerConnection(senderId);
           await pc.setRemoteDescription(new RTCSessionDescription(message.data));
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
 
+          console.log('Sending answer back to host');
           if (channelRef.current && streamId) {
             channelRef.current.send({
               type: 'broadcast',
@@ -236,7 +242,7 @@ export const useWebRTCLive = ({ streamId, role }: WebRTCConfig) => {
                 console.log('Creating peer connection for viewer:', presence.user_id);
                 
                 const viewerId = presence.user_id;
-                const pc = createPeerConnection(viewerId);
+                const pc = await createPeerConnection(viewerId);
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
 

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, RotateCcw, Sparkles, MapPin, Play, Users, Globe, X, UserPlus, Music, Zap } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface LiveConfig {
   type: 'random' | 'circle';
@@ -24,42 +25,129 @@ const PreLiveSettings: React.FC<PreLiveSettingsProps> = ({ config, onComplete, o
   const [settings, setSettings] = useState<LiveConfig>(config);
   const [beautyMode, setBeautyMode] = useState(false);
   const [showMusicSelector, setShowMusicSelector] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const handleSettingChange = (key: keyof LiveConfig, value: any) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  // Initialize camera
+  useEffect(() => {
+    const initCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { 
+            facingMode: settings.cameraFlipped ? 'environment' : 'user',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+        
+        streamRef.current = stream;
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+          setCameraReady(true);
+        }
+      } catch (error) {
+        console.error('Camera access error:', error);
+        toast.error('Failed to access camera. Please check permissions.');
+      }
+    };
+
+    initCamera();
+
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  // Handle camera flip
+  useEffect(() => {
+    const switchCamera = async () => {
+      if (!streamRef.current) return;
+
+      // Stop current stream
+      streamRef.current.getTracks().forEach(track => track.stop());
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { 
+            facingMode: settings.cameraFlipped ? 'environment' : 'user',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+        
+        streamRef.current = stream;
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+        }
+      } catch (error) {
+        console.error('Failed to switch camera:', error);
+        toast.error('Failed to switch camera');
+      }
+    };
+
+    if (cameraReady) {
+      switchCamera();
+    }
+  }, [settings.cameraFlipped]);
+
   const handleStartLive = () => {
-    console.log('Starting live with settings:', settings);
     if (!settings.title.trim()) {
-      alert('Please add a title for your live stream');
+      toast.error('Please add a title for your live stream');
       return;
     }
-    console.log('Calling onComplete with settings');
+    if (!cameraReady) {
+      toast.error('Camera is not ready yet');
+      return;
+    }
     onComplete(settings);
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-black">
       {/* Full-screen Camera Preview */}
-      <div className="relative w-full h-full">
-        {/* Simulated selfie camera preview */}
-        <div className="absolute inset-0 bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200">
-          {/* Selfie preview simulation */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center">
-              <div className="text-white/80 text-sm">👤 You</div>
+      <div className="relative w-full h-full bg-black">
+        {/* Real camera video feed */}
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{
+            transform: settings.cameraFlipped ? 'scaleX(1)' : 'scaleX(-1)'
+          }}
+        />
+        
+        {/* Camera loading state */}
+        {!cameraReady && (
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+            <div className="text-white text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4" />
+              <p className="text-lg">Initializing camera...</p>
             </div>
           </div>
-          
-          {/* Beauty/Filter effects overlay */}
-          {beautyMode && (
-            <div className="absolute inset-0 bg-pink-100/10" />
-          )}
-          {settings.filters && (
-            <div className="absolute inset-0 bg-purple-100/10" />
-          )}
-        </div>
+        )}
+        
+        {/* Beauty/Filter effects overlay */}
+        {beautyMode && (
+          <div className="absolute inset-0 bg-pink-100/20 backdrop-blur-[0.5px]" />
+        )}
+        {settings.filters && (
+          <div className="absolute inset-0 bg-purple-100/20 backdrop-saturate-150" />
+        )}
 
         {/* Top Overlay Controls */}
         <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-black/40 to-transparent">

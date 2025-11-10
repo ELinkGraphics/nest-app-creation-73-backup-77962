@@ -32,6 +32,8 @@ import CreateShop from "./pages/CreateShop";
 import SellerDashboard from "./pages/SellerDashboard";
 import OrderHistory from "./pages/OrderHistory";
 import OrderDetail from "./pages/OrderDetail";
+import ShopMessages from "./pages/ShopMessages";
+import ShippingAddresses from "./pages/ShippingAddresses";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -82,6 +84,9 @@ const AppRoutes = () => (
     <Route path="/order/:orderId" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
     <Route path="/seller/dashboard" element={<ProtectedRoute><SellerDashboard /></ProtectedRoute>} />
     <Route path="/seller/:sellerId" element={<ProtectedRoute><SellerProfile /></ProtectedRoute>} />
+    <Route path="/shop/messages" element={<ProtectedRoute><ShopMessages /></ProtectedRoute>} />
+    <Route path="/shop/messages/:conversationId" element={<ProtectedRoute><ShopMessages /></ProtectedRoute>} />
+    <Route path="/shipping-addresses" element={<ProtectedRoute><ShippingAddresses /></ProtectedRoute>} />
     <Route path="/ask" element={<ProtectedRoute><Ask activeTab="ask" onTabSelect={() => {}} onOpenCreate={() => {}} /></ProtectedRoute>} />
     <Route path="/ask/profile" element={<ProtectedRoute><AskProfile /></ProtectedRoute>} />
     <Route path="/ask/question/:questionId" element={<ProtectedRoute><QuestionDetail /></ProtectedRoute>} />

@@ -5,12 +5,14 @@ import { ShopFeed } from '../components/shop/ShopFeed';
 import { ShopSearch } from '../components/shop/ShopSearch';
 import { ShopCategories } from '../components/shop/ShopCategories';
 import { TrendingItemsCarousel } from '../components/shop/TrendingItemsCarousel';
+import { FlashSalesSection } from '../components/shop/FlashSalesSection';
+import { GroupBuysSection } from '../components/shop/GroupBuysSection';
 import { InstallPrompt } from '../components/InstallPrompt';
 import { CartModal } from '../components/shop/CartModal';
 import { CheckoutModal } from '../components/shop/CheckoutModal';
 import { OrderConfirmationModal } from '../components/shop/OrderConfirmationModal';
 import { useCart } from '../contexts/CartContext';
-import { ShoppingCart, Package, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, Package, ShoppingBag, MessageSquare, MapPin } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -53,6 +55,24 @@ const Shop: React.FC<ShopProps> = ({ activeTab, onTabSelect, onOpenCreate }) => 
             <ShoppingBag className="h-4 w-4 mr-2" />
             My Orders
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/shop/messages')}
+            className="flex-shrink-0"
+          >
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Messages
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/shipping-addresses')}
+            className="flex-shrink-0"
+          >
+            <MapPin className="h-4 w-4 mr-2" />
+            Addresses
+          </Button>
           {sellerProfile && (
             <Button
               variant="outline"
@@ -68,6 +88,12 @@ const Shop: React.FC<ShopProps> = ({ activeTab, onTabSelect, onOpenCreate }) => 
       </div>
       
       <main className="pb-28 safe-area-bottom">
+        {/* Flash Sales Section */}
+        <FlashSalesSection />
+        
+        {/* Group Buys Section */}
+        <GroupBuysSection />
+        
         <div className="mobile-px mobile-py space-y-4">
           <ShopSearch 
             value={searchQuery}

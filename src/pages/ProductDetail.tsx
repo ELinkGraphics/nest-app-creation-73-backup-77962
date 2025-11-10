@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { useShopItems } from '@/hooks/useShopItems';
 import { useProductReviews } from '@/hooks/useProductReviews';
 import { useReviewMutations } from '@/hooks/useReviewMutations';
+import { useShopMessageMutations } from '@/hooks/useShopMessages';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -41,10 +42,10 @@ const ProductDetail: React.FC = () => {
   const [showReviewInput, setShowReviewInput] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
 
-  // Fetch shop items and reviews from database
   const { data: items, isLoading } = useShopItems({});
   const { data: reviews = [], isLoading: reviewsLoading } = useProductReviews(id || '');
   const { createReview } = useReviewMutations();
+  const { createConversation } = useShopMessageMutations();
 
   if (isLoading) {
     return (
@@ -93,6 +94,19 @@ const ProductDetail: React.FC = () => {
   const handleBuyNow = () => {
     handleAddToCart();
     navigate('/cart');
+  };
+
+  const handleContactSeller = async () => {
+    if (!product) return;
+    try {
+      const conversationId = await createConversation.mutateAsync({
+        itemId: product.id,
+        sellerId: product.seller.id,
+      });
+      navigate(`/shop/messages/${conversationId}`);
+    } catch (error) {
+      // Error handled by mutation
+    }
   };
 
   const handleSubmitReview = async () => {
@@ -299,11 +313,18 @@ const ProductDetail: React.FC = () => {
                 className="flex-shrink-0 text-xs px-2"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Handle message action
+                  handleContactSeller();
                 }}
+                disabled={createConversation.isPending}
               >
-                <MessageCircle className="w-3 h-3 sm:mr-1" />
-                <span className="hidden sm:inline">Message</span>
+                {createConversation.isPending ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <>
+                    <MessageCircle className="w-3 h-3 sm:mr-1" />
+                    <span className="hidden sm:inline">Message</span>
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>

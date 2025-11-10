@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Bell, Mail, Settings, User as UserIcon, Palette, LogOut, ShoppingBag, RotateCw } from 'lucide-react';
+import { Bell, Mail, Settings, User as UserIcon, Palette, LogOut, ShoppingBag, RotateCw, Search } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUser } from '@/contexts/UserContext';
 import { useAppNav } from '@/hooks/useAppNav';
 import { useNavigate } from 'react-router-dom';
 import ProfileModal from './ProfileModal';
+import SearchModal from './SearchModal';
 import { cacheManager } from '@/utils/cacheManager';
 import { useNotifications } from '@/hooks/useNotifications';
 
@@ -67,6 +68,7 @@ const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages, onMenuOpen
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
   const { unreadCount } = useNotifications();
 
   React.useEffect(() => {
@@ -187,6 +189,14 @@ const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages, onMenuOpen
               </button>
             </div>
             <MenuItem 
+              icon={<Search className="size-4" />} 
+              label="Search" 
+              onClick={() => {
+                setShowSearchModal(true);
+                setMenuOpen(false);
+              }} 
+            />
+            <MenuItem 
               icon={<UserIcon className="size-4" />} 
               label="View profile" 
               onClick={() => {
@@ -230,6 +240,11 @@ const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages, onMenuOpen
       <ProfileModal 
         isOpen={showProfileModal}
         onClose={() => setShowProfileModal(false)}
+      />
+      
+      <SearchModal 
+        isOpen={showSearchModal}
+        onClose={() => setShowSearchModal(false)}
       />
     </header>
   );

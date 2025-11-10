@@ -137,6 +137,29 @@ export const useStoryPersistence = () => {
     fetchStories();
   }, [user]);
 
+  // Real-time subscription for story changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('stories-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'stories'
+        },
+        () => {
+          // Refresh stories when any story is added, updated, or deleted
+          fetchStories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   // Refresh stories function
   const refreshStories = () => {
     fetchStories();

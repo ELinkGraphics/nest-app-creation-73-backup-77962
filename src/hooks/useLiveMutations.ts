@@ -108,6 +108,7 @@ export const useLiveMutations = () => {
 
       toast.success('Live stream ended');
       queryClient.invalidateQueries({ queryKey: ['live-streams'] });
+      queryClient.invalidateQueries({ queryKey: ['stories'] });
     } catch (error: any) {
       toast.error(error.message || 'Failed to end live stream');
       throw error;

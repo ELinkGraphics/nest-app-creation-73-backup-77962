@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Users, Globe, Settings, ArrowLeft } from 'lucide-react';
 import LiveTypeSelection from './LiveTypeSelection';
 import PreLiveSettings from './PreLiveSettings';
-import LiveSimulation from './LiveSimulation';
+import WebRTCLiveSimulation from './WebRTCLiveSimulation';
 
 interface GoLiveModalProps {
   isOpen: boolean;
@@ -105,7 +105,7 @@ const GoLiveModal: React.FC<GoLiveModalProps> = ({ isOpen, onClose }) => {
 
   if (currentStep === 'live') {
     return (
-      <LiveSimulation 
+      <WebRTCLiveSimulation 
         config={liveConfig} 
         onEndLive={handleEndLive} 
       />

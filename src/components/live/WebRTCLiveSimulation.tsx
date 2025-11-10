@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Camera, CameraOff, RotateCcw, Sparkles, MapPin, Users, Eye, MoreVertical, PhoneOff, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLiveMutations } from '@/hooks/useLiveMutations';
-import { useAgoraLive } from '@/hooks/useAgoraLive';
+import { useWebRTCLive } from '@/hooks/useWebRTCLive';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -19,7 +19,7 @@ interface LiveConfig {
   visibility: 'public' | 'friends' | 'circle';
 }
 
-interface LiveSimulationProps {
+interface WebRTCLiveSimulationProps {
   config: LiveConfig;
   onEndLive: () => void;
 }
@@ -35,31 +35,29 @@ interface LiveMessage {
   };
 }
 
-const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) => {
+const WebRTCLiveSimulation: React.FC<WebRTCLiveSimulationProps> = ({ config, onEndLive }) => {
   const [streamId, setStreamId] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [messageText, setMessageText] = useState('');
   const [messages, setMessages] = useState<LiveMessage[]>([]);
-  const videoRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   const { startLive, endLive, sendMessage } = useLiveMutations();
   
-  // Initialize Agora for real video streaming - only when we have a streamId
+  // Initialize WebRTC for real video streaming
   const {
-    localVideoTrack,
-    isJoined,
+    localStream,
+    isConnected,
     isMicMuted,
     isCameraOff,
     toggleMic,
     toggleCamera,
     switchCamera,
-  } = useAgoraLive({
-    channelName: streamId,
+  } = useWebRTCLive({
+    streamId,
     role: 'host',
   });
-
-  console.log('LiveSimulation rendered with config:', config);
 
   // Fetch stream data
   const { data: stream } = useQuery({
@@ -81,7 +79,6 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
   useEffect(() => {
     const initLive = async () => {
       try {
-        console.log('Starting live stream with config:', config);
         const stream = await startLive({
           type: config.type,
           circleId: config.circleId,
@@ -90,7 +87,6 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
           visibility: config.visibility,
           locationVisible: config.locationVisible
         });
-        console.log('Live stream started:', stream);
         setStreamId(stream.id);
       } catch (error) {
         console.error('Failed to start live:', error);
@@ -102,12 +98,12 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
     initLive();
   }, []);
 
-  // Play local video track
+  // Play local video
   useEffect(() => {
-    if (localVideoTrack && videoRef.current) {
-      localVideoTrack.play(videoRef.current);
+    if (localStream && videoRef.current) {
+      videoRef.current.srcObject = localStream;
     }
-  }, [localVideoTrack]);
+  }, [localStream]);
 
   // Duration counter
   useEffect(() => {
@@ -169,7 +165,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
           filter: `stream_id=eq.${streamId}`
         },
         () => {
-          // Viewer joined or left, no action needed - counter updates via query refetch
+          // Viewer joined or left
         }
       )
       .subscribe();
@@ -214,20 +210,24 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
   return (
     <div className="fixed inset-0 z-[100] bg-black overflow-hidden">
       {/* Real Video Stream */}
-      <div 
+      <video 
         ref={videoRef} 
-        className="absolute inset-0 w-full h-full"
+        autoPlay
+        playsInline
+        muted
+        className="absolute inset-0 w-full h-full object-cover"
         style={{ 
           transform: config.cameraFlipped ? 'scaleX(-1)' : 'none',
         }}
       />
       
       {/* Loading overlay while connecting */}
-      {!isJoined && (
+      {!isConnected && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
           <div className="text-white text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4" />
             <p className="text-lg">Starting live stream...</p>
+            <p className="text-sm text-white/60 mt-2">Using WebRTC (no API key required)</p>
           </div>
         </div>
       )}
@@ -402,4 +402,4 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
   );
 };
 
-export default LiveSimulation;
+export default WebRTCLiveSimulation;

@@ -8,6 +8,7 @@ import ProfileModal from './ProfileModal';
 import SearchModal from './SearchModal';
 import { cacheManager } from '@/utils/cacheManager';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useConversations } from '@/hooks/useConversations';
 
 interface HeaderProps {
   onNotifications?: () => void;
@@ -43,23 +44,32 @@ const IconButton = ({ label, children, badge, onClick, 'data-testid': dataTestId
   </button>
 );
 
-const MenuItem = ({ icon, label, danger, onClick, 'data-testid': dataTestId }: { 
+const MenuItem = ({ icon, label, danger, badge, onClick, 'data-testid': dataTestId }: { 
   icon: React.ReactNode; 
   label: string; 
   danger?: boolean;
+  badge?: number;
   onClick?: () => void;
   'data-testid'?: string;
 }) => (
   <button
     type="button"
-    className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors"
+    className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors relative"
     style={{ color: danger ? "#B42318" : undefined }}
     role="menuitem"
     onClick={onClick}
     data-testid={dataTestId}
   >
     <span className="text-gray-800">{icon}</span>
-    <span className="text-sm text-gray-800">{label}</span>
+    <span className="text-sm text-gray-800 flex-1">{label}</span>
+    {typeof badge === "number" && badge > 0 && (
+      <span 
+        className="min-w-[20px] h-[20px] px-1.5 rounded-full text-[11px] grid place-items-center bg-destructive text-white font-medium"
+        aria-label={`${badge} unread`}
+      >
+        {badge}
+      </span>
+    )}
   </button>
 );
 
@@ -79,6 +89,8 @@ const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages, onMenuOpen
     onProfileModalChange?.(showProfileModal);
   }, [showProfileModal, onProfileModalChange]);
   const { user, isLoading } = useUser();
+  const { conversations } = useConversations(user?.id);
+  const totalUnreadMessages = conversations?.reduce((sum, conv) => sum + conv.unread_count, 0) || 0;
 
   if (isLoading || !user) {
     return (
@@ -207,6 +219,7 @@ const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages, onMenuOpen
             <MenuItem 
               icon={<Mail className="size-4" />} 
               label="Messages" 
+              badge={totalUnreadMessages}
               onClick={() => {
                 navigateToMessages();
                 setMenuOpen(false);

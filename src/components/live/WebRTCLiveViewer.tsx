@@ -26,7 +26,7 @@ const WebRTCLiveViewer: React.FC<WebRTCLiveViewerProps> = ({ streamId, onClose }
   const [messages, setMessages] = useState<LiveMessage[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   
-  const { sendMessage } = useLiveMutations();
+  const { sendMessage, joinStream, leaveStream } = useLiveMutations();
   
   const {
     remoteStreams,
@@ -105,6 +105,15 @@ const WebRTCLiveViewer: React.FC<WebRTCLiveViewerProps> = ({ streamId, onClose }
       console.error('Failed to send message:', error);
     }
   };
+
+  // Join/leave live viewers list for accurate counts
+  useEffect(() => {
+    if (!streamId) return;
+    joinStream(streamId).catch(console.error);
+    return () => {
+      leaveStream(streamId).catch(console.error);
+    };
+  }, [streamId]);
 
   return (
     <div className="fixed inset-0 z-[100] bg-black overflow-hidden">

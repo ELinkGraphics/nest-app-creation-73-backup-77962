@@ -75,6 +75,8 @@ export const useWebRTCLive = ({ streamId, role }: WebRTCConfig) => {
         newMap.set(viewerId, event.streams[0]);
         return newMap;
       });
+      // Mark connected as soon as we receive a remote track (viewer UX)
+      setIsConnected(true);
     };
 
     // Handle connection state
@@ -234,19 +236,26 @@ export const useWebRTCLive = ({ streamId, role }: WebRTCConfig) => {
 
         // Listen for new viewers joining (host only)
         if (role === 'host') {
-          channel.on('presence', { event: 'join' }, async ({ newPresences }) => {
-            console.log('New presence detected:', newPresences);
+          channel.on('presence', { event: 'join' }, async ({ key, newPresences }) => {
+            console.log('Presence join detected:', { key, newPresences });
             
-            for (const presence of newPresences) {
-              if (presence.role === 'audience' && presence.user_id && presence.user_id !== userId) {
-                console.log('Creating peer connection for viewer:', presence.user_id);
+            for (const presence of newPresences as any[]) {
+              // Try multiple shapes to extract the viewer's user_id
+              const viewerUserId = presence?.user_id 
+                ?? presence?.payload?.user_id 
+                ?? presence?.presence?.user_id;
+              const viewerRole = presence?.role 
+                ?? presence?.payload?.role 
+                ?? presence?.presence?.role;
+
+              if (viewerRole === 'audience' && viewerUserId && viewerUserId !== userId) {
+                console.log('Creating peer connection for viewer:', viewerUserId);
                 
-                const viewerId = presence.user_id;
-                const pc = await createPeerConnection(viewerId);
+                const pc = await createPeerConnection(viewerUserId);
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
 
-                console.log('Sending offer to viewer:', viewerId);
+                console.log('Sending offer to viewer:', viewerUserId);
                 
                 channel.send({
                   type: 'broadcast',
@@ -255,7 +264,7 @@ export const useWebRTCLive = ({ streamId, role }: WebRTCConfig) => {
                     type: 'offer',
                     data: offer,
                     from: userId,
-                    to: viewerId,
+                    to: viewerUserId,
                     streamId
                   }
                 });

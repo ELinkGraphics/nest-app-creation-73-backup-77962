@@ -234,40 +234,55 @@ export const useWebRTCLive = ({ streamId, role }: WebRTCConfig) => {
             }
           });
 
-        // Listen for new viewers joining (host only)
+        // Listen for viewers (host only)
         if (role === 'host') {
+          // 1) Send offers when new viewers join after we're ready
           channel.on('presence', { event: 'join' }, async ({ key, newPresences }) => {
             console.log('Presence join detected:', { key, newPresences });
-            
             for (const presence of newPresences as any[]) {
-              // Try multiple shapes to extract the viewer's user_id
-              const viewerUserId = presence?.user_id 
-                ?? presence?.payload?.user_id 
-                ?? presence?.presence?.user_id;
-              const viewerRole = presence?.role 
-                ?? presence?.payload?.role 
-                ?? presence?.presence?.role;
-
+              const viewerUserId = presence?.user_id ?? presence?.payload?.user_id ?? presence?.presence?.user_id;
+              const viewerRole = presence?.role ?? presence?.payload?.role ?? presence?.presence?.role;
               if (viewerRole === 'audience' && viewerUserId && viewerUserId !== userId) {
-                console.log('Creating peer connection for viewer:', viewerUserId);
-                
-                const pc = await createPeerConnection(viewerUserId);
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
+                if (!peerConnectionsRef.current.has(viewerUserId)) {
+                  console.log('Creating peer connection (join) for viewer:', viewerUserId);
+                  const pc = await createPeerConnection(viewerUserId);
+                  const offer = await pc.createOffer();
+                  await pc.setLocalDescription(offer);
+                  channel.send({
+                    type: 'broadcast',
+                    event: 'signaling',
+                    payload: { type: 'offer', data: offer, from: userId, to: viewerUserId, streamId }
+                  });
+                } else {
+                  console.log('PC already exists for viewer (join):', viewerUserId);
+                }
+              }
+            }
+          });
 
-                console.log('Sending offer to viewer:', viewerUserId);
-                
-                channel.send({
-                  type: 'broadcast',
-                  event: 'signaling',
-                  payload: {
-                    type: 'offer',
-                    data: offer,
-                    from: userId,
-                    to: viewerUserId,
-                    streamId
+          // 2) Also handle sync to catch viewers who joined before we attached handlers
+          channel.on('presence', { event: 'sync' }, async () => {
+            const state: Record<string, any[]> = channel.presenceState() as any;
+            console.log('Presence sync state:', state);
+            for (const key of Object.keys(state)) {
+              for (const presence of state[key] || []) {
+                const viewerUserId = presence?.user_id ?? presence?.payload?.user_id ?? presence?.presence?.user_id ?? key;
+                const viewerRole = presence?.role ?? presence?.payload?.role ?? presence?.presence?.role;
+                if (viewerRole === 'audience' && viewerUserId && viewerUserId !== userId) {
+                  if (!peerConnectionsRef.current.has(viewerUserId)) {
+                    console.log('Creating peer connection (sync) for viewer:', viewerUserId);
+                    const pc = await createPeerConnection(viewerUserId);
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    channel.send({
+                      type: 'broadcast',
+                      event: 'signaling',
+                      payload: { type: 'offer', data: offer, from: userId, to: viewerUserId, streamId }
+                    });
+                  } else {
+                    console.log('PC already exists for viewer (sync):', viewerUserId);
                   }
-                });
+                }
               }
             }
           });

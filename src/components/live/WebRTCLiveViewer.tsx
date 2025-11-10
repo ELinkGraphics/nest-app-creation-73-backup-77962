@@ -56,6 +56,10 @@ const WebRTCLiveViewer: React.FC<WebRTCLiveViewerProps> = ({ streamId, onClose }
     const firstStream = Array.from(remoteStreams.values())[0];
     if (firstStream && videoRef.current) {
       videoRef.current.srcObject = firstStream;
+      const play = videoRef.current.play();
+      if (play && typeof play.then === 'function') {
+        play.catch((err) => console.log('Autoplay prevented, waiting for user interaction', err));
+      }
     }
   }, [remoteStreams]);
 

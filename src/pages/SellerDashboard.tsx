@@ -12,7 +12,9 @@ import { Loader2 } from 'lucide-react';
 import FooterNav from '@/components/FooterNav';
 import { SellerOrdersList } from '@/components/shop/SellerOrdersList';
 import { SellerInventory } from '@/components/shop/SellerInventory';
-import { SellerAnalytics } from '@/components/shop/SellerAnalytics';
+import { SellerAnalyticsEnhanced } from '@/components/shop/SellerAnalyticsEnhanced';
+import { SellerVerificationModal } from '@/components/shop/SellerVerificationModal';
+import { CheckCircle2, Clock } from 'lucide-react';
 
 const SellerDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ const SellerDashboard: React.FC = () => {
   const { profile, isLoading: profileLoading } = useSellerProfile(user?.id);
   const { data: orders, isLoading: ordersLoading } = useSellerOrders();
   const [activeTab, setActiveTab] = useState('orders');
+  const [verificationModalOpen, setVerificationModalOpen] = useState(false);
 
   if (profileLoading) {
     return (
@@ -78,12 +81,23 @@ const SellerDashboard: React.FC = () => {
             </div>
           </div>
           <Button
-            variant="ghost"
+            variant={profile?.verification_status === 'verified' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => navigate('/seller/settings')}
-            className="p-2"
+            onClick={() => setVerificationModalOpen(true)}
           >
-            <Settings className="w-5 h-5" />
+            {profile?.verification_status === 'verified' ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Verified
+              </>
+            ) : profile?.verification_status === 'pending' ? (
+              <>
+                <Clock className="w-4 h-4 mr-2" />
+                Pending
+              </>
+            ) : (
+              'Get Verified'
+            )}
           </Button>
         </div>
       </div>
@@ -178,9 +192,15 @@ const SellerDashboard: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <SellerAnalytics sellerId={user?.id || ''} />
+          <SellerAnalyticsEnhanced sellerId={user?.id || ''} />
         </TabsContent>
       </Tabs>
+
+      <SellerVerificationModal
+        open={verificationModalOpen}
+        onOpenChange={setVerificationModalOpen}
+        currentStatus={profile?.verification_status}
+      />
 
       <FooterNav active="shop" onSelect={() => {}} onOpenCreate={() => {}} />
     </div>

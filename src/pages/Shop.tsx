@@ -12,7 +12,7 @@ import { CartModal } from '../components/shop/CartModal';
 import { CheckoutModal } from '../components/shop/CheckoutModal';
 import { OrderConfirmationModal } from '../components/shop/OrderConfirmationModal';
 import { useCart } from '../contexts/CartContext';
-import { ShoppingCart, Package, ShoppingBag, MessageSquare, MapPin } from 'lucide-react';
+import { ShoppingCart, Package, ShoppingBag, MessageSquare, MapPin, Heart, AlertTriangle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -72,6 +72,24 @@ const Shop: React.FC<ShopProps> = ({ activeTab, onTabSelect, onOpenCreate }) => 
           >
             <MapPin className="h-4 w-4 mr-2" />
             Addresses
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/wishlist')}
+            className="flex-shrink-0"
+          >
+            <Heart className="h-4 w-4 mr-2" />
+            Wishlist
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/disputes')}
+            className="flex-shrink-0"
+          >
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            Disputes
           </Button>
           {sellerProfile && (
             <Button

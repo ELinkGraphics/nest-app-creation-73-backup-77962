@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, MapPin, CreditCard, Truck, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Package, MapPin, CreditCard, Truck, CheckCircle, AlertTriangle } from 'lucide-react';
+import { DisputeModal } from '@/components/shop/DisputeModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,7 @@ const OrderDetail: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
   const { data: orders, isLoading } = useBuyerOrders();
+  const [disputeModalOpen, setDisputeModalOpen] = useState(false);
 
   const order = orders?.find(o => o.id === orderId);
 
@@ -166,17 +168,36 @@ const OrderDetail: React.FC = () => {
         </Card>
 
         {/* Actions */}
-        <div className="flex gap-2">
-          <Button variant="outline" className="flex-1" onClick={() => navigate('/shop')}>
-            Continue Shopping
-          </Button>
-          {order.status === 'delivered' && (
-            <Button className="flex-1" onClick={() => navigate(`/shop/product/${order.items[0]?.id}`)}>
-              Review Products
+        <div className="space-y-2">
+          {order.status !== 'delivered' && (
+            <Button
+              variant="outline"
+              onClick={() => setDisputeModalOpen(true)}
+              className="w-full"
+            >
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Open a Dispute
             </Button>
           )}
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => navigate('/shop')}>
+              Continue Shopping
+            </Button>
+            {order.status === 'delivered' && (
+              <Button className="flex-1" onClick={() => navigate(`/shop/product/${order.items[0]?.id}`)}>
+                Review Products
+              </Button>
+            )}
+          </div>
         </div>
       </div>
+
+      <DisputeModal
+        open={disputeModalOpen}
+        onOpenChange={setDisputeModalOpen}
+        orderId={order.id}
+        sellerId={order.items?.[0]?.seller_id || ''}
+      />
 
       <FooterNav active="shop" onSelect={() => {}} onOpenCreate={() => {}} />
     </div>

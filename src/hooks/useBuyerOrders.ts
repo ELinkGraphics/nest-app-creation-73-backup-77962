@@ -8,6 +8,7 @@ export interface BuyerOrderItem {
   quantity: number;
   price_at_purchase: number;
   seller_name: string;
+  seller_id: string;
 }
 
 export interface BuyerOrder {
@@ -40,6 +41,7 @@ export const useBuyerOrders = () => {
             item_id,
             quantity,
             price_at_purchase,
+            seller_id,
             shop_items!inner(
               id,
               title,
@@ -73,6 +75,7 @@ export const useBuyerOrders = () => {
           quantity: item.quantity,
           price_at_purchase: item.price_at_purchase,
           seller_name: item.profiles?.name || 'Unknown Seller',
+          seller_id: item.seller_id,
         })),
       }));
 

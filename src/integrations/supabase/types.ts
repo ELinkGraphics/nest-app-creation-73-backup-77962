@@ -835,6 +835,56 @@ export type Database = {
         }
         Relationships: []
       }
+      disputes: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          description: string
+          id: string
+          order_id: string
+          reason: string
+          resolution: string | null
+          resolved_at: string | null
+          seller_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          description: string
+          id?: string
+          order_id: string
+          reason: string
+          resolution?: string | null
+          resolved_at?: string | null
+          seller_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          order_id?: string
+          reason?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          seller_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emergency_contacts: {
         Row: {
           contact_name: string
@@ -1989,6 +2039,54 @@ export type Database = {
           views?: number | null
         }
         Relationships: []
+      }
+      refunds: {
+        Row: {
+          amount: number
+          created_at: string
+          dispute_id: string | null
+          id: string
+          order_id: string
+          processed_at: string | null
+          reason: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          dispute_id?: string | null
+          id?: string
+          order_id: string
+          processed_at?: string | null
+          reason: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          dispute_id?: string | null
+          id?: string
+          order_id?: string
+          processed_at?: string | null
+          reason?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_dispute_id_fkey"
+            columns: ["dispute_id"]
+            isOneToOne: false
+            referencedRelation: "disputes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       review_helpful: {
         Row: {

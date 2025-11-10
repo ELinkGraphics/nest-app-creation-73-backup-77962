@@ -32,6 +32,8 @@ import CreateShop from "./pages/CreateShop";
 import SellerDashboard from "./pages/SellerDashboard";
 import OrderHistory from "./pages/OrderHistory";
 import OrderDetail from "./pages/OrderDetail";
+import Wishlist from "./pages/Wishlist";
+import Disputes from "./pages/Disputes";
 import ShopMessages from "./pages/ShopMessages";
 import ShippingAddresses from "./pages/ShippingAddresses";
 import Profile from "./pages/Profile";
@@ -83,6 +85,8 @@ const AppRoutes = () => (
     <Route path="/orders" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
     <Route path="/order/:orderId" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
     <Route path="/seller/dashboard" element={<ProtectedRoute><SellerDashboard /></ProtectedRoute>} />
+    <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+    <Route path="/disputes" element={<ProtectedRoute><Disputes /></ProtectedRoute>} />
     <Route path="/seller/:sellerId" element={<ProtectedRoute><SellerProfile /></ProtectedRoute>} />
     <Route path="/shop/messages" element={<ProtectedRoute><ShopMessages /></ProtectedRoute>} />
     <Route path="/shop/messages/:conversationId" element={<ProtectedRoute><ShopMessages /></ProtectedRoute>} />

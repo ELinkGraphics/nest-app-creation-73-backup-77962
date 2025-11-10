@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Conversation } from '@/hooks/useConversations';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MessageCircle } from 'lucide-react';
+import { usePresence } from '@/hooks/usePresence';
 
 interface ConversationsListProps {
   conversations: Conversation[];
@@ -21,6 +22,7 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
   isLoading,
   currentUserId,
 }) => {
+  const { isUserOnline } = usePresence(currentUserId);
   if (isLoading) {
     return (
       <div className="space-y-1">
@@ -71,8 +73,8 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
                   {conversation.other_user_initials}
                 </AvatarFallback>
               </Avatar>
-              {conversation.other_user_online && (
-                <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-500 border-2 border-background" />
+              {isUserOnline(conversation.other_user_id) && (
+                <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-success border-2 border-background" />
               )}
             </div>
 

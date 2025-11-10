@@ -7,12 +7,16 @@ import { useMessages, useSendMessage } from '@/hooks/useMessages';
 import { Conversation } from '@/hooks/useConversations';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePresence } from '@/hooks/usePresence';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
+import { Badge } from '@/components/ui/badge';
 
 interface ChatViewProps {
   conversation: Conversation;
   currentUserId: string;
   currentUserAvatar?: string | null;
   currentUserInitials: string;
+  currentUserName: string;
   onBack: () => void;
 }
 
@@ -21,12 +25,19 @@ const ChatView: React.FC<ChatViewProps> = ({
   currentUserId, 
   currentUserAvatar,
   currentUserInitials,
+  currentUserName,
   onBack 
 }) => {
   const [messageText, setMessageText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { messages, isLoading } = useMessages(conversation.conversation_id, currentUserId);
   const { sendMessage, isSending } = useSendMessage();
+  const { isUserOnline } = usePresence(currentUserId);
+  const { typingUsers, startTyping, stopTyping } = useTypingIndicator(
+    conversation.conversation_id,
+    currentUserId,
+    currentUserName
+  );
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -38,6 +49,8 @@ const ChatView: React.FC<ChatViewProps> = ({
 
   const handleSendMessage = () => {
     if (!messageText.trim() || isSending) return;
+
+    stopTyping();
 
     sendMessage({
       conversationId: conversation.conversation_id,
@@ -52,6 +65,15 @@ const ChatView: React.FC<ChatViewProps> = ({
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessageText(e.target.value);
+    if (e.target.value.trim()) {
+      startTyping();
+    } else {
+      stopTyping();
     }
   };
 
@@ -76,8 +98,8 @@ const ChatView: React.FC<ChatViewProps> = ({
                 {conversation.other_user_initials}
               </AvatarFallback>
             </Avatar>
-            {conversation.other_user_online && (
-              <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-background" />
+            {isUserOnline(conversation.other_user_id) && (
+              <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-success border-2 border-background" />
             )}
           </div>
 
@@ -85,9 +107,14 @@ const ChatView: React.FC<ChatViewProps> = ({
             <h2 className="font-semibold text-foreground truncate text-base">
               {conversation.other_user_name}
             </h2>
-            <p className="text-xs text-muted-foreground">
-              {conversation.other_user_online ? 'Online' : 'Offline'}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-muted-foreground">
+                @{conversation.other_user_username}
+              </p>
+              {isUserOnline(conversation.other_user_id) && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">Online</Badge>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -158,13 +185,21 @@ const ChatView: React.FC<ChatViewProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Typing Indicator */}
+      {typingUsers.length > 0 && (
+        <div className="px-4 py-2 text-sm text-muted-foreground italic animate-fade-in">
+          {typingUsers[0]} is typing...
+        </div>
+      )}
+
       {/* Message Input - Fixed at bottom */}
       <div className="flex-none fixed bottom-0 left-0 right-0 lg:sticky bg-background border-t border-border safe-bottom">
         <div className="flex gap-2 p-3 max-w-screen-xl mx-auto">
           <Textarea
             value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
+            onChange={handleTextChange}
             onKeyDown={handleKeyPress}
+            onBlur={stopTyping}
             placeholder="Type a message..."
             className="resize-none min-h-[44px] max-h-32 text-[16px] rounded-2xl"
             rows={1}

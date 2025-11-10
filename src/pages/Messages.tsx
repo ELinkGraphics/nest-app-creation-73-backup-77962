@@ -87,6 +87,7 @@ const Messages = () => {
               currentUserId={user.id}
               currentUserAvatar={user.avatar}
               currentUserInitials={user.initials}
+              currentUserName={user.name}
               onBack={handleBack}
             />
           ) : (
@@ -105,13 +106,14 @@ const Messages = () => {
       {/* Mobile Layout */}
       <div className="lg:hidden h-screen flex flex-col">
         {selectedConversation ? (
-          <ChatView
-            conversation={selectedConversation}
-            currentUserId={user.id}
-            currentUserAvatar={user.avatar}
-            currentUserInitials={user.initials}
-            onBack={handleBack}
-          />
+            <ChatView
+              conversation={selectedConversation}
+              currentUserId={user.id}
+              currentUserAvatar={user.avatar}
+              currentUserInitials={user.initials}
+              currentUserName={user.name}
+              onBack={handleBack}
+            />
         ) : (
           <ConversationsList
             conversations={conversations}

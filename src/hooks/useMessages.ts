@@ -66,7 +66,7 @@ export const useMessages = (conversationId: string | null, userId: string | unde
     enabled: !!conversationId,
   });
 
-  // Real-time subscription for new messages in this conversation
+  // Real-time subscription for new messages and read status updates
   useEffect(() => {
     if (!conversationId) return;
 
@@ -83,6 +83,19 @@ export const useMessages = (conversationId: string | null, userId: string | unde
         (payload) => {
           console.log('New message received:', payload);
           queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'conversation_members',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        () => {
+          // Refetch when read status changes
           queryClient.invalidateQueries({ queryKey: ['conversations'] });
         }
       )

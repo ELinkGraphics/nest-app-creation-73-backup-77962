@@ -40,8 +40,16 @@ export const useStoryPersistence = () => {
 
       if (error) throw error;
 
+      // Filter out live stories where the stream is no longer live
+      const activeData = data?.filter(story => {
+        // If it's not a live story, keep it
+        if (!story.live_stream_id) return true;
+        // If it's a live story, only keep it if the stream is still live
+        return story.live_streams?.status === 'live';
+      }) || [];
+
       // Transform Supabase data to Story format
-      const transformedStories: Story[] = data?.map((story: any) => ({
+      const transformedStories: Story[] = activeData?.map((story: any) => ({
         id: story.id,
         user: {
           id: story.user_id,
@@ -68,7 +76,7 @@ export const useStoryPersistence = () => {
         if (story.isOwn) {
           ownStories.push(story);
         } else {
-          const userId = data?.find((s: any) => s.id === story.id)?.user_id;
+          const userId = activeData?.find((s: any) => s.id === story.id)?.user_id;
           if (userId) {
             if (!userStoriesMap.has(userId)) {
               userStoriesMap.set(userId, []);
@@ -137,7 +145,7 @@ export const useStoryPersistence = () => {
     fetchStories();
   }, [user]);
 
-  // Real-time subscription for story changes
+  // Real-time subscription for story and live stream changes
   useEffect(() => {
     const channel = supabase
       .channel('stories-realtime')
@@ -151,6 +159,20 @@ export const useStoryPersistence = () => {
         () => {
           // Refresh stories when any story is added, updated, or deleted
           fetchStories();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'live_streams'
+        },
+        (payload) => {
+          // Refresh stories when a live stream ends to remove its story
+          if ((payload.new as any).status === 'ended') {
+            fetchStories();
+          }
         }
       )
       .subscribe();

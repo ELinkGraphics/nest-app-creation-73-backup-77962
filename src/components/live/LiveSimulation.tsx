@@ -45,7 +45,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
   
   const { startLive, endLive, sendMessage } = useLiveMutations();
   
-  // Initialize Agora for real video streaming
+  // Initialize Agora for real video streaming - only when we have a streamId
   const {
     localVideoTrack,
     isJoined,
@@ -55,7 +55,7 @@ const LiveSimulation: React.FC<LiveSimulationProps> = ({ config, onEndLive }) =>
     toggleCamera,
     switchCamera,
   } = useAgoraLive({
-    channelName: streamId || 'temp-channel',
+    channelName: streamId,
     role: 'host',
   });
 

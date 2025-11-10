@@ -28,8 +28,13 @@ export const useAgoraLive = ({ channelName, role }: AgoraConfig) => {
 
   useEffect(() => {
     // Wait until we have a real channel name (streamId)
-    if (!channelName) return;
+    if (!channelName) {
+      console.log('useAgoraLive: waiting for channel name');
+      return;
+    }
 
+    console.log('useAgoraLive: initializing with channel:', channelName);
+    
     const init = async () => {
       try {
         // Create Agora client
@@ -119,14 +124,19 @@ export const useAgoraLive = ({ channelName, role }: AgoraConfig) => {
     return () => {
       // Cleanup
       const cleanup = async () => {
-        if (localAudioTrack) {
-          localAudioTrack.close();
-        }
-        if (localVideoTrack) {
-          localVideoTrack.close();
-        }
-        if (clientRef.current) {
-          await clientRef.current.leave();
+        console.log('useAgoraLive: cleaning up');
+        try {
+          if (localAudioTrack) {
+            localAudioTrack.close();
+          }
+          if (localVideoTrack) {
+            localVideoTrack.close();
+          }
+          if (clientRef.current) {
+            await clientRef.current.leave();
+          }
+        } catch (error) {
+          console.error('Cleanup error:', error);
         }
       };
       cleanup();

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, X, TrendingUp, User as UserIcon, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -162,7 +163,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  return (
+  const content = (
     <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="h-full w-full bg-background overflow-y-auto">
         {/* Header */}
@@ -333,6 +334,8 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
       </div>
     </div>
   );
+
+  return createPortal(content, document.body);
 };
 
 export default SearchModal;

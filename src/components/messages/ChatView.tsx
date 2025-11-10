@@ -11,10 +11,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface ChatViewProps {
   conversation: Conversation;
   currentUserId: string;
+  currentUserAvatar?: string | null;
+  currentUserInitials: string;
   onBack: () => void;
 }
 
-const ChatView: React.FC<ChatViewProps> = ({ conversation, currentUserId, onBack }) => {
+const ChatView: React.FC<ChatViewProps> = ({ 
+  conversation, 
+  currentUserId, 
+  currentUserAvatar,
+  currentUserInitials,
+  onBack 
+}) => {
   const [messageText, setMessageText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { messages, isLoading } = useMessages(conversation.conversation_id, currentUserId);
@@ -48,9 +56,9 @@ const ChatView: React.FC<ChatViewProps> = ({ conversation, currentUserId, onBack
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-screen lg:h-full bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-lg border-b border-border">
+      <div className="flex-none sticky top-0 z-10 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-3 py-3 safe-top">
           <Button 
             variant="ghost" 
@@ -85,7 +93,7 @@ const ChatView: React.FC<ChatViewProps> = ({ conversation, currentUserId, onBack
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3 overscroll-contain">
+      <div className="flex-1 overflow-y-auto px-3 py-4 pb-20 space-y-3 overscroll-contain">
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
@@ -137,9 +145,9 @@ const ChatView: React.FC<ChatViewProps> = ({ conversation, currentUserId, onBack
 
                 {isOwn && (
                   <Avatar className="h-8 w-8 shrink-0 mt-1">
-                    <AvatarImage src={undefined} />
+                    <AvatarImage src={currentUserAvatar || undefined} />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-xs">
-                      You
+                      {currentUserInitials}
                     </AvatarFallback>
                   </Avatar>
                 )}
@@ -150,9 +158,9 @@ const ChatView: React.FC<ChatViewProps> = ({ conversation, currentUserId, onBack
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur-lg border-t border-border safe-bottom">
-        <div className="flex gap-2 p-3">
+      {/* Message Input - Fixed at bottom */}
+      <div className="flex-none fixed bottom-0 left-0 right-0 lg:sticky bg-background border-t border-border safe-bottom">
+        <div className="flex gap-2 p-3 max-w-screen-xl mx-auto">
           <Textarea
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}

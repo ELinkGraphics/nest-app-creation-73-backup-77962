@@ -6,8 +6,99 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Using official Agora token generation via agora-access-token library (loaded dynamically below)
-// Previous custom token builder removed to ensure compatibility with Agora SDK
+// Agora Token Builder using Deno Web Crypto API
+// Compatible with Agora RTC SDK v4.x token format (version 007)
+class AgoraTokenBuilder {
+  private VERSION = '007';
+  
+  private packUint16(value: number): Uint8Array {
+    const buffer = new Uint8Array(2);
+    buffer[0] = value & 0xff;
+    buffer[1] = (value >> 8) & 0xff;
+    return buffer;
+  }
+
+  private packUint32(value: number): Uint8Array {
+    const buffer = new Uint8Array(4);
+    buffer[0] = value & 0xff;
+    buffer[1] = (value >> 8) & 0xff;
+    buffer[2] = (value >> 16) & 0xff;
+    buffer[3] = (value >> 24) & 0xff;
+    return buffer;
+  }
+
+  private packString(str: string): Uint8Array {
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(str);
+    const length = this.packUint16(bytes.length);
+    return this.concatArrays([length, bytes]);
+  }
+
+  private concatArrays(arrays: Uint8Array[]): Uint8Array {
+    const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const arr of arrays) {
+      result.set(arr, offset);
+      offset += arr.length;
+    }
+    return result;
+  }
+
+  private async hmacSign(key: string, message: Uint8Array): Promise<Uint8Array> {
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(key);
+    
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    // Uint8Array is a valid BufferSource (ArrayBufferView)
+    const signature = await crypto.subtle.sign('HMAC', cryptoKey, message as BufferSource);
+    return new Uint8Array(signature);
+  }
+
+  private base64Encode(data: Uint8Array): string {
+    const binString = Array.from(data, (byte) => String.fromCharCode(byte)).join('');
+    return btoa(binString);
+  }
+
+  async buildToken(
+    appId: string,
+    appCertificate: string,
+    channelName: string,
+    uid: number,
+    role: number,
+    expireSeconds: number = 3600
+  ): Promise<string> {
+    const now = Math.floor(Date.now() / 1000);
+    const salt = Math.floor(Math.random() * 100000000);
+    const expireTimestamp = now + expireSeconds;
+
+    // Build message: salt + timestamp + expire + channelName + uid
+    const message = this.concatArrays([
+      this.packUint32(salt),
+      this.packUint32(now),
+      this.packUint32(expireTimestamp),
+      this.packString(channelName),
+      this.packUint32(uid)
+    ]);
+
+    // Sign with app certificate
+    const signature = await this.hmacSign(appCertificate, message);
+
+    // Combine signature + message and encode
+    const content = this.concatArrays([signature, message]);
+    const base64Content = this.base64Encode(content);
+
+    // Return: version + appId + base64Content
+    return `${this.VERSION}${appId}${base64Content}`;
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -59,17 +150,15 @@ serve(async (req) => {
 
     console.log(`Generating Agora token for channel="${channelName}" uid=${uid} role=${roleNum}`);
 
-    // Load official token builder and generate token
-    const { RtcTokenBuilder, RtcRole } = await import('https://esm.sh/agora-access-token@2.0.2');
-    const roleEnum = roleNum === 1 ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER;
-    const expireSeconds = 3600;
-    const token = RtcTokenBuilder.buildTokenWithUid(
+    // Use custom token builder with Web Crypto API
+    const tokenBuilder = new AgoraTokenBuilder();
+    const token = await tokenBuilder.buildToken(
       appId,
       appCertificate,
       channelName,
       uid,
-      roleEnum,
-      expireSeconds
+      roleNum,
+      3600
     );
 
     console.log(`Token generated successfully. Length: ${token.length}`);

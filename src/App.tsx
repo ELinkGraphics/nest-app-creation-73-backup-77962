@@ -29,6 +29,9 @@ import CreatePost from "./pages/CreatePost";
 import CreateVideo from "./pages/CreateVideo";
 import CreateCircle from "./pages/CreateCircle";
 import CreateShop from "./pages/CreateShop";
+import SellerDashboard from "./pages/SellerDashboard";
+import OrderHistory from "./pages/OrderHistory";
+import OrderDetail from "./pages/OrderDetail";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -75,6 +78,9 @@ const AppRoutes = () => (
     <Route path="/shop" element={<ProtectedRoute><Shop activeTab="shop" onTabSelect={() => {}} onOpenCreate={() => {}} /></ProtectedRoute>} />
     <Route path="/shop/product/:id" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
     <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+    <Route path="/orders" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
+    <Route path="/order/:orderId" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
+    <Route path="/seller/dashboard" element={<ProtectedRoute><SellerDashboard /></ProtectedRoute>} />
     <Route path="/seller/:sellerId" element={<ProtectedRoute><SellerProfile /></ProtectedRoute>} />
     <Route path="/ask" element={<ProtectedRoute><Ask activeTab="ask" onTabSelect={() => {}} onOpenCreate={() => {}} /></ProtectedRoute>} />
     <Route path="/ask/profile" element={<ProtectedRoute><AskProfile /></ProtectedRoute>} />

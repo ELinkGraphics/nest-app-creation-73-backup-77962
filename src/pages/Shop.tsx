@@ -10,9 +10,12 @@ import { CartModal } from '../components/shop/CartModal';
 import { CheckoutModal } from '../components/shop/CheckoutModal';
 import { OrderConfirmationModal } from '../components/shop/OrderConfirmationModal';
 import { useCart } from '../contexts/CartContext';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Package, ShoppingBag } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { useNavigate } from 'react-router-dom';
+import { useSellerProfile } from '../hooks/useSellerProfile';
+import { useUser } from '../contexts/UserContext';
 
 type TabKey = "home" | "circles" | "add" | "ask" | "safe" | "shop";
 
@@ -26,6 +29,9 @@ const Shop: React.FC<ShopProps> = ({ activeTab, onTabSelect, onOpenCreate }) => 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const { openCart, getCartCount } = useCart();
+  const navigate = useNavigate();
+  const { user } = useUser();
+  const { profile: sellerProfile } = useSellerProfile(user?.id);
 
   return (
     <div className="min-h-[100dvh] mx-auto bg-background text-foreground selection:bg-secondary/40 max-w-[480px] relative border-l border-r border-border/20 font-sans safe-area-bottom" data-testid="shop-page">
@@ -35,6 +41,30 @@ const Shop: React.FC<ShopProps> = ({ activeTab, onTabSelect, onOpenCreate }) => 
           onNotifications={() => alert("Notifications")}
           onMessages={() => alert("Messages")}
         />
+        
+        {/* Quick Action Bar */}
+        <div className="flex gap-2 px-4 py-2 bg-muted/30 border-b overflow-x-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/orders')}
+            className="flex-shrink-0"
+          >
+            <ShoppingBag className="h-4 w-4 mr-2" />
+            My Orders
+          </Button>
+          {sellerProfile && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/seller/dashboard')}
+              className="flex-shrink-0"
+            >
+              <Package className="h-4 w-4 mr-2" />
+              Seller Dashboard
+            </Button>
+          )}
+        </div>
       </div>
       
       <main className="pb-28 safe-area-bottom">

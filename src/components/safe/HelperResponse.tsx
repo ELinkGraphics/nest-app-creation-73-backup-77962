@@ -422,19 +422,13 @@ export const HelperResponse: React.FC = () => {
       </Card>
 
       {/* Messaging Dialog */}
-      <Dialog open={showMessaging} onOpenChange={setShowMessaging}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Emergency Messages</DialogTitle>
-          </DialogHeader>
-          {selectedAlertId && (
-            <SOSMessaging
-              alertId={selectedAlertId} 
-              onClose={() => setShowMessaging(false)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {selectedAlertId && (
+        <SOSMessaging
+          alertId={selectedAlertId}
+          isOpen={showMessaging}
+          onClose={() => setShowMessaging(false)}
+        />
+      )}
     </div>
   );
 };

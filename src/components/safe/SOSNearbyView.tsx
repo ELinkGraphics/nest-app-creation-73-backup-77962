@@ -544,19 +544,13 @@ export const SOSNearbyView: React.FC = () => {
       )}
 
       {/* Messaging Dialog */}
-      <Dialog open={showMessaging} onOpenChange={setShowMessaging}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Emergency Messages</DialogTitle>
-          </DialogHeader>
-          {selectedAlertId && (
-            <SOSMessaging
-              alertId={selectedAlertId} 
-              onClose={() => setShowMessaging(false)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {selectedAlertId && (
+        <SOSMessaging
+          alertId={selectedAlertId}
+          isOpen={showMessaging}
+          onClose={() => setShowMessaging(false)}
+        />
+      )}
 
       {/* Abuse Report Modal */}
       {selectedAlert && (

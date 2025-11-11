@@ -95,8 +95,8 @@ export const ShopPostCard: React.FC<ShopPostCardProps> = ({
         </div>
       </div>
 
-      {/* Product Image */}
-      <div className="relative aspect-square">
+      {/* Product Image - Optimized for mobile */}
+      <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
         <img 
           src={item.images[0]} 
           alt={item.title}
@@ -106,9 +106,9 @@ export const ShopPostCard: React.FC<ShopPostCardProps> = ({
         
         {/* Flash Sale Timer */}
         {item.flashSale && timeLeft !== null && timeLeft > 0 && (
-          <div className="absolute top-3 left-3">
-            <Badge className="bg-destructive text-destructive-foreground gap-1.5 px-2.5 py-1">
-              <Clock className="h-3.5 w-3.5" />
+          <div className="absolute top-2 left-2">
+            <Badge className="bg-destructive text-destructive-foreground gap-1 px-2 py-0.5 text-xs">
+              <Clock className="h-3 w-3" />
               <span className="font-semibold">{formatTime(timeLeft)}</span>
             </Badge>
           </div>
@@ -116,8 +116,8 @@ export const ShopPostCard: React.FC<ShopPostCardProps> = ({
         
         {/* Discount Badge */}
         {discountPercentage > 0 && (
-          <div className="absolute top-3 right-3">
-            <Badge className="bg-success text-success-foreground font-semibold px-2.5 py-1">
+          <div className="absolute top-2 right-2">
+            <Badge className="bg-success text-success-foreground font-semibold px-2 py-0.5 text-xs">
               -{discountPercentage}%
             </Badge>
           </div>

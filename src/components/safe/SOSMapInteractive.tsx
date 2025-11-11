@@ -576,19 +576,13 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
       </div>
 
       {/* Messaging Dialog */}
-      <Dialog open={showMessaging} onOpenChange={setShowMessaging}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Emergency Messages</DialogTitle>
-          </DialogHeader>
-          {selectedEmergency && (
-            <SOSMessaging
-              alertId={selectedEmergency} 
-              onClose={() => setShowMessaging(false)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {selectedEmergency && (
+        <SOSMessaging
+          alertId={selectedEmergency}
+          isOpen={showMessaging}
+          onClose={() => setShowMessaging(false)}
+        />
+      )}
     </div>
   );
 };

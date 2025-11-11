@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { Bell, BellOff, Clock, MapPin } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Bell, Volume2, Users, Shield } from 'lucide-react';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { supabase } from '@/integrations/supabase/client';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface NotificationPreferencesModalProps {
   isOpen: boolean;
@@ -20,6 +22,7 @@ export const NotificationPreferencesModal: React.FC<NotificationPreferencesModal
 }) => {
   const [userId, setUserId] = useState<string | null>(null);
   const { preferences, updatePreferences } = useNotificationPreferences(userId || undefined);
+  const isMobile = useIsMobile();
 
   const [enabled, setEnabled] = useState(true);
   const [sosAlerts, setSosAlerts] = useState(true);
@@ -64,44 +67,39 @@ export const NotificationPreferencesModal: React.FC<NotificationPreferencesModal
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Notification Preferences
-          </DialogTitle>
-        </DialogHeader>
+    <Drawer open={isOpen} onOpenChange={onClose}>
+      <DrawerContent className="max-h-[90vh]">
+        <DrawerHeader>
+          <DrawerTitle>Notification Settings</DrawerTitle>
+        </DrawerHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="overflow-y-auto px-4 space-y-4 pb-4">
           {/* Master Toggle */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              {enabled ? (
-                <Bell className="h-5 w-5 text-green-600" />
-              ) : (
-                <BellOff className="h-5 w-5 text-gray-400" />
-              )}
-              <div>
-                <Label className="font-semibold">Enable Notifications</Label>
-                <p className="text-xs text-gray-600">Receive all notifications</p>
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Bell className="h-5 w-5 text-primary" />
+                <div>
+                  <Label className="text-sm font-medium">Enable Notifications</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">Master toggle for all alerts</p>
+                </div>
               </div>
+              <Switch checked={enabled} onCheckedChange={setEnabled} />
             </div>
-            <Switch
-              checked={enabled}
-              onCheckedChange={setEnabled}
-              className="data-[state=checked]:bg-green-500"
-            />
-          </div>
+          </Card>
 
-          {/* Notification Types */}
-          <div className="space-y-4">
-            <h3 className="font-medium text-sm text-gray-700">Notification Types</h3>
+          {/* Alert Types */}
+          <Card className="p-4 space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Volume2 className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-medium">Alert Types</Label>
+            </div>
             
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-sm">SOS Alerts Nearby</Label>
+                <Label htmlFor="sos-alerts" className="text-sm">SOS Alerts Nearby</Label>
                 <Switch
+                  id="sos-alerts"
                   checked={sosAlerts}
                   onCheckedChange={setSosAlerts}
                   disabled={!enabled}
@@ -109,8 +107,9 @@ export const NotificationPreferencesModal: React.FC<NotificationPreferencesModal
               </div>
 
               <div className="flex items-center justify-between">
-                <Label className="text-sm">Helper Responses</Label>
+                <Label htmlFor="helper-responses" className="text-sm">Helper Responses</Label>
                 <Switch
+                  id="helper-responses"
                   checked={helperResponses}
                   onCheckedChange={setHelperResponses}
                   disabled={!enabled}
@@ -118,8 +117,9 @@ export const NotificationPreferencesModal: React.FC<NotificationPreferencesModal
               </div>
 
               <div className="flex items-center justify-between">
-                <Label className="text-sm">Alert Updates</Label>
+                <Label htmlFor="alert-updates" className="text-sm">Alert Updates</Label>
                 <Switch
+                  id="alert-updates"
                   checked={alertUpdates}
                   onCheckedChange={setAlertUpdates}
                   disabled={!enabled}
@@ -127,85 +127,89 @@ export const NotificationPreferencesModal: React.FC<NotificationPreferencesModal
               </div>
 
               <div className="flex items-center justify-between">
-                <Label className="text-sm">Emergency Contact Alerts</Label>
+                <Label htmlFor="emergency-contacts" className="text-sm">Emergency Contact Alerts</Label>
                 <Switch
+                  id="emergency-contacts"
                   checked={emergencyContactAlerts}
                   onCheckedChange={setEmergencyContactAlerts}
                   disabled={!enabled}
                 />
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Distance Range */}
-          <div className="space-y-3">
+          <Card className="p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-blue-600" />
-              <Label className="font-medium text-sm">Alert Distance Range</Label>
+              <Users className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-medium">Alert Distance: {maxDistance} km</Label>
             </div>
-            <div className="space-y-2">
-              <Slider
-                value={[maxDistance]}
-                onValueChange={([value]) => setMaxDistance(value)}
-                min={1}
-                max={50}
-                step={1}
-                disabled={!enabled || !sosAlerts}
-                className="w-full"
-              />
-              <p className="text-sm text-gray-600 text-center">
-                Notify me about alerts within <span className="font-semibold">{maxDistance} km</span>
-              </p>
-            </div>
-          </div>
+            <Slider
+              value={[maxDistance]}
+              onValueChange={([value]) => setMaxDistance(value)}
+              min={1}
+              max={50}
+              step={1}
+              disabled={!enabled}
+              className="w-full"
+            />
+            <p className="text-xs text-muted-foreground">
+              Receive alerts within this radius
+            </p>
+          </Card>
 
           {/* Quiet Hours */}
-          <div className="space-y-3">
+          <Card className="p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-purple-600" />
-              <Label className="font-medium text-sm">Quiet Hours</Label>
+              <Shield className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-medium">Quiet Hours</Label>
             </div>
-            <p className="text-xs text-gray-600">
-              Only receive critical (high urgency) alerts during these hours
-            </p>
+            
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs text-gray-600">Start Time</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="quiet-start" className="text-xs text-muted-foreground">Start Time</Label>
                 <Input
+                  id="quiet-start"
                   type="time"
                   value={quietHoursStart}
                   onChange={(e) => setQuietHoursStart(e.target.value)}
                   disabled={!enabled}
-                  className="mt-1"
+                  className="h-10"
                 />
               </div>
-              <div>
-                <Label className="text-xs text-gray-600">End Time</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="quiet-end" className="text-xs text-muted-foreground">End Time</Label>
                 <Input
+                  id="quiet-end"
                   type="time"
                   value={quietHoursEnd}
                   onChange={(e) => setQuietHoursEnd(e.target.value)}
                   disabled={!enabled}
-                  className="mt-1"
+                  className="h-10"
                 />
               </div>
             </div>
-          </div>
+            <p className="text-xs text-muted-foreground">
+              Only critical alerts during these hours
+            </p>
+          </Card>
         </div>
 
-        <div className="flex gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={onClose} className="flex-1">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={updatePreferences.isPending}
-            className="flex-1"
-          >
-            {updatePreferences.isPending ? 'Saving...' : 'Save Preferences'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        <DrawerFooter className="border-t bg-background">
+          <div className="flex gap-2 w-full">
+            <Button variant="outline" onClick={onClose} className="flex-1 touch-target">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSave}
+              disabled={updatePreferences.isPending}
+              className="flex-1 touch-target"
+            >
+              {updatePreferences.isPending ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 };

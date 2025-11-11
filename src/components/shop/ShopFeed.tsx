@@ -79,14 +79,14 @@ export const ShopFeed: React.FC<ShopFeedProps> = ({ searchQuery, category }) => 
   }
 
   return (
-    <div className="divide-y divide-border/50">
+    <div className="divide-y divide-border/50 pb-32">
       {items.length === 0 ? (
         <div className="text-center py-12 mobile-px">
           <p className="text-muted-foreground text-base">No items found</p>
         </div>
       ) : (
         items.map((item) => (
-          <div key={item.id} className="py-4">
+          <div key={item.id} className="py-3">
             <ShopPostCard
               item={item}
               onLike={handleLike}

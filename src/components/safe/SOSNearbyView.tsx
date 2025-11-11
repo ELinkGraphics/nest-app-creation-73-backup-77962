@@ -254,6 +254,19 @@ export const SOSNearbyView: React.FC = () => {
 
   return (
     <div className="space-y-3 sm:space-y-4">
+      {/* Location Loading/Error State */}
+      {locationLoading && !latitude && !longitude && (
+        <Card className="p-4 bg-blue-50 border-blue-200">
+          <div className="flex items-center gap-3">
+            <div className="h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <div>
+              <p className="font-medium text-blue-900">Getting your location...</p>
+              <p className="text-xs text-blue-700">This may take a few seconds</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Header with Live Badge and Map Toggle */}
       <div className="px-3 sm:px-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">

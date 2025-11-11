@@ -43,41 +43,57 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
     enabled: false // Only track when user creates an alert
   });
 
-  // Fetch all active helpers with their current locations
+  // Fetch all active helpers with their current locations - OPTIMIZED
   const { data: activeHelpers } = useQuery({
     queryKey: ['active-helpers'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch helpers first
+      const { data: helpersData, error: helpersError } = await supabase
         .from('helper_profiles')
         .select('user_id, location_lat, location_lng, availability_status')
         .eq('is_available', true)
         .not('location_lat', 'is', null)
-        .not('location_lng', 'is', null);
+        .not('location_lng', 'is', null)
+        .limit(50);
 
-      if (error) throw error;
+      if (helpersError) {
+        console.error('Error fetching helpers:', helpersError);
+        return [];
+      }
 
-      // Fetch profiles manually
-      const helpersWithProfiles = await Promise.all(
-        (data || []).map(async (helper) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('name, avatar_url, initials, avatar_color')
-            .eq('id', helper.user_id)
-            .single();
+      if (!helpersData || helpersData.length === 0) {
+        return [];
+      }
 
-          return {
-            ...helper,
-            profiles: profile,
-          };
-        })
-      );
+      // Get unique user IDs
+      const userIds = helpersData.map(h => h.user_id);
+
+      // Batch fetch profiles
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name, avatar_url, initials, avatar_color')
+        .in('id', userIds);
+
+      // Create profile map
+      const profileMap = (profilesData || []).reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {} as Record<string, any>);
+
+      // Combine helpers with profiles
+      const helpersWithProfiles = helpersData.map(helper => ({
+        ...helper,
+        profiles: profileMap[helper.user_id] || null
+      }));
 
       return helpersWithProfiles;
     },
-    refetchInterval: 10000, // Refresh every 10 seconds
+    refetchInterval: 15000, // Refresh every 15 seconds
+    staleTime: 10000,
+    gcTime: 300000,
   });
 
-  // Initialize Mapbox
+  // Initialize Mapbox with optimizations
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
 
@@ -92,31 +108,50 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [userLongitude, userLatitude],
       zoom: 12,
+      attributionControl: false,
+      // Performance optimizations
+      preserveDrawingBuffer: false,
+      refreshExpiredTiles: false,
+      fadeDuration: 0,
     });
 
     // Wait for the style to load before adding controls
     map.current.on('load', () => {
       console.log('Map style loaded successfully');
+      // Pre-render layers for better performance
+      map.current?.resize();
     });
 
     map.current.on('error', (e) => {
       console.error('Map error:', e);
-      toast.error('Failed to load map. Please check your connection.');
+      // Don't show error for minor issues
+      if (e.error?.message && !e.error.message.includes('NetworkError')) {
+        toast.error('Map loading issue detected');
+      }
     });
 
     // Add navigation controls after map loads
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    map.current.addControl(new mapboxgl.NavigationControl({
+      showCompass: true,
+      showZoom: true,
+      visualizePitch: false
+    }), 'top-right');
+    
     map.current.addControl(new mapboxgl.GeolocateControl({
       positionOptions: {
-        enableHighAccuracy: true
+        enableHighAccuracy: true,
+        timeout: 10000
       },
       trackUserLocation: true,
-      showUserHeading: true
+      showUserHeading: true,
+      showAccuracyCircle: false
     }), 'top-right');
 
     return () => {
-      map.current?.remove();
-      map.current = null;
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
     };
   }, [mapboxToken]);
 
@@ -171,11 +206,12 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
     return icons[type as keyof typeof icons] || AlertTriangle;
   };
 
-  // Update markers for alerts and helpers
+  // Update markers for alerts and helpers - OPTIMIZED
   useEffect(() => {
     if (!map.current || !alerts) return;
+    if (!map.current.isStyleLoaded()) return; // Wait for style to load
 
-    // Clear existing alert markers
+    // Clear existing alert markers efficiently
     Object.keys(markersRef.current).forEach(key => {
       if (key.startsWith('alert-')) {
         markersRef.current[key].remove();
@@ -184,10 +220,15 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
     });
 
     const activeEmergencies = alerts.filter(alert => alert.status === 'active');
+    
+    console.log('Rendering', activeEmergencies.length, 'emergency markers');
 
-    // Add emergency markers
+    // Batch create emergency markers
     activeEmergencies.forEach(emergency => {
-      if (!emergency.location_lat || !emergency.location_lng) return;
+      if (!emergency.location_lat || !emergency.location_lng) {
+        console.warn('Emergency missing location:', emergency.id);
+        return;
+      }
 
       const markerEl = document.createElement('div');
       markerEl.className = 'relative cursor-pointer';
@@ -206,23 +247,48 @@ export const SOSMap: React.FC<SOSMapProps> = ({ userLat, userLng }) => {
         </div>
       `;
 
-      const marker = new mapboxgl.Marker({ element: markerEl })
-        .setLngLat([emergency.location_lng, emergency.location_lat])
-        .addTo(map.current!);
+      try {
+        const marker = new mapboxgl.Marker({ element: markerEl })
+          .setLngLat([emergency.location_lng, emergency.location_lat])
+          .addTo(map.current!);
 
-      // Add popup on click
-      markerEl.addEventListener('click', () => {
-        setSelectedEmergency(emergency.id);
-        map.current?.flyTo({
-          center: [emergency.location_lng!, emergency.location_lat!],
-          zoom: 16,
-          duration: 1000,
+        // Add popup on click
+        markerEl.addEventListener('click', () => {
+          setSelectedEmergency(emergency.id);
+          map.current?.flyTo({
+            center: [emergency.location_lng!, emergency.location_lat!],
+            zoom: 16,
+            duration: 1000,
+          });
         });
+
+        markersRef.current[`alert-${emergency.id}`] = marker;
+      } catch (error) {
+        console.error('Error adding marker for emergency:', emergency.id, error);
+      }
+    });
+
+    // Fit map to show all markers if there are any
+    if (activeEmergencies.length > 0 && currentUserLat && currentUserLng) {
+      const bounds = new mapboxgl.LngLatBounds();
+      
+      // Add user location
+      bounds.extend([currentUserLng, currentUserLat]);
+      
+      // Add all emergency locations
+      activeEmergencies.forEach(e => {
+        if (e.location_lat && e.location_lng) {
+          bounds.extend([e.location_lng, e.location_lat]);
+        }
       });
 
-      markersRef.current[`alert-${emergency.id}`] = marker;
-    });
-  }, [alerts]);
+      map.current.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 15,
+        duration: 1000
+      });
+    }
+  }, [alerts, currentUserLat, currentUserLng]);
 
   // Update helper markers
   useEffect(() => {

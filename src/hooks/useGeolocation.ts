@@ -71,11 +71,31 @@ export const useGeolocation = (): UseGeolocationReturn => {
 
     setState(prev => ({ ...prev, loading: true }));
     
-    navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
-      enableHighAccuracy: false,
-      timeout: 5000,
-      maximumAge: 300000,
-    });
+    // Try with high accuracy first, then fallback to low accuracy
+    navigator.geolocation.getCurrentPosition(
+      handleSuccess, 
+      (error) => {
+        // If high accuracy fails, try with low accuracy
+        if (error.code === error.TIMEOUT) {
+          navigator.geolocation.getCurrentPosition(
+            handleSuccess,
+            handleError,
+            {
+              enableHighAccuracy: false,
+              timeout: 15000,
+              maximumAge: 60000,
+            }
+          );
+        } else {
+          handleError(error);
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000,
+      }
+    );
   };
 
   const startWatching = () => {
@@ -94,8 +114,8 @@ export const useGeolocation = (): UseGeolocationReturn => {
       handleError,
       {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 5000,
+        timeout: 15000,
+        maximumAge: 10000,
       }
     );
 

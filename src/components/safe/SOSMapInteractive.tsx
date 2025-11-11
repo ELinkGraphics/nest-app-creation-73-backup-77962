@@ -71,32 +71,54 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
     }
   }, [currentUserLat, currentUserLng, geoError]);
 
-  // Fetch all active helpers with their current locations
+  // Fetch all active helpers with their current locations - OPTIMIZED
   const { data: activeHelpers, refetch: refetchHelpers } = useQuery({
     queryKey: ['active-helpers'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch helpers first
+      const { data: helpersData, error: helpersError } = await supabase
         .from('helper_profiles')
-        .select(`
-          user_id,
-          location_lat,
-          location_lng,
-          availability_status,
-          profiles!user_id (
-            name,
-            avatar_url,
-            initials,
-            avatar_color
-          )
-        `)
+        .select('user_id, location_lat, location_lng, availability_status')
         .eq('is_available', true)
         .not('location_lat', 'is', null)
-        .not('location_lng', 'is', null);
+        .not('location_lng', 'is', null)
+        .limit(50);
 
-      if (error) throw error;
-      return data || [];
+      if (helpersError) {
+        console.error('Error fetching helpers:', helpersError);
+        return [];
+      }
+
+      if (!helpersData || helpersData.length === 0) {
+        return [];
+      }
+
+      // Get unique user IDs
+      const userIds = helpersData.map(h => h.user_id);
+
+      // Batch fetch profiles
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name, avatar_url, initials, avatar_color')
+        .in('id', userIds);
+
+      // Create profile map
+      const profileMap = (profilesData || []).reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {} as Record<string, any>);
+
+      // Combine helpers with profiles
+      const helpersWithProfiles = helpersData.map(helper => ({
+        ...helper,
+        profiles: profileMap[helper.user_id] || null
+      }));
+
+      return helpersWithProfiles;
     },
-    refetchInterval: 10000, // Refresh every 10 seconds
+    refetchInterval: 15000, // Refresh every 15 seconds
+    staleTime: 10000,
+    gcTime: 300000,
   });
 
   // Real-time subscription for map updates
@@ -155,7 +177,7 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
     return icons[type as keyof typeof icons] || AlertTriangle;
   };
 
-  // Initialize map
+  // Initialize map with optimizations
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
 
@@ -184,17 +206,29 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
         antialias: false,
         preserveDrawingBuffer: false,
         refreshExpiredTiles: false,
+        fadeDuration: 0,
+        attributionControl: false,
       });
 
-      map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+      map.current.addControl(new mapboxgl.NavigationControl({ 
+        showCompass: true, 
+        showZoom: true,
+        visualizePitch: false 
+      }), 'top-right');
 
       map.current.on('load', () => {
+        console.log('Map loaded successfully');
         setIsMapLoaded(true);
+        // Pre-render for better performance
+        map.current?.resize();
       });
 
       map.current.on('error', (e) => {
         console.error('Map error:', e);
-        toast.error('Map failed to load');
+        // Only show error for critical issues
+        if (e.error?.message && !e.error.message.includes('NetworkError')) {
+          toast.error('Map loading issue');
+        }
         setIsMapLoaded(true);
       });
 

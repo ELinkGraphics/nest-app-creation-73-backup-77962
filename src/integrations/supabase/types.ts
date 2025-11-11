@@ -3524,6 +3524,14 @@ export type Database = {
         Args: { conversation_id: string; user_id: string }
         Returns: boolean
       }
+      is_order_buyer: {
+        Args: { _order_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_order_seller: {
+        Args: { _order_id: string; _user_id: string }
+        Returns: boolean
+      }
       mark_conversation_read: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: undefined

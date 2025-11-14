@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation, Users, Clock, Target, Heart, Shield, Flame, Car, Tornado, AlertTriangle, MessageCircle, X, Loader2 } from 'lucide-react';
 import { useSOSAlerts } from '@/hooks/useSOSAlerts';
 import { useSOSHelpers } from '@/hooks/useSOSHelpers';
+import { useHelperProfile } from '@/hooks/useHelperProfile';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +15,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SOSMessaging } from './SOSMessaging';
+import { LegalDisclaimerModal } from './LegalDisclaimerModal';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
 
 interface SOSMapInteractiveProps {
@@ -28,19 +30,30 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
   
   const [selectedEmergency, setSelectedEmergency] = useState<string | null>(null);
   const [showMessaging, setShowMessaging] = useState(false);
+  const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
+  const [pendingAlertId, setPendingAlertId] = useState<string | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [userResponses, setUserResponses] = useState<Set<string>>(new Set());
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   
   const { latitude: userLat2, longitude: userLng2, refreshLocation, error: geoError, loading: geoLoading } = useGeolocation();
   const currentUserLat = userLat || userLat2;
   const currentUserLng = userLng || userLng2;
   const { alerts } = useSOSAlerts(currentUserLat, currentUserLng);
   const { respondToAlert, checkExistingResponse } = useSOSHelpers();
+  const { upsertProfile } = useHelperProfile(userId || undefined);
   const { data: mapboxToken, isLoading: isTokenLoading } = useMapboxToken();
 
   useEffect(() => {
     refreshLocation();
+  }, []);
+
+  // Get current user
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id || null);
+    });
   }, []);
 
   // Check which alerts the current user has already responded to
@@ -359,11 +372,68 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
       return;
     }
     
-    respondToAlert.mutate({
-      alert_id: alertId,
-      current_lat: currentUserLat,
-      current_lng: currentUserLng,
-    });
+    // Check if user has accepted helper terms
+    const hasAcceptedTerms = localStorage.getItem('helper_terms_accepted');
+    if (!hasAcceptedTerms) {
+      setPendingAlertId(alertId);
+      setShowLegalDisclaimer(true);
+      return;
+    }
+    
+    respondToAlert.mutate(
+      {
+        alert_id: alertId,
+        current_lat: currentUserLat,
+        current_lng: currentUserLng,
+      },
+      {
+        onSuccess: () => {
+          toast.success('Response sent!');
+          setUserResponses(prev => new Set([...prev, alertId]));
+        },
+      }
+    );
+  };
+
+  const handleAcceptTerms = async () => {
+    try {
+      // Store acceptance in localStorage
+      localStorage.setItem('helper_terms_accepted', 'true');
+      
+      // Update helper profile in database
+      await upsertProfile.mutateAsync({
+        is_available: true,
+        availability_status: 'available',
+      });
+      
+      setShowLegalDisclaimer(false);
+      
+      // If there's a pending alert, respond to it now
+      if (pendingAlertId && currentUserLat && currentUserLng) {
+        respondToAlert.mutate(
+          {
+            alert_id: pendingAlertId,
+            current_lat: currentUserLat,
+            current_lng: currentUserLng,
+          },
+          {
+            onSuccess: () => {
+              toast.success('Response sent!');
+              setUserResponses(prev => new Set([...prev, pendingAlertId]));
+              setPendingAlertId(null);
+            },
+          }
+        );
+      }
+    } catch (error) {
+      toast.error('Failed to accept terms. Please try again.');
+    }
+  };
+
+  const handleDeclineTerms = () => {
+    setShowLegalDisclaimer(false);
+    setPendingAlertId(null);
+    toast.info('You must accept the terms to respond to emergencies');
   };
 
   return (
@@ -583,6 +653,14 @@ export const SOSMapInteractive: React.FC<SOSMapInteractiveProps> = ({ userLat, u
           onClose={() => setShowMessaging(false)}
         />
       )}
+
+      {/* Legal Disclaimer Modal */}
+      <LegalDisclaimerModal
+        isOpen={showLegalDisclaimer}
+        onAccept={handleAcceptTerms}
+        onDecline={handleDeclineTerms}
+        type="helper"
+      />
     </div>
   );
 };

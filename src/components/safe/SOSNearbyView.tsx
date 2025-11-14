@@ -9,9 +9,11 @@ import { SOSMessaging } from './SOSMessaging';
 import { AbuseReportModal } from './AbuseReportModal';
 import { EditAlertModal } from './EditAlertModal';
 import { HelperTrackingModal } from './HelperTrackingModal';
+import { LegalDisclaimerModal } from './LegalDisclaimerModal';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useSOSAlerts } from '@/hooks/useSOSAlerts';
 import { useSOSHelpers } from '@/hooks/useSOSHelpers';
+import { useHelperProfile } from '@/hooks/useHelperProfile';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -24,6 +26,8 @@ export const SOSNearbyView: React.FC = () => {
   const [showAbuseReport, setShowAbuseReport] = useState(false);
   const [showEditAlert, setShowEditAlert] = useState(false);
   const [showHelperTracking, setShowHelperTracking] = useState(false);
+  const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
+  const [pendingAlertId, setPendingAlertId] = useState<string | null>(null);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -34,6 +38,7 @@ export const SOSNearbyView: React.FC = () => {
   const { latitude, longitude, loading: locationLoading } = useGeolocation();
   const { alerts, isLoading: alertsLoading, updateAlertStatus } = useSOSAlerts(latitude, longitude);
   const { respondToAlert, checkExistingResponse } = useSOSHelpers();
+  const { upsertProfile } = useHelperProfile(userId || undefined);
 
   // Fetch available helpers with optimized query
   const { data: availableHelpers } = useQuery({
@@ -163,11 +168,11 @@ export const SOSNearbyView: React.FC = () => {
       return;
     }
     
-    // Show legal disclaimer for first-time helpers
+    // Check if user has accepted helper terms
     const hasAcceptedTerms = localStorage.getItem('helper_terms_accepted');
     if (!hasAcceptedTerms) {
-      // Import and show legal modal
-      toast.info('Please accept helper terms before responding');
+      setPendingAlertId(alertId);
+      setShowLegalDisclaimer(true);
       return;
     }
     
@@ -226,6 +231,47 @@ export const SOSNearbyView: React.FC = () => {
       `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
       '_blank'
     );
+  };
+
+  const handleAcceptTerms = async () => {
+    try {
+      // Store acceptance in localStorage
+      localStorage.setItem('helper_terms_accepted', 'true');
+      
+      // Update helper profile in database
+      await upsertProfile.mutateAsync({
+        is_available: true,
+        availability_status: 'available',
+      });
+      
+      setShowLegalDisclaimer(false);
+      
+      // If there's a pending alert, respond to it now
+      if (pendingAlertId && latitude && longitude) {
+        respondToAlert.mutate(
+          {
+            alert_id: pendingAlertId,
+            current_lat: latitude,
+            current_lng: longitude,
+          },
+          {
+            onSuccess: () => {
+              toast.success('Response sent!');
+              setUserResponses(prev => new Set([...prev, pendingAlertId]));
+              setPendingAlertId(null);
+            },
+          }
+        );
+      }
+    } catch (error) {
+      toast.error('Failed to accept terms. Please try again.');
+    }
+  };
+
+  const handleDeclineTerms = () => {
+    setShowLegalDisclaimer(false);
+    setPendingAlertId(null);
+    toast.info('You must accept the terms to respond to emergencies');
   };
 
   const isAlertCreator = (emergency: any) => {
@@ -594,6 +640,14 @@ export const SOSNearbyView: React.FC = () => {
           helpers={availableHelpers || []}
         />
       )}
+
+      {/* Legal Disclaimer Modal */}
+      <LegalDisclaimerModal
+        isOpen={showLegalDisclaimer}
+        onAccept={handleAcceptTerms}
+        onDecline={handleDeclineTerms}
+        type="helper"
+      />
     </div>
   );
 };

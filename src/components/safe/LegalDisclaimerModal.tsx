@@ -86,16 +86,16 @@ export const LegalDisclaimerModal: React.FC<LegalDisclaimerModalProps> = ({
 
   return (
     <Drawer open={isOpen} onOpenChange={onDecline}>
-      <DrawerContent className="max-h-[85vh] pb-safe">
-        <DrawerHeader className="px-4 pt-4 pb-2">
+      <DrawerContent className="max-h-[85vh] pb-safe flex flex-col">
+        <DrawerHeader className="px-4 pt-4 pb-2 flex-shrink-0">
           <DrawerTitle className="flex items-center gap-2 text-destructive text-left">
             <Shield className="h-5 w-5 flex-shrink-0" />
             <span className="text-base font-semibold leading-tight">{terms.title}</span>
           </DrawerTitle>
         </DrawerHeader>
 
-        <ScrollArea className="flex-1 px-4">
-          <div className="space-y-4 pb-4">
+        <ScrollArea className="flex-1 overflow-y-auto">
+          <div className="space-y-4 px-4 pb-4">
             <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-amber-900 dark:text-amber-100">
@@ -124,7 +124,7 @@ export const LegalDisclaimerModal: React.FC<LegalDisclaimerModalProps> = ({
           </div>
         </ScrollArea>
 
-        <div className="space-y-4 px-4 py-4 border-t border-border bg-background/95 backdrop-blur-sm">
+        <div className="space-y-4 px-4 py-4 border-t border-border bg-background/95 backdrop-blur-sm flex-shrink-0">
           <div className="flex items-start gap-3">
             <Checkbox
               id="accept-terms"

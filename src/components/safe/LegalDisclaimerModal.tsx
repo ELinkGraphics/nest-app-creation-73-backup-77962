@@ -1,9 +1,10 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertTriangle, Shield } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LegalDisclaimerModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export const LegalDisclaimerModal: React.FC<LegalDisclaimerModalProps> = ({
   type,
 }) => {
   const [accepted, setAccepted] = React.useState(false);
+  const isMobile = useIsMobile();
 
   const helperTerms = {
     title: 'Helper Terms of Service & Liability Waiver',
@@ -83,20 +85,20 @@ export const LegalDisclaimerModal: React.FC<LegalDisclaimerModalProps> = ({
   const terms = type === 'helper' ? helperTerms : requesterTerms;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onDecline}>
-      <DialogContent className="max-w-2xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-red-600">
-            <Shield className="h-5 w-5" />
-            {terms.title}
-          </DialogTitle>
-        </DialogHeader>
+    <Drawer open={isOpen} onOpenChange={onDecline}>
+      <DrawerContent className="max-h-[85vh] pb-safe">
+        <DrawerHeader className="px-4 pt-4 pb-2">
+          <DrawerTitle className="flex items-center gap-2 text-destructive text-left">
+            <Shield className="h-5 w-5 flex-shrink-0" />
+            <span className="text-base font-semibold leading-tight">{terms.title}</span>
+          </DrawerTitle>
+        </DrawerHeader>
 
-        <ScrollArea className="h-[400px] pr-4">
-          <div className="space-y-4">
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-amber-900">
+        <ScrollArea className="flex-1 px-4">
+          <div className="space-y-4 pb-4">
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-amber-900 dark:text-amber-100">
                 <p className="font-medium mb-1">Important: Please Read Carefully</p>
                 <p>
                   By using this service, you acknowledge the risks involved and agree to the following terms.
@@ -105,14 +107,14 @@ export const LegalDisclaimerModal: React.FC<LegalDisclaimerModalProps> = ({
             </div>
 
             {terms.sections.map((section, index) => (
-              <div key={index} className="space-y-2">
-                <h4 className="font-semibold text-gray-900">{section.title}</h4>
-                <p className="text-sm text-gray-700">{section.content}</p>
+              <div key={index} className="space-y-1.5">
+                <h4 className="font-semibold text-foreground text-sm">{section.title}</h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">{section.content}</p>
               </div>
             ))}
 
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-6">
-              <p className="text-xs text-gray-600">
+            <div className="bg-muted border border-border rounded-lg p-3 mt-4">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 <strong>Emergency Services Disclaimer:</strong> This platform is a community
                 support tool and does NOT provide professional emergency services. For
                 life-threatening situations, always contact 911 or your local emergency services
@@ -122,16 +124,17 @@ export const LegalDisclaimerModal: React.FC<LegalDisclaimerModalProps> = ({
           </div>
         </ScrollArea>
 
-        <div className="space-y-4 pt-4 border-t">
+        <div className="space-y-4 px-4 py-4 border-t border-border bg-background/95 backdrop-blur-sm">
           <div className="flex items-start gap-3">
             <Checkbox
               id="accept-terms"
               checked={accepted}
               onCheckedChange={(checked) => setAccepted(checked as boolean)}
+              className="mt-0.5"
             />
             <label
               htmlFor="accept-terms"
-              className="text-sm text-gray-700 cursor-pointer"
+              className="text-sm text-muted-foreground cursor-pointer leading-relaxed"
             >
               I have read and agree to the {terms.title}. I understand the risks and limitations
               of this service.
@@ -142,20 +145,22 @@ export const LegalDisclaimerModal: React.FC<LegalDisclaimerModalProps> = ({
             <Button
               variant="outline"
               onClick={onDecline}
-              className="flex-1"
+              className="flex-1 h-11"
+              size="lg"
             >
               Decline
             </Button>
             <Button
               onClick={onAccept}
               disabled={!accepted}
-              className="flex-1 bg-primary hover:bg-primary/90"
+              className="flex-1 h-11"
+              size="lg"
             >
               Accept & Continue
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   );
 };

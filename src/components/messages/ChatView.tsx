@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { usePresence } from '@/hooks/usePresence';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 
 interface ChatViewProps {
   conversation: Conversation;
@@ -28,6 +29,7 @@ const ChatView: React.FC<ChatViewProps> = ({
   currentUserName,
   onBack 
 }) => {
+  const navigate = useNavigate();
   const [messageText, setMessageText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { messages, isLoading } = useMessages(conversation.conversation_id, currentUserId);
@@ -38,6 +40,10 @@ const ChatView: React.FC<ChatViewProps> = ({
     currentUserId,
     currentUserName
   );
+
+  const handleProfileClick = () => {
+    navigate(`/profile/${conversation.other_user_id}`);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -91,7 +97,10 @@ const ChatView: React.FC<ChatViewProps> = ({
             <ArrowLeft className="h-5 w-5" />
           </Button>
 
-          <div className="relative">
+          <div 
+            className="relative cursor-pointer active:scale-95 transition-transform"
+            onClick={handleProfileClick}
+          >
             <Avatar className="h-11 w-11">
               <AvatarImage src={conversation.other_user_avatar || undefined} />
               <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-sm">
@@ -103,7 +112,10 @@ const ChatView: React.FC<ChatViewProps> = ({
             )}
           </div>
 
-          <div className="flex-1 min-w-0">
+          <div 
+            className="flex-1 min-w-0 cursor-pointer"
+            onClick={handleProfileClick}
+          >
             <h2 className="font-semibold text-foreground truncate text-base">
               {conversation.other_user_name}
             </h2>
@@ -147,7 +159,10 @@ const ChatView: React.FC<ChatViewProps> = ({
                 className={`flex gap-2 animate-fade-in ${isOwn ? 'justify-end' : 'justify-start'}`}
               >
                 {!isOwn && (
-                  <Avatar className="h-8 w-8 shrink-0 mt-1">
+                  <Avatar 
+                    className="h-8 w-8 shrink-0 mt-1 cursor-pointer active:scale-95 transition-transform"
+                    onClick={handleProfileClick}
+                  >
                     <AvatarImage src={conversation.other_user_avatar || undefined} />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-xs">
                       {conversation.other_user_initials}

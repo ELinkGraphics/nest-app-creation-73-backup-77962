@@ -219,6 +219,13 @@ const Notifications = () => {
     const profile = notification.data?.userId ? getProfileById(notification.data.userId) : null;
     const isUnread = !notification.read_at;
     const isSafety = isSafetyNotification(notification.notification_type);
+
+    const handleProfileClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (notification.data?.userId) {
+        navigate(`/profile/${notification.data.userId}`);
+      }
+    };
     
     const swipeHandlers = useSwipeGestures(
       {
@@ -266,7 +273,10 @@ const Notifications = () => {
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 mt-0.5">
             {profile ? (
-              <Avatar className="size-9 transition-transform hover:scale-105">
+              <Avatar 
+                className="size-9 transition-transform hover:scale-105 cursor-pointer"
+                onClick={handleProfileClick}
+              >
                 <AvatarImage src={profile.avatar_url} />
                 <AvatarFallback 
                   className="text-xs font-medium text-white"

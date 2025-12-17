@@ -38,7 +38,8 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
   onOpenCreate = () => {}
 }) => {
   // Fetch videos from database
-  const { videos: relaxVideos, loading: videosLoading, hasMore, loadMore, refetch } = useVideoFeed();
+  const { videos: relaxVideosRaw, loading: videosLoading, hasMore, loadMore, refetch } = useVideoFeed();
+  const relaxVideos = relaxVideosRaw ?? [];
   const { toggleLike, toggleSave, incrementShare } = useVideoMutations();
   const { toggleFollow, checkFollowStatus } = useFollowMutations();
   const { user } = useUser();

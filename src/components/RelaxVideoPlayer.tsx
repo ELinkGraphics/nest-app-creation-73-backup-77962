@@ -67,11 +67,11 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
   // Check initial follow status for all videos
   useEffect(() => {
     const checkAllFollowStatuses = async () => {
-      if (!user) return;
+      if (!user || !relaxVideos || relaxVideos.length === 0) return;
       
       const newFollowStates: Record<string, 'visible' | 'checked' | 'hidden'> = {};
       for (const video of relaxVideos) {
-        if (video.user.id && user.id !== video.user.id) {
+        if (video?.user?.id && user.id !== video.user.id) {
           const following = await checkFollowStatus(video.user.id);
           if (following) {
             newFollowStates[video.user.id] = 'hidden';
@@ -168,15 +168,16 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
     }
 
     // Navigate between videos
+    const videoCount = relaxVideos?.length || 0;
     if (Math.abs(deltaY) > 80 && velocity > 0.4 && deltaTime < 500) {
       setIsTransitioning(true);
       
-      if (deltaY < 0 && currentIndex < relaxVideos.length - 1) {
+      if (deltaY < 0 && currentIndex < videoCount - 1) {
         // Swipe up - next video
         setCurrentIndex(prev => prev + 1);
         
         // Load more if near the end
-        if (currentIndex >= relaxVideos.length - 3 && hasMore) {
+        if (currentIndex >= videoCount - 3 && hasMore) {
           loadMore();
         }
       } else if (deltaY > 0 && currentIndex > 0) {
@@ -187,7 +188,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
       // Reset transition state
       setTimeout(() => setIsTransitioning(false), 300);
     }
-  }, [currentIndex, relaxVideos.length, onRefresh, isTransitioning]);
+  }, [currentIndex, relaxVideos?.length, onRefresh, isTransitioning]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -205,7 +206,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
           break;
         case 'ArrowDown':
           e.preventDefault();
-          if (currentIndex < relaxVideos.length - 1) {
+          if (currentIndex < (relaxVideos?.length || 0) - 1) {
             setIsTransitioning(true);
             setCurrentIndex(prev => prev + 1);
             setTimeout(() => setIsTransitioning(false), 300);
@@ -219,7 +220,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, relaxVideos.length, isTransitioning, onBackToFeed]);
+  }, [currentIndex, relaxVideos?.length, isTransitioning, onBackToFeed]);
 
   const handleFollow = useCallback(async (userId: string) => {
     if (!user) {
@@ -301,6 +302,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
 
   // Calculate which videos to render (current + adjacent for smooth scrolling)
   const getVisibleVideos = () => {
+    if (!relaxVideos || relaxVideos.length === 0) return [];
     const visible = [];
     for (let i = Math.max(0, currentIndex - 1); i <= Math.min(relaxVideos.length - 1, currentIndex + 1); i++) {
       visible.push(i);
@@ -328,6 +330,7 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
       >
         {visibleVideoIndices.map((index) => {
           const video = relaxVideos[index];
+          if (!video) return null;
           const translateY = (index - currentIndex) * videoHeight;
           const isActive = index === currentIndex;
           const isLiked = video.liked || likedVideos.has(video.id);

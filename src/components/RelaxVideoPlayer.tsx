@@ -296,9 +296,9 @@ export const RelaxVideoPlayer: React.FC<RelaxVideoPlayerProps> = ({
     triggerHaptic('light');
   }, [triggerHaptic]);
 
-  const needsReadMore = useCallback((text: string) => {
+  const needsReadMore = useCallback((text: string | null | undefined) => {
     // More aggressive check - trigger read more for descriptions longer than 100 characters
-    return text.length > 100;
+    return (text ?? '').length > 100;
   }, []);
 
   // Calculate which videos to render (current + adjacent for smooth scrolling)

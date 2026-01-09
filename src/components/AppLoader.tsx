@@ -80,9 +80,11 @@ export const AppLoader = ({ onComplete }: AppLoaderProps) => {
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-sm text-muted-foreground text-center animate-pulse">
-            {status}
-          </p>
+          {progress < 100 && (
+            <p className="text-sm text-muted-foreground text-center animate-pulse">
+              {status}
+            </p>
+          )}
         </div>
       </div>
     </div>

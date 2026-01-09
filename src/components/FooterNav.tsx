@@ -56,6 +56,9 @@ const FooterNav: React.FC<FooterNavProps> = ({ active, onSelect, onOpenCreate, o
   };
 
   const handleTabClick = (tabKey: TabKey) => {
+    // Scroll to top smoothly on navigation
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     if (tabKey === 'add') {
       // Handle add button - trigger create popup or navigate based on current page
       if (typeof onSelect === 'function') {

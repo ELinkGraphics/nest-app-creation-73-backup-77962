@@ -91,15 +91,6 @@ export default function Login() {
       <div className="w-full max-w-md space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigateToTab("home")}
-            className="absolute top-6 left-6 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          
           <div className="inline-flex items-center rounded-full px-3 py-1 border border-gray-200">
             <img 
               src="/lovable-uploads/0cbbe835-9c4c-4a9c-87ae-8385aa0d34ee.png" 

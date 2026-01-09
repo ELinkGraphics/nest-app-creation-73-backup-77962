@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollTriggeredAIInsight } from './ScrollTriggeredAIInsight';
+import { useQuestionVote, useUserVotes } from '@/hooks/useQuestions';
 import { 
   ThumbsUp, 
   MessageCircle, 
@@ -72,9 +73,20 @@ const getCategoryColor = (category: string) => {
 
 export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick }) => {
   const navigate = useNavigate();
+  const voteOnQuestion = useQuestionVote();
+  const { data: userVotes } = useUserVotes();
+  const hasVoted = userVotes?.questions?.includes(question.id);
 
   const handleClick = () => {
     navigate(`/ask/question/${question.id}`);
+  };
+  
+  const handleUpvote = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await voteOnQuestion.mutateAsync({ 
+      questionId: question.id, 
+      hasVoted: !!hasVoted 
+    });
   };
 
   return (
@@ -159,14 +171,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-auto p-0 text-muted-foreground hover:text-primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Handle upvote
-              }}
+              className={`h-auto p-0 hover:text-primary ${hasVoted ? 'text-primary' : 'text-muted-foreground'}`}
+              onClick={handleUpvote}
             >
-              <ThumbsUp className="w-4 h-4 mr-1" />
-              {question.upvotes}
+              <ThumbsUp className={`w-4 h-4 mr-1 ${hasVoted ? 'fill-current' : ''}`} />
+              {question.upvotes + (hasVoted ? 1 : 0)}
             </Button>
             
             <div className="flex items-center text-muted-foreground text-meta-info">

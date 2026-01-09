@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Plus, Check, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck, Plus, Check, Trash2, Bookmark, Flag } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { useNavigate } from 'react-router-dom';
 import { Post } from '@/data/mock';
 import { useUser } from '@/contexts/UserContext';
@@ -330,11 +331,31 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleShare}>
+              <Share2 className="size-4 mr-2" />
+              Share
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSave}>
+              <Bookmark className="size-4 mr-2" />
+              {saved ? 'Unsave' : 'Save'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              toast({
+                title: "Report submitted",
+                description: "Thank you for reporting this content",
+              });
+            }}>
+              <Flag className="size-4 mr-2" />
+              Report
+            </DropdownMenuItem>
             {user?.id === post.user.id && (
-              <DropdownMenuItem onClick={handleDelete} className="text-red-600">
-                <Trash2 className="size-4 mr-2" />
-                Delete Post
-              </DropdownMenuItem>
+              <>
+                <Separator className="my-1" />
+                <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+                  <Trash2 className="size-4 mr-2" />
+                  Delete Post
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>

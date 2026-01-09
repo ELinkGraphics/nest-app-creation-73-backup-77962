@@ -90,7 +90,7 @@ export const TrendingItemsCarousel: React.FC = () => {
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="h-5 w-5 text-primary" />
+        <TrendingUp className="h-4 w-4 text-primary" />
         <h2 className="text-lg font-semibold">Trending Today</h2>
         <Badge variant="secondary" className="text-xs font-medium px-2 py-0.5">Hot</Badge>
       </div>

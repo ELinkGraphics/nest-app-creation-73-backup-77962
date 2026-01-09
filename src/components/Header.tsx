@@ -9,6 +9,7 @@ import SearchModal from './SearchModal';
 import { cacheManager } from '@/utils/cacheManager';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useConversations } from '@/hooks/useConversations';
+import { supabase } from '@/integrations/supabase/client';
 
 interface HeaderProps {
   onNotifications?: () => void;
@@ -121,7 +122,7 @@ const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages, onMenuOpen
             <img 
               src="/lovable-uploads/0cbbe835-9c4c-4a9c-87ae-8385aa0d34ee.png" 
               alt="MomsNest" 
-              className="h-7 w-auto"
+              className="h-7 w-7 rounded-full object-cover"
             />
           </div>
           
@@ -240,9 +241,10 @@ const Header: React.FC<HeaderProps> = ({ onNotifications, onMessages, onMenuOpen
               icon={<LogOut className="size-4" />} 
               label="Log out" 
               danger 
-              onClick={() => {
-                navigate('/login');
+              onClick={async () => {
                 setMenuOpen(false);
+                await supabase.auth.signOut();
+                navigate('/login', { replace: true });
               }}
               data-testid="menu-logout"
             />

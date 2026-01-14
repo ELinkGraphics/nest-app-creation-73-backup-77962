@@ -1,4 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import FooterNav from '../components/FooterNav';
 import { InstallPrompt } from '../components/InstallPrompt';
@@ -26,13 +27,14 @@ const Safe: React.FC<SafeProps> = ({
   onTabSelect,
   onOpenCreate
 }) => {
+  const navigate = useNavigate();
   const [activeView, setActiveView] = useState<'sos' | 'nearby' | 'profile'>('sos');
   const [showContactsModal, setShowContactsModal] = useState(false);
   const [showNotificationPrefs, setShowNotificationPrefs] = useState(false);
   
   return <div className="min-h-[100dvh] mx-auto bg-white text-foreground selection:bg-secondary/40 max-w-[480px] relative border-l border-r border-gray-200 font-sans" data-testid="safe-page">
       <InstallPrompt />
-      <Header onNotifications={() => alert("Notifications")} onMessages={() => alert("Messages")} />
+      <Header onNotifications={() => navigate('/notifications')} onMessages={() => navigate('/messages')} />
       
       <main className="pb-24 mobile-px">
         <div className="bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-100 p-3 sm:p-4 space-y-2">

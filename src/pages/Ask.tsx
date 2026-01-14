@@ -30,8 +30,8 @@ const Ask: React.FC<AskProps> = ({
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
   const handleViewExpertAnswer = (answerId: string) => {
-    // Navigate to answer detail or show in modal
-    console.log('View expert answer:', answerId);
+    // Navigate to answer detail
+    navigate(`/ask/question/${answerId}`);
   };
   return <div className="min-h-screen bg-background" data-testid="ask-page">
       <InstallPrompt />

@@ -4,6 +4,7 @@ import { Video } from '@/data/mock';
 import { cn } from '@/lib/utils';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useFollowMutations } from '@/hooks/useFollowMutations';
+import { useVideoMutations } from '@/hooks/useVideoMutations';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 import PublicProfileModal from '@/components/PublicProfileModal';
@@ -27,11 +28,13 @@ export const RelaxVideoCard: React.FC<RelaxVideoCardProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [followState, setFollowState] = useState<'visible' | 'checked' | 'hidden'>('visible');
   const [showProfileModal, setShowProfileModal] = useState(false);
   const reducedMotion = useReducedMotion();
   const { toggleFollow, checkFollowStatus } = useFollowMutations();
+  const { toggleLike, toggleSave, incrementShare } = useVideoMutations();
   const { user } = useUser();
 
   // Check initial follow status
@@ -60,9 +63,16 @@ export const RelaxVideoCard: React.FC<RelaxVideoCardProps> = ({
     }
   }, [isVisible]);
 
-  const handleLike = (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!user) {
+      toast.error('Please login to like videos');
+      return;
+    }
     setIsLiked(!isLiked);
+    if (video.id) {
+      await toggleLike(String(video.id));
+    }
   };
 
   const handleMute = (e: React.MouseEvent) => {
@@ -73,9 +83,42 @@ export const RelaxVideoCard: React.FC<RelaxVideoCardProps> = ({
     }
   };
 
-  const handleAction = (action: string) => (e: React.MouseEvent) => {
+  const handleComment = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Handle action
+    toast.info('Comments coming soon');
+  };
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: video.title,
+          text: video.description,
+          url: window.location.href
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard');
+      }
+      if (video.id) {
+        await incrementShare(String(video.id));
+      }
+    } catch (error) {
+      // User cancelled share
+    }
+  };
+
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      toast.error('Please login to save videos');
+      return;
+    }
+    setIsSaved(!isSaved);
+    if (video.id) {
+      await toggleSave(String(video.id));
+    }
   };
 
   return (
@@ -217,7 +260,7 @@ export const RelaxVideoCard: React.FC<RelaxVideoCardProps> = ({
         </button>
 
         <button
-          onClick={handleAction('comment')}
+          onClick={handleComment}
           aria-label={`Comment on video by ${video.user.name}`}
           className="group flex flex-col items-center gap-1 transition-all duration-200 active:bg-transparent"
         >
@@ -230,7 +273,7 @@ export const RelaxVideoCard: React.FC<RelaxVideoCardProps> = ({
         </button>
 
         <button
-          onClick={handleAction('share')}
+          onClick={handleShare}
           aria-label={`Share video by ${video.user.name}`}
           className="group flex flex-col items-center gap-1 transition-all duration-200 active:bg-transparent"
         >
@@ -243,15 +286,23 @@ export const RelaxVideoCard: React.FC<RelaxVideoCardProps> = ({
         </button>
 
         <button
-          onClick={handleAction('save')}
+          onClick={handleSave}
           aria-label={`Save video by ${video.user.name}`}
           className="group flex flex-col items-center gap-1 transition-all duration-200"
         >
-          <div className="p-3 bg-white/15 border border-white/20 rounded-full backdrop-blur-md hover:bg-white/25 transition-all duration-200 group-active:scale-95 shadow-lg">
-            <Bookmark className="size-6 text-white" />
+          <div className={cn(
+            "p-3 rounded-full backdrop-blur-md border transition-all duration-200 group-active:scale-95 shadow-lg",
+            isSaved
+              ? "bg-primary/20 border-primary/30"
+              : "bg-white/15 border-white/20 hover:bg-white/25"
+          )}>
+            <Bookmark className={cn(
+              "size-6 transition-all duration-200",
+              isSaved ? "fill-primary text-primary" : "text-white"
+            )} />
           </div>
           <span className="text-xs font-medium text-white drop-shadow-sm">
-            {formatCount(video.stats.saves)}
+            {formatCount(video.stats.saves + (isSaved ? 1 : 0))}
           </span>
         </button>
       </div>

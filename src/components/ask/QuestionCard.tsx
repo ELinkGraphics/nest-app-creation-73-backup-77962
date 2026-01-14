@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollTriggeredAIInsight } from './ScrollTriggeredAIInsight';
 import { useQuestionVote, useUserVotes } from '@/hooks/useQuestions';
+import anonymousLogo from '@/assets/anonymous-logo.png';
 import { 
   ThumbsUp, 
   MessageCircle, 
@@ -99,7 +100,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
         <div className="flex items-center gap-3 mb-3">
           <div className="relative">
             <img 
-              src="/src/assets/anonymous-logo.png" 
+              src={anonymousLogo} 
               alt={question.is_anonymous ? "Anonymous Asker" : "User"} 
               className="w-8 h-8 rounded-full border-2 border-primary/20"
             />

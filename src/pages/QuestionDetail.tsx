@@ -9,6 +9,7 @@ import { useQuestion, useQuestionVote, useUserVotes } from '@/hooks/useQuestions
 import { useThreadUpdates, useCreateThreadUpdate } from '@/hooks/useThreadUpdates';
 import { useIsQuestionBookmarked, useToggleQuestionBookmark } from '@/hooks/useQuestionBookmarks';
 import { supabase } from '@/integrations/supabase/client';
+import anonymousLogo from '@/assets/anonymous-logo.png';
 import { 
   ThumbsUp, 
   MessageCircle, 
@@ -395,7 +396,7 @@ export default function QuestionDetail() {
           {/* Asker info */}
           <div className="flex items-center gap-3">
             <img 
-              src="/src/assets/anonymous-logo.png" 
+              src={anonymousLogo} 
               alt="Asker" 
               className="w-10 h-10 rounded-full border-2 border-primary/20"
             />

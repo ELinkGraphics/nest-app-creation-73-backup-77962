@@ -78,7 +78,7 @@ export default function Signup() {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => navigateToTab("home")}
+            onClick={() => navigate('/login')}
             className="absolute top-6 left-6 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4" />

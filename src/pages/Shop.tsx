@@ -40,8 +40,8 @@ const Shop: React.FC<ShopProps> = ({ activeTab, onTabSelect, onOpenCreate }) => 
       <InstallPrompt />
       <div className="relative safe-area-top">
         <Header 
-          onNotifications={() => alert("Notifications")}
-          onMessages={() => alert("Messages")}
+          onNotifications={() => navigate('/notifications')}
+          onMessages={() => navigate('/messages')}
         />
         
         {/* Quick Action Bar */}

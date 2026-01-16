@@ -25,6 +25,7 @@ interface Question {
   timestamp: string;
   answerCount: number;
   upvotes: number;
+  voteCount?: number;
   isUrgent: boolean;
   hasExpertAnswer: boolean;
   aiResponse?: string;
@@ -176,7 +177,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onClick })
               onClick={handleUpvote}
             >
               <ThumbsUp className={`w-4 h-4 mr-1 ${hasVoted ? 'fill-current' : ''}`} />
-              {question.upvotes + (hasVoted ? 1 : 0)}
+              {question.voteCount ?? question.upvotes ?? 0}
             </Button>
             
             <div className="flex items-center text-muted-foreground text-meta-info">

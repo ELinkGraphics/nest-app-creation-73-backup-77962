@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAppNav } from "@/hooks/useAppNav";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -17,7 +16,6 @@ export default function Signup() {
     password: "",
     confirmPassword: ""
   });
-  const { navigateToTab } = useAppNav();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {

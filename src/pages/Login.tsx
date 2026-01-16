@@ -19,7 +19,7 @@ export default function Login() {
     e.preventDefault();
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -30,12 +30,12 @@ export default function Login() {
           description: error.message,
           variant: "destructive",
         });
-      } else {
+      } else if (data.session) {
         toast({
           title: "Welcome back!",
           description: "You've successfully logged in.",
         });
-        navigate("/");
+        navigate("/", { replace: true });
       }
     } catch (error) {
       toast({

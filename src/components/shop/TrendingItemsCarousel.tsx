@@ -131,7 +131,7 @@ export const TrendingItemsCarousel: React.FC = () => {
                         className="h-7 w-7 p-0 rounded-full bg-background/90 hover:bg-background shadow-md backdrop-blur-sm touch-target active:scale-90 transition-transform"
                         onClick={(e) => handleLike(item.id, e)}
                       >
-                        <Heart className={`h-3 w-3 ${likedItems.has(item.id) ? 'fill-current text-red-500' : 'text-foreground'}`} />
+                        <Heart className={`h-3 w-3 ${likedItems.has(item.id) ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />
                       </Button>
                       <Button
                         size="sm"
@@ -164,7 +164,7 @@ export const TrendingItemsCarousel: React.FC = () => {
                         )}
                       </div>
                       <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                        <Heart className={`h-2.5 w-2.5 ${likedItems.has(item.id) ? 'fill-current text-red-500' : 'fill-current'}`} />
+                        <Heart className={`h-2.5 w-2.5 ${likedItems.has(item.id) ? 'fill-red-500 text-red-500' : 'fill-muted-foreground'}`} />
                         <span className="font-medium">{item.likes + (likedItems.has(item.id) ? 1 : 0)}</span>
                       </div>
                     </div>
